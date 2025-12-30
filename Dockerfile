@@ -36,7 +36,8 @@ EXPOSE 8000
 
 # Script de démarrage
 COPY start.sh /app/
-RUN chmod +x /app/start.sh
+RUN python -c "import pathlib; p = pathlib.Path('/app/start.sh'); p.write_bytes(p.read_bytes().replace(b'\r\n', b'\n'))" \
+    && chmod +x /app/start.sh
 
 # Commande par défaut
 CMD ["/app/start.sh", "production"]
