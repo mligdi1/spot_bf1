@@ -1,0 +1,193 @@
+{% extends 'spot/admin_base.html' %}
+{% block admin_header %}Détail de la demande{% endblock %}
+{% block admin_content %}
+<div class="space-y-6">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <h1 class="text-2xl font-bold break-words">{{ coverage.event_title }}</h1>
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="px-3 py-1 text-xs font-semibold rounded-full
+        {% if coverage.status == 'new' %}bg-yellow-100 text-yellow-800{% endif %}
+        {% if coverage.status == 'review' %}bg-blue-100 text-blue-800{% endif %}
+        {% if coverage.status == 'scheduled' %}bg-green-100 text-green-800{% endif %}
+        {% if coverage.status == 'closed' %}bg-gray-100 text-gray-800{% endif %}">
+        {{ coverage.get_status_display }}
+      </span>
+      <a href="{% url 'admin_coverage_list' %}" class="text-bf1-red hover:underline">Retour à la liste</a>
+    </div>
+  </div>
+
+  <!-- Informations principales -->
+  <section class="bg-white rounded-xl shadow-sm p-6">
+    <h2 class="text-lg font-semibold mb-4">Informations de l’événement</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+      <div>
+        <div class="text-gray-500">Type d’événement</div>
+        <div class="font-medium">{{ coverage.get_event_type_display }}</div>
+      </div>
+      <div>
+        <div class="text-gray-500">Date</div>
+        <div class="font-medium">{{ coverage.event_date|date:'d/m/Y' }}</div>
+      </div>
+      <div>
+        <div class="text-gray-500">Heures</div>
+        <div class="font-medium">{{ coverage.start_time }}{% if coverage.end_time %} – {{ coverage.end_time }}{% endif %}</div>
+      </div>
+      <div class="md:col-span-2">
+        <div class="text-gray-500">Adresse</div>
+        <div class="font-medium">{{ coverage.address }}</div>
+      </div>
+      {% if coverage.meeting_point %}
+      <div>
+        <div class="text-gray-500">Point de rendez-vous</div>
+        <div class="font-medium">{{ coverage.meeting_point }}</div>
+      </div>
+      {% endif %}
+      <div>
+        <div class="text-gray-500">Urgence</div>
+        <div class="font-medium">{{ coverage.get_urgency_level_display }}</div>
+      </div>
+      {% if coverage.response_deadline %}
+      <div>
+        <div class="text-gray-500">Date limite de réponse</div>
+        <div class="font-medium">{{ coverage.response_deadline|date:'d/m/Y' }}</div>
+      </div>
+      {% endif %}
+    </div>
+    {% if coverage.description %}
+    <div class="mt-4">
+      <div class="text-gray-500 mb-1">Description</div>
+      <p class="text-sm leading-relaxed">{{ coverage.description }}</p>
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- Contacts & préférences de couverture -->
+  <section class="bg-white rounded-xl shadow-sm p-6">
+    <h2 class="text-lg font-semibold mb-4">Contacts & préférences</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+      <div>
+        <div class="text-gray-500">Contact presse</div>
+        <div class="font-medium">{{ coverage.contact_name }}</div>
+      </div>
+      <div>
+        <div class="text-gray-500">Téléphone</div>
+        <div class="font-medium">{{ coverage.contact_phone }}</div>
+      </div>
+      <div>
+        <div class="text-gray-500">Email</div>
+        <div class="font-medium">{{ coverage.contact_email|default:'—' }}</div>
+      </div>
+      {% if coverage.other_contacts %}
+      <div class="md:col-span-3">
+        <div class="text-gray-500">Autres contacts</div>
+        <div class="font-medium">{{ coverage.other_contacts }}</div>
+      </div>
+      {% endif %}
+      <div>
+        <div class="text-gray-500">Type de couverture</div>
+        <div class="font-medium">{{ coverage.get_coverage_type_display }}</div>
+      </div>
+      {% if coverage.coverage_objective %}
+      <div class="md:col-span-2">
+        <div class="text-gray-500">Objectif</div>
+        <div class="font-medium">{{ coverage.coverage_objective }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- Pièces jointes -->
+  <section class="bg-white rounded-xl shadow-sm p-6">
+    <div class="flex items-center justify-between">
+      <h2 class="text-lg font-semibold">Documents joints</h2>
+      <span class="text-sm text-gray-600">{{ attachments|length }} document(s)</span>
+    </div>
+    {% if attachments %}
+    <ul class="mt-3 divide-y divide-gray-200">
+      {% for att in attachments %}
+      <li class="py-2 flex items-center justify-between gap-3">
+        <div class="min-w-0 text-sm text-gray-800 truncate">{{ att.file.name|default:"" }}</div>
+        <a href="{{ att.file.url }}" target="_blank" rel="noopener" class="px-3 py-1 text-xs rounded border hover:bg-gray-50 whitespace-nowrap">Télécharger</a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-sm text-gray-600 mt-2">Aucun document joint.</p>
+    {% endif %}
+  </section>
+
+  <!-- Actions de décision (affichées uniquement si statut non final) -->
+  {% if coverage.status == 'new' or coverage.status == 'review' %}
+  <section class="bg-white rounded-xl shadow-sm p-6">
+    <h2 class="text-lg font-semibold mb-4">Décision</h2>
+    <form method="post" class="space-y-4" id="decision-form">{% csrf_token %}
+      <input type="hidden" name="action" id="action-field" value="" />
+      <div id="reject-reason-container" class="hidden opacity-0 max-h-0 transition-all duration-200 ease-out">
+        <label for="comment" class="block text-sm font-medium text-gray-700">Raison du rejet</label>
+        <textarea id="comment" name="comment" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-600 focus:border-transparent" placeholder="Expliquez brièvement la raison du rejet (obligatoire)"></textarea>
+        <p id="reject-error" class="mt-2 text-sm text-red-600 hidden">Ce champ est obligatoire pour rejeter la demande.</p>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <button type="button" onclick="submitApprove()" class="px-4 py-2 rounded-lg bg-green-600 text-white transition duration-150 ease-in-out hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">Valider</button>
+        <button type="button" id="reject-btn" onclick="prepareReject()" class="px-4 py-2 rounded-lg bg-red-600 text-white transition duration-150 ease-in-out hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">Rejeter</button>
+      </div>
+    </form>
+    <script>
+      (function(){
+        const form = document.getElementById('decision-form');
+        const actionField = document.getElementById('action-field');
+        const rejectContainer = document.getElementById('reject-reason-container');
+        const comment = document.getElementById('comment');
+        const rejectBtn = document.getElementById('reject-btn');
+        const errorText = document.getElementById('reject-error');
+
+        window.submitApprove = function(){
+          actionField.value = 'approve';
+          form.submit();
+        };
+        window.prepareReject = function(){
+          actionField.value = 'reject';
+          // Afficher le champ avec transition
+          rejectContainer.classList.remove('hidden');
+          // transition height/opacity
+          rejectContainer.style.maxHeight = '300px';
+          rejectContainer.style.opacity = '1';
+          comment.setAttribute('aria-required', 'true');
+          comment.focus();
+
+          // Validation live: désactiver le bouton tant que vide
+          const valid = comment.value.trim().length > 0;
+          toggleRejectState(valid);
+        };
+        function toggleRejectState(valid){
+          if(valid){
+            rejectBtn.classList.remove('opacity-50','cursor-not-allowed');
+            errorText.classList.add('hidden');
+            // Soumettre si déjà en mode rejet et clic à nouveau
+            rejectBtn.onclick = function(){
+              actionField.value = 'reject';
+              form.submit();
+            };
+          } else {
+            rejectBtn.classList.add('opacity-50','cursor-not-allowed');
+            errorText.classList.remove('hidden');
+            rejectBtn.onclick = function(){
+              // empêche soumission
+              comment.focus();
+            };
+          }
+        }
+        comment && comment.addEventListener('input', function(){
+          toggleRejectState(this.value.trim().length > 0);
+        });
+
+        // Si le serveur demande d'afficher le rejet (erreur), ouvrir le panneau
+        {% if show_reject %}
+          prepareReject();
+        {% endif %}
+      })();
+    </script>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

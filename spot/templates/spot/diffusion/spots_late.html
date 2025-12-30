@@ -1,0 +1,48 @@
+{% extends 'spot/diffusion/base_diffusion.html' %}
+
+{% block title %}Spots en retard{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-semibold">Spots en retard</h1>
+    <a href="{% url 'diffusion_spots' %}" class="px-3 py-2 border rounded">Retour aux spots</a>
+  </div>
+
+  {% if late_count %}
+  <div class="mb-4 text-sm text-yellow-800 bg-yellow-50 border border-yellow-200 rounded p-3">
+    {{ late_count }} programmation(s) dépassée(s) non diffusée(s).
+  </div>
+  <div class="bg-white rounded border overflow-x-auto">
+    <table class="min-w-full text-sm">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-3 sm:px-4 py-2 text-left">Spot</th>
+          <th class="px-3 sm:px-4 py-2 text-left">Client</th>
+          <th class="px-3 sm:px-4 py-2 text-left whitespace-nowrap">Date</th>
+          <th class="px-3 sm:px-4 py-2 text-left whitespace-nowrap">Heure</th>
+          <th class="px-3 sm:px-4 py-2 text-left">Créneau</th>
+          <th class="px-3 sm:px-4 py-2 text-left">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in late_schedules %}
+        <tr class="border-t">
+          <td class="px-3 sm:px-4 py-2 font-medium">{{ s.title }}</td>
+          <td class="px-3 sm:px-4 py-2">{{ s.client }}</td>
+          <td class="px-3 sm:px-4 py-2 whitespace-nowrap">{{ s.broadcast_date }}</td>
+          <td class="px-3 sm:px-4 py-2 whitespace-nowrap">{{ s.broadcast_time }}</td>
+          <td class="px-3 sm:px-4 py-2">{{ s.time_slot }}</td>
+          <td class="px-3 sm:px-4 py-2">
+            <a href="{% url 'diffusion_spot_detail' s.spot_id %}" class="text-blue-600 hover:underline">Voir le spot</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="text-gray-600">Aucun spot en retard actuellement.</div>
+  {% endif %}
+</div>
+{% endblock %}

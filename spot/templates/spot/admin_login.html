@@ -1,0 +1,30 @@
+{% extends 'spot/base.html' %}
+{% block title %}Connexion Admin - BF1{% endblock %}
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
+  <div class="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow">
+    <div class="text-center">
+      <div class="inline-flex items-center justify-center bg-bf1-red text-white p-3 rounded-lg">
+        <i class="fas fa-user-shield text-2xl"></i>
+      </div>
+      <h2 class="mt-4 text-2xl font-bold text-gray-900">Console d’administration</h2>
+      <p class="text-gray-600 text-sm mt-1">Accès réservé aux administrateurs</p>
+    </div>
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      <div>
+        <label for="id_username" class="block text-sm font-medium text-gray-700">Nom d'utilisateur</label>
+        <input id="id_username" name="username" type="text" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-bf1-red focus:border-bf1-red">
+      </div>
+      <div>
+        <label for="id_password" class="block text-sm font-medium text-gray-700">Mot de passe</label>
+        <input id="id_password" name="password" type="password" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-bf1-red focus:border-bf1-red">
+      </div>
+      <button type="submit" class="w-full bg-bf1-red text-white py-2 rounded-md hover:bg-bf1-red-dark transition">Se connecter</button>
+    </form>
+    <div class="text-center">
+      <a href="{% url 'home' %}" class="text-sm text-gray-600 hover:text-bf1-red"><i class="fas fa-arrow-left mr-1"></i> Retour</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

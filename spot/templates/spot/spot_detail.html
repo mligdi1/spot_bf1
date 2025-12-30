@@ -1,0 +1,89 @@
+{% extends 'spot/base.html' %}
+{% load static %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header avec statut -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">{{ spot.title }}</h1>
+                    <p class="text-gray-600 mt-1">Campagne: {{ campaign.title }}</p>
+                </div>
+                
+                <div class="text-right">
+                    {% if spot.status == 'pending_review' %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                            ⏳ En attente de validation
+                        </span>
+                    {% elif spot.status == 'approved' %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                            ✅ Approuvé
+                        </span>
+                    {% elif spot.status == 'rejected' %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                            ❌ Rejeté
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Aperçu du spot -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Aperçu du spot</h2>
+                
+                {% if spot.media_type == 'image' and spot.image_file %}
+                    <div class="aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                        <img src="{{ spot.image_file.url }}" alt="{{ spot.title }}" class="w-full h-full object-cover">
+                    </div>
+                {% elif spot.media_type == 'video' and spot.video_file %}
+                    <div class="aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                        <video src="{{ spot.video_file.url }}" class="w-full h-full object-cover" controls></video>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-2">Durée: {{ spot.duration_seconds }} secondes</p>
+                {% endif %}
+                
+                {% if spot.description %}
+                    <div class="mt-4">
+                        <h3 class="font-medium text-gray-900 mb-2">Description</h3>
+                        <p class="text-gray-600">{{ spot.description }}</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Actions et informations -->
+            <div class="space-y-6">
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Informations de campagne</h2>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Budget:</span>
+                            <span class="font-medium">{{ campaign.budget }} FCFA</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Période:</span>
+                            <span class="font-medium">{{ campaign.start_date }} - {{ campaign.end_date }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Statut campagne:</span>
+                            <span class="font-medium">{{ campaign.get_status_display }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- zone paiement supprimée -->
+            </div>
+        </div>
+        
+        <!-- Bouton retour -->
+        <div class="mt-8 text-center">
+            <a href="{% url 'dashboard' %}" class="inline-flex items-center px-6 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200">
+                ← Retour au tableau de bord
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

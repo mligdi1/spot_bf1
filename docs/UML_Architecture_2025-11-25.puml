@@ -1,0 +1,180 @@
+
+@startuml BF1TV-ClassDiagram
+skinparam classAttributeIconSize 0
+title Diagramme de classes – BF1 TV
+
+class User {
+  + username: str
+  + role: {client|admin}
+  + phone: str
+  + company: str
+  + address: text
+  + created_at: datetime
+  + updated_at: datetime
+  .. Méthodes ..
+  + is_client()
+  + is_admin()
+  + __str__()
+}
+
+class Campaign {
+  + id: UUID
+  + client: User
+  + title: str
+  + description: text
+  + start_date: date
+  + end_date: date
+  + budget: Decimal
+  + campaign_type: enum
+  + status: enum
+  + approved_by: User?
+  .. Méthodes ..
+  + duration_days()
+  + __str__()
+}
+
+class Spot {
+  + id: UUID
+  + campaign: Campaign
+  + title: str
+  + description: text
+  + media_type: enum
+  + image_file: Image?
+  + video_file: File?
+  + duration_seconds: int?
+  + status: enum
+  .. Méthodes ..
+  + __str__()
+}
+
+class TimeSlot {
+  + name: str
+  + start_time: time
+  + end_time: time
+  + price_multiplier: Decimal
+  + is_active: bool
+  + is_prime: bool
+  .. Méthodes ..
+  + __str__()
+}
+
+class SpotSchedule {
+  + spot: Spot
+  + time_slot: TimeSlot
+  + broadcast_date: date
+  + broadcast_time: time
+  + price: Decimal
+  + is_broadcasted: bool
+  .. Méthodes ..
+  + __str__()
+}
+
+class Notification {
+  + user: User
+  + title: str
+  + message: text
+  + type: enum
+  + is_read: bool
+  + related_campaign: Campaign?
+  + related_spot: Spot?
+  + related_thread: CorrespondenceThread?
+  + related_contact: ContactRequest?
+  .. Méthodes ..
+  + __str__()
+}
+
+class CorrespondenceThread {
+  + id: UUID
+  + client: User
+  + subject: str
+  + status: enum
+  + related_campaign: Campaign?
+  + assigned_to: User?
+  + priority: enum
+  + last_message_at: datetime
+  .. Méthodes ..
+  + __str__()
+}
+
+class CorrespondenceMessage {
+  + id: UUID
+  + thread: CorrespondenceThread
+  + author: User
+  + content: text
+  + attachment: File?
+  + created_at: datetime
+  .. Méthodes ..
+  + save()
+  + __str__()
+}
+
+class ContactRequest {
+  + id: UUID
+  + user: User?
+  + name: str
+  + email: Email
+  + phone: str
+  + subject: str
+  + message: text
+  + status: enum
+  + assigned_to: User?
+}
+
+class AdvisorySession {}
+class AdvisoryArticle {}
+class CaseStudy {}
+class ServiceCategory {}
+class ServiceItem {}
+
+Campaign "1" o-- "*" Spot
+SpotSchedule "*" --> "1" Spot
+SpotSchedule "*" --> "1" TimeSlot
+Notification --> Campaign
+Notification --> Spot
+Notification --> CorrespondenceThread
+Notification --> ContactRequest
+CorrespondenceThread "1" --> "*" CorrespondenceMessage
+ServiceCategory "1" --> "*" ServiceItem
+
+legend right
+  Légende:
+  Association: ligne avec flèche
+  Composition: losange rempli
+  Héritage: flèche triangle
+  Multiplicité: 1..*, 0..1
+endlegend
+
+@enduml
+
+@startuml BF1TV-UseCase
+title Diagramme des cas d'utilisation – BF1 TV
+
+actor Client
+actor Administrateur
+actor Support
+
+usecase UC1 as "Créer une campagne"
+usecase UC2 as "Téléverser un spot"
+usecase UC3 as "Planifier la diffusion"
+usecase UC4 as "Consulter les notifications"
+usecase UC5 as "Valider un spot"
+usecase UC6 as "Gérer les échanges (thread)"
+usecase UC7 as "Traiter une demande de contact"
+usecase UC8 as "Consulter conseils & études de cas"
+
+Client --> UC1
+Client --> UC2
+Client --> UC3
+Client --> UC4
+Administrateur --> UC5
+Administrateur --> UC6
+Administrateur --> UC7
+Support --> UC8
+
+UC1 ..> (Définir objectifs) <<include>>
+UC3 ..> (Choisir créneau) <<include>>
+UC5 ..> (Vérifier conformité) <<include>>
+UC4 ..> (Marquer comme lu) <<include>>
+UC2 ..|> UC1 <<extend>>
+
+@enduml

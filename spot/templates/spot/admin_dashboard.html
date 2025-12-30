@@ -1,0 +1,492 @@
+{% extends 'spot/admin_base.html' %}
+{% block admin_header %}Tableau de bord{% endblock %}
+{% block admin_content %}
+<div class="space-y-6">
+    <!-- En-tête (Hero coloré) -->
+    <header class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-bf1-red to-pink-600 p-6 sm:p-8 shadow-lg">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div class="min-w-0">
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight elegant-appear">
+                    Console d'administration
+                </h1>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <a href="{% url 'admin_campaign_list' %}" class="px-4 py-2 rounded-full bg-white text-bf1-red hover:bg-white/90 transition-all duration-200 ease-out font-semibold">
+                    <i class="fas fa-bullhorn mr-2"></i> Voir les campagnes
+                </a>
+            </div>
+        </div>
+        <!-- Décor -->
+        <div class="absolute -right-10 -top-10 opacity-20 text-white">
+            <i class="fas fa-cogs text-[120px]"></i>
+        </div>
+    </header>
+
+    <!-- Actions rapides -->
+    <section class="grid grid-cols-12 gap-3">
+        <a href="{% url 'admin_campaign_list' %}"
+           class="relative col-span-12 sm:col-span-6 lg:col-span-2 bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition-all"
+           aria-label="Campagnes en attente: {{ stats.pending_campaigns }}">
+            <div class="flex items-center gap-3">
+                <span class="inline-flex w-9 h-9 items-center justify-center rounded-lg bg-bf1-red-light text-bf1-red"><i class="fas fa-bullhorn"></i></span>
+                <div>
+                    <div class="text-sm font-semibold text-gray-900">Campagnes</div>
+                    <div class="text-xs text-gray-500">Gérer les campagnes</div>
+                </div>
+            </div>
+            <!-- Bulle compteur Campagnes -->
+            <span id="badge-campaigns"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded-full bg-bf1-red text-white shadow-sm"
+                  role="status" aria-live="polite"
+                  data-count="{{ stats.pending_campaigns }}"
+                  style="min-width:18px; height:18px; font-size:11px; padding:0 6px;">
+                {{ stats.pending_campaigns }}
+            </span>
+        </a>
+        <a href="{% url 'spot_list' %}"
+           class="relative col-span-12 sm:col-span-6 lg:col-span-2 bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition-all"
+           aria-label="Spots en attente: {{ stats.pending_spots }}">
+            <div class="flex items-center gap-3">
+                <span class="inline-flex w-9 h-9 items-center justify-center rounded-lg bg-blue-100 text-blue-600"><i class="fas fa-video"></i></span>
+                <div>
+                    <div class="text-sm font-semibold text-gray-900">Spots</div>
+                    <div class="text-xs text-gray-500">Valider les spots</div>
+                </div>
+            </div>
+            <!-- Bulle compteur Spots -->
+            <span id="badge-spots"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded-full bg-blue-600 text-white shadow-sm"
+                  role="status" aria-live="polite"
+                  data-count="{{ stats.pending_spots|default:0 }}"
+                  style="min-width:18px; height:18px; font-size:11px; padding:0 6px;">
+                {{ stats.pending_spots|default:0 }}
+            </span>
+        </a>
+        <a href="{% url 'admin_coverage_list' %}"
+           class="relative col-span-12 sm:col-span-6 lg:col-span-2 bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition-all"
+           aria-label="Couvertures en attente: {{ stats.pending_coverages|default:0 }}">
+            <div class="flex items-center gap-3">
+                <span class="inline-flex w-9 h-9 items-center justify-center rounded-lg bg-rose-100 text-rose-600"><i class="fas fa-newspaper"></i></span>
+                <div>
+                    <div class="text-sm font-semibold text-gray-900">Couvertures</div>
+                    <div class="text-xs text-gray-500">Demandes médias</div>
+                </div>
+            </div>
+            <span id="badge-coverages"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded-full bg-rose-600 text-white shadow-sm"
+                  role="status" aria-live="polite"
+                  data-count="{{ stats.pending_coverages|default:0 }}"
+                  style="min-width:18px; height:18px; font-size:11px; padding:0 6px;">
+                {{ stats.pending_coverages|default:0 }}
+            </span>
+        </a>
+        <a href="{% url 'broadcast_grid' %}" class="col-span-12 sm:col-span-6 lg:col-span-2 bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition-all">
+            <div class="flex items-center gap-3">
+                <span class="inline-flex w-9 h-9 items-center justify-center rounded-lg bg-gray-900 text-white"><i class="fas fa-calendar-alt"></i></span>
+                <div>
+                    <div class="text-sm font-semibold text-gray-900">Diffusions</div>
+                    <div class="text-xs text-gray-500">Grille des diffusions</div>
+                </div>
+            </div>
+        </a>
+        <a href="{% url 'correspondence_list' %}"
+           class="relative col-span-12 sm:col-span-6 lg:col-span-2 bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition-all"
+           aria-label="Messages en attente: {{ stats.pending_threads }}">
+            <div class="flex items-center gap-3">
+                <span class="inline-flex w-9 h-9 items-center justify-center rounded-lg bg-purple-100 text-purple-600"><i class="fas fa-comments"></i></span>
+                <div>
+                    <div class="text-sm font-semibold text-gray-900">Correspondance</div>
+                    <div class="text-xs text-gray-500">Tickets et messages</div>
+                </div>
+            </div>
+            <!-- Bulle compteur Messages -->
+            <span id="badge-messages"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 inline-flex items-center justify-center rounded-full bg-purple-600 text-white shadow-sm"
+                  role="status" aria-live="polite"
+                  data-count="{{ stats.pending_threads|default:0 }}"
+                  style="min-width:18px; height:18px; font-size:11px; padding:0 6px;">
+                {{ stats.pending_threads|default:0 }}
+            </span>
+        </a>
+        <a href="{% url 'notifications' %}" class="col-span-12 sm:col-span-6 lg:col-span-2 bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition-all">
+            <div class="flex items-center gap-3">
+                <span class="inline-flex w-9 h-9 items-center justify-center rounded-lg bg-yellow-100 text-yellow-600"><i class="fas fa-bell"></i></span>
+                <div>
+                    <div class="text-sm font-semibold text-gray-900">Notifications</div>
+                    <div class="text-xs text-gray-500">Alertes systèmes</div>
+                </div>
+            </div>
+        </a>
+        <a href="{% url 'report_overview' %}" class="col-span-12 sm:col-span-6 lg:col-span-2 bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition-all">
+            <div class="flex items-center gap-3">
+                <span class="inline-flex w-9 h-9 items-center justify-center rounded-lg bg-green-100 text-green-600"><i class="fas fa-chart-line"></i></span>
+                <div>
+                    <div class="text-sm font-semibold text-gray-900">Rapports</div>
+                    <div class="text-xs text-gray-500">Bilan intelligent</div>
+                </div>
+            </div>
+        </a>
+</section>
+
+    <!-- Statistiques générales -->
+    <div class="grid grid-cols-12 gap-6">
+        <div class="col-span-12 md:col-span-6 lg:col-span-3 bg-white p-6 rounded-xl shadow-md">
+            <div class="flex items-center">
+                <div class="p-2 bg-bf1-red-light rounded-lg">
+                    <i class="fas fa-bullhorn text-bf1-red text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total campagnes</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ stats.total_campaigns }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-span-12 md:col-span-6 lg:col-span-3 bg-white p-6 rounded-xl shadow-md">
+            <div class="flex items-center">
+                <div class="p-2 bg-yellow-100 rounded-lg">
+                    <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">En attente</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ stats.pending_campaigns }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-span-12 md:col-span-6 lg:col-span-3 bg-white p-6 rounded-xl shadow-md">
+            <div class="flex items-center">
+                <div class="p-2 bg-green-100 rounded-lg">
+                    <i class="fas fa-play text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Actives</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ stats.active_campaigns }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-span-12 md:col-span-6 lg:col-span-3 bg-white p-6 rounded-xl shadow-md">
+            <div class="flex items-center">
+                <div class="p-2 bg-blue-100 rounded-lg">
+                    <i class="fas fa-users text-blue-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Clients</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ stats.total_clients }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approbations en attente (priorités) -->
+    <div class="grid grid-cols-12 gap-6">
+        <!-- Campagnes en attente -->
+        <div class="col-span-12 lg:col-span-6 bg-white p-6 rounded-xl shadow-md">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xl font-semibold text-gray-900">
+                        <i class="fas fa-clock text-yellow-600 mr-2"></i>
+                        Campagnes en attente
+                    </h2>
+                    <span class="bg-yellow-100 text-yellow-800 text-sm font-medium px-2 py-1 rounded-full">
+                        {{ pending_approvals.campaigns|length }}
+                    </span>
+                </div>
+                <a href="{% url 'admin_campaign_list' %}" class="text-bf1-red hover:text-bf1-red-dark text-sm font-medium">Voir plus</a>
+            </div>
+            
+            {% if pending_approvals.campaigns %}
+                <div class="space-y-3">
+                    {% for campaign in pending_approvals.campaigns|slice:":5" %}
+                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-lg hover:scale-105 transition-all duration-200 ease-out">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <h3 class="font-medium text-gray-900">{{ campaign.title }}</h3>
+                                <p class="text-sm text-gray-600">{{ campaign.client.username }}</p>
+                                <p class="text-sm text-gray-500">{{ campaign.budget|floatformat:0 }} FCFA</p>
+                                <p class="text-xs text-gray-400">{{ campaign.created_at|timesince }} ago</p>
+                            </div>
+                            <a href="{% url 'admin_campaign_approve' campaign.id %}" 
+                               class="bg-bf1-red text-white px-3 py-1 rounded-full hover:bg-bf1-red-dark transition-colors text-sm">
+                                <i class="fas fa-eye mr-1"></i>
+                                Examiner
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-check-circle text-4xl mb-4"></i>
+                    <p>Aucune campagne en attente d'approbation</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Spots en attente -->
+        <div class="col-span-12 lg:col-span-6 bg-white p-6 rounded-xl shadow-md">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xl font-semibold text-gray-900">
+                        <i class="fas fa-video text-blue-600 mr-2"></i>
+                        Spots en attente
+                    </h2>
+                    <span class="bg-blue-100 text-blue-800 text-sm font-medium px-2 py-1 rounded-full">
+                        {{ pending_approvals.spots|length }}
+                    </span>
+                </div>
+                <a href="{% url 'spot_list' %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Voir plus</a>
+            </div>
+            
+            {% if pending_approvals.spots %}
+                <div class="space-y-3">
+                    {% for spot in pending_approvals.spots|slice:":5" %}
+                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-lg hover:scale-105 transition-all duration-200 ease-out">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <h3 class="font-medium text-gray-900">{{ spot.title }}</h3>
+                                <p class="text-sm text-gray-600">{{ spot.campaign.title }}</p>
+                                <p class="text-sm text-gray-500">{{ spot.duration_seconds }}s - {{ spot.campaign.client.username }}</p>
+                                <p class="text-xs text-gray-400">{{ spot.created_at|timesince }} ago</p>
+                            </div>
+                            <a href="{% url 'admin_spot_approve' spot.id %}" 
+                               class="bg-bf1-red text-white px-3 py-1 rounded-full hover:bg-bf1-red-dark transition-colors text-sm">
+                                <i class="fas fa-eye mr-1"></i>
+                                Examiner
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-check-circle text-4xl mb-4"></i>
+                    <p>Aucun spot en attente d'approbation</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Couvertures en attente -->
+        <div class="col-span-12 lg:col-span-6 bg-white p-6 rounded-xl shadow-md">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xl font-semibold text-gray-900">
+                        <i class="fas fa-newspaper text-rose-600 mr-2"></i>
+                        Couvertures en attente
+                    </h2>
+                    <span class="bg-rose-100 text-rose-800 text-sm font-medium px-2 py-1 rounded-full">
+                        {{ pending_approvals.coverages|length|default:0 }}
+                    </span>
+                </div>
+                <a href="{% url 'admin_coverage_list' %}" class="text-rose-600 hover:text-rose-800 text-sm font-medium">Voir plus</a>
+            </div>
+            {% if pending_approvals.coverages %}
+                <div class="space-y-3">
+                    {% for cv in pending_approvals.coverages|slice:":5" %}
+                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-lg hover:scale-105 transition-all duration-200 ease-out">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <h3 class="font-medium text-gray-900">{{ cv.event_title }}</h3>
+                                <p class="text-sm text-gray-600">{{ cv.contact_name }}{% if cv.contact_phone %} · {{ cv.contact_phone }}{% endif %}</p>
+                                <p class="text-sm text-gray-500">{{ cv.get_coverage_type_display }} · {{ cv.event_date|date:"d/m/Y" }}</p>
+                                <p class="text-xs text-gray-400">{{ cv.created_at|timesince }} ago</p>
+                            </div>
+                            <a href="{% url 'admin_coverage_list' %}"
+                               class="bg-bf1-red text-white px-3 py-1 rounded-full hover:bg-bf1-red-dark transition-colors text-sm">
+                                <i class="fas fa-eye mr-1"></i>
+                                Examiner
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-check-circle text-4xl mb-4"></i>
+                    <p>Aucune demande de couverture en attente</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Campagnes récentes -->
+    <section class="bg-white p-6 rounded-xl shadow-md">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold text-gray-900">
+                <i class="fas fa-history text-bf1-red mr-2"></i>
+                Campagnes récentes
+            </h2>
+            <a href="{% url 'admin_campaign_list' %}" class="text-bf1-red hover:text-bf1-red-dark font-medium">
+                Voir tout <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+        
+        {% if recent_campaigns %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Campagne</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Budget</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for campaign in recent_campaigns %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">{{ campaign.title }}</div>
+                                <div class="text-sm text-gray-500">{{ campaign.description|truncatechars:50 }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ campaign.client.username }}</div>
+                                {% if campaign.client.company %}
+                                    <div class="text-sm text-gray-500">{{ campaign.client.company }}</div>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    {% if campaign.status == 'active' %}bg-green-100 text-green-800
+                                    {% elif campaign.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                    {% elif campaign.status == 'approved' %}bg-blue-100 text-blue-800
+                                    {% elif campaign.status == 'rejected' %}bg-red-100 text-red-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ campaign.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ campaign.budget|floatformat:0 }} FCFA
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ campaign.created_at|date:"d/m/Y" }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <a href="{% url 'campaign_detail' campaign.id %}" class="text-bf1-red hover:text-bf1-red-dark mr-3">
+                                    Voir
+                                </a>
+                                {% if campaign.status == 'pending' %}
+                                    <a href="{% url 'admin_campaign_approve' campaign.id %}" class="text-blue-600 hover:text-blue-800">
+                                        Examiner
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-8 text-gray-500">
+                <i class="fas fa-bullhorn text-4xl mb-4"></i>
+                <p>Aucune campagne récente</p>
+            </div>
+        {% endif %}
+    </section>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  const BADGES = {
+    campaigns: document.getElementById('badge-campaigns'),
+    spots: document.getElementById('badge-spots'),
+    messages: document.getElementById('badge-messages'),
+    coverages: document.getElementById('badge-coverages'),
+  };
+
+  function computeSize(count) {
+    const n = Number(count) || 0;
+    if (n < 10) return { w: 18, h: 18, fs: 11 };
+    if (n < 100) return { w: 22, h: 22, fs: 12 };
+    if (n < 1000) return { w: 26, h: 26, fs: 13 };
+    return { w: 30, h: 30, fs: 13 };
+  }
+
+  function updateBadge(el, count) {
+    if (!el) return;
+    const c = Math.max(0, Number(count) || 0);
+    el.textContent = c;
+    const { w, h, fs } = computeSize(c);
+    el.style.minWidth = w + 'px';
+    el.style.height = h + 'px';
+    el.style.fontSize = fs + 'px';
+    el.style.padding = '0 6px';
+    el.style.transition = 'transform 160ms ease, box-shadow 160ms ease';
+    el.style.transform = 'translateY(-50%) scale(1.06)';
+    el.style.boxShadow = '0 4px 10px rgba(0,0,0,0.08)';
+    setTimeout(() => {
+      el.style.transform = 'translateY(-50%) scale(1)';
+      el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.06)';
+    }, 180);
+  }
+
+  for (const el of Object.values(BADGES)) {
+    if (el) updateBadge(el, el.getAttribute('data-count'));
+  }
+
+  const CACHE_KEY = 'bf1tv.pendingCounts';
+  const CACHE_TTL_MS = 60 * 1000;
+  function loadCache() {
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (!raw) return null;
+      const obj = JSON.parse(raw);
+      if (!obj || !obj.ts || Date.now() - obj.ts > CACHE_TTL_MS) return null;
+      return obj.data;
+    } catch (_) { return null; }
+  }
+  function saveCache(data) {
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data })); } catch (_) {}
+  }
+
+  function applyCounts(data) {
+    if (!data) return;
+    updateBadge(BADGES.campaigns, data.count_campaigns_pending);
+    updateBadge(BADGES.spots, data.count_spots_pending);
+    updateBadge(BADGES.messages, data.count_messages_pending);
+    updateBadge(BADGES.coverages, data.count_coverages_pending);
+  }
+
+  const cached = loadCache();
+  if (cached) applyCounts(cached);
+
+  async function fetchCounts() {
+    try {
+      const res = await fetch('{% url "pending_counts_api" %}', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      if (!res.ok) return;
+      const data = await res.json();
+      applyCounts(data);
+      saveCache(data);
+    } catch (_) {}
+  }
+  fetchCounts();
+  setInterval(fetchCounts, 30000);
+
+  function connectWS() {
+    const loc = window.location;
+    const proto = loc.protocol === 'https:' ? 'wss' : 'ws';
+    const wsUrl = proto + '://' + loc.host + '/ws/admin/pending-counts/';
+    try {
+      const ws = new WebSocket(wsUrl);
+      ws.onmessage = (evt) => {
+        try {
+          const data = JSON.parse(evt.data);
+          applyCounts(data);
+          saveCache(data);
+        } catch (_) {}
+      };
+      ws.onclose = () => {
+        setTimeout(connectWS, 10000);
+      };
+    } catch (_) {}
+  }
+  connectWS();
+})();
+</script>
+{% endblock %}

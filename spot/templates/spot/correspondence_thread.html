@@ -1,0 +1,86 @@
+{% extends 'spot/base.html' %}
+{% block title %}Correspondance{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="mb-4">
+    <h1 class="text-2xl font-bold text-gray-900">{{ thread.subject }}</h1>
+    {% if thread.related_campaign %}<p class="text-gray-600">Campagne liée : {{ thread.related_campaign.title }}</p>{% endif %}
+    <p class="text-gray-500">Statut : {{ thread.get_status_display }}</p>
+
+    <div class="mt-2 flex items-center gap-2">
+      <span class="px-2 py-1 text-xs rounded
+        {% if state_code == 'closed' %} bg-green-100 text-green-800
+        {% elif state_code == 'waiting' %} bg-yellow-100 text-yellow-800
+        {% else %} bg-blue-100 text-blue-800 {% endif %}">
+        {{ state_label }}
+      </span>
+      {% if thread.status != 'closed' %}
+      <form method="post" class="inline-block">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="resolve" />
+        <button type="submit" class="px-3 py-1.5 rounded bg-gray-100 text-gray-900 hover:bg-gray-200 text-xs">
+          Marquer comme résolu
+        </button>
+      </form>
+      {% if user.is_admin %}
+      <form method="post" class="inline-block">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="relance" />
+        <input type="hidden" name="relance_text" value="Bonjour, nous relançons la discussion pour avancer." />
+        <button type="submit" class="px-3 py-1.5 rounded bg-blue-100 text-blue-900 hover:bg-blue-200 text-xs">
+          Relancer (admin)
+        </button>
+      </form>
+      {% endif %}
+      {% else %}
+      <span class="text-xs text-gray-600">Pour réouvrir, envoyez un nouveau message.</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="space-y-3 mb-6">
+    {% for m in messages_qs %}
+      <div class="{% if m.author == user %}text-right{% endif %}">
+        <div class="inline-block max-w-[85%] p-4 rounded-lg {% if m.author == user %}bg-bf1-red text-white{% else %}bg-white bf1-shadow{% endif %}">
+          <div class="flex items-center justify-between gap-4">
+            <span class="font-semibold">{{ m.author.username }}</span>
+            <span class="text-xs opacity-75">{{ m.created_at|date:"d/m/Y H:i" }}</span>
+          </div>
+          <p class="mt-2">{{ m.content }}</p>
+          {% if m.attachment %}
+          <a href="{{ m.attachment.url }}" class="text-bf1-red text-sm mt-2 inline-block">Pièce jointe</a>
+          {% endif %}
+        </div>
+      </div>
+    {% empty %}
+      <p class="text-gray-500">Aucun message pour le moment.</p>
+    {% endfor %}
+  </div>
+
+  {% if not can_reply_now %}
+  <div class="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded mb-4">
+    Vous avez déjà relancé cette demande. Vous pourrez relancer après le
+    <strong>{{ next_allowed_reply_at|date:"d/m/Y H:i" }}</strong>.
+  </div>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" class="bg-gray-50 p-4 rounded">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Votre message</label>
+      <textarea name="content" rows="4" class="w-full rounded border-gray-300 focus:ring-bf1-red focus:border-bf1-red {% if not can_reply_now %}opacity-50 cursor-not-allowed{% endif %}"
+                placeholder="Écrire une réponse..."
+                {% if not can_reply_now %}disabled aria-disabled="true"{% endif %}></textarea>
+    </div>
+    <div class="mb-3">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Pièce jointe (facultatif)</label>
+      <input type="file" name="attachment" class="block w-full text-sm text-gray-900 border border-gray-300 rounded {% if not can_reply_now %}opacity-50 cursor-not-allowed{% endif %}"
+             {% if not can_reply_now %}disabled aria-disabled="true"{% endif %}/>
+    </div>
+    <button type="submit" class="px-4 py-2 rounded-md bg-bf1-red text-white hover:bg-red-700 {% if not can_reply_now %}opacity-50 cursor-not-allowed{% endif %}"
+            {% if not can_reply_now %}disabled aria-disabled="true" title="Relance possible après {{ next_allowed_reply_at|date:'d/m/Y H:i' }}"{% endif %}>
+      Envoyer
+    </button>
+  </form>
+</div>
+{% endblock %}

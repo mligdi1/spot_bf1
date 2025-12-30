@@ -1,0 +1,33 @@
+{% extends 'spot/diffusion/base_diffusion.html' %}
+{% block title %}Signaler un problème{% endblock %}
+{% block content %}
+<h1 class="heading text-3xl font-semibold text-gray-800 mb-6 flex items-center"><i class="fa-solid fa-triangle-exclamation mr-2 text-red-600"></i> Signaler un problème</h1>
+
+<div class="bg-white shadow rounded-lg p-6">
+  <p class="mb-4">Spot : <strong>{{ spot.title }}</strong></p>
+  <form method="post" class="space-y-6">{% csrf_token %}
+    <div class="form__group">
+      <textarea name="description" rows="5" class="form__control" placeholder=" " data-validate="required|min:10" aria-describedby="desc-help"></textarea>
+      <label class="form__label">Description du problème</label>
+      <span class="form__icon" aria-hidden="true"></span>
+      <p id="desc-help" class="text-xs text-gray-500 mt-2">Donnez le maximum de détails (min. 10 caractères).</p>
+      <p class="form__error" data-error-for="description" aria-live="polite"></p>
+    </div>
+    <div class="form__group">
+      <select name="severity" class="form__control" data-validate="required" aria-label="Gravité">
+        <option value="">Sélectionner...</option>
+        <option value="low">Faible</option>
+        <option value="medium">Moyenne</option>
+        <option value="high">Élevée</option>
+      </select>
+      <label class="form__label">Gravité</label>
+      <span class="form__icon" aria-hidden="true"></span>
+      <p class="form__error" data-error-for="severity" aria-live="polite"></p>
+    </div>
+    <div class="flex gap-3">
+      <button type="submit" class="btn btn--primary inline-flex items-center" data-sparkles="true"><i class="fa-solid fa-paper-plane mr-2"></i>Envoyer</button>
+      <a href="{% url 'diffusion_spots' %}" class="btn btn--ghost inline-flex items-center" data-ripple="true"><i class="fa-solid fa-arrow-left mr-2"></i>Retour</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

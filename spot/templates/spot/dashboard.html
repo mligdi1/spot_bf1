@@ -1,0 +1,142 @@
+{% extends 'spot/base.html' %}
+
+{% block title %}Tableau de bord{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="flex items-center justify-between gap-4 mb-6">
+    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Tableau de bord</h1>
+    {% if user.role == 'client' %}
+      <a href="{% url 'campaign_spot_create' %}" class="inline-flex items-center px-4 py-2 rounded-lg bg-bf1-red text-white font-semibold hover:bg-bf1-red-dark">
+        <i class="fas fa-plus mr-2"></i> Créer une campagne
+      </a>
+    {% endif %}
+  </div>
+
+  {% if user.role == 'client' %}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="bg-white rounded-lg border p-5 bf1-shadow lg:col-span-2">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-gray-900">Dernières campagnes</h2>
+          <a href="{% url 'campaign_list' %}" class="text-sm font-semibold text-bf1-red hover:underline">Voir tout</a>
+        </div>
+        {% if campaigns %}
+          <div class="divide-y">
+            {% for campaign in campaigns %}
+              <div class="py-3 flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                  <div class="font-semibold text-gray-900 truncate">{{ campaign.title }}</div>
+                  <div class="text-sm text-gray-600">
+                    {{ campaign.start_date }} – {{ campaign.end_date }}
+                  </div>
+                </div>
+                <a href="{% url 'campaign_detail' campaign.id %}" class="text-sm font-semibold text-gray-700 hover:text-bf1-red whitespace-nowrap">Détails</a>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-gray-600">Aucune campagne pour le moment.</div>
+        {% endif %}
+      </div>
+
+      <div class="bg-white rounded-lg border p-5 bf1-shadow">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Notifications</h2>
+        {% if notifications %}
+          <div class="space-y-3">
+            {% for notification in notifications %}
+              <div class="p-3 rounded-lg bg-gray-50 border">
+                <div class="text-sm text-gray-900">{{ notification.message }}</div>
+                <div class="text-xs text-gray-500 mt-1">{{ notification.created_at }}</div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-gray-600">Aucune notification.</div>
+        {% endif %}
+        <div class="mt-4">
+          <a href="{% url 'notifications' %}" class="text-sm font-semibold text-bf1-red hover:underline">Voir toutes</a>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg border p-5 bf1-shadow lg:col-span-3">
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <div class="p-4 rounded-lg bg-gray-50 border">
+            <div class="text-xs text-gray-500">Campagnes</div>
+            <div class="text-2xl font-bold text-gray-900">{{ total_campaigns|default:0 }}</div>
+          </div>
+          <div class="p-4 rounded-lg bg-gray-50 border">
+            <div class="text-xs text-gray-500">Campagnes actives</div>
+            <div class="text-2xl font-bold text-gray-900">{{ active_campaigns|default:0 }}</div>
+          </div>
+          <div class="p-4 rounded-lg bg-gray-50 border">
+            <div class="text-xs text-gray-500">Diffusions à venir</div>
+            <div class="text-2xl font-bold text-gray-900">{{ spots_in_progress_count|default:0 }}</div>
+          </div>
+          <div class="p-4 rounded-lg bg-gray-50 border">
+            <div class="text-xs text-gray-500">Diffusions réalisées</div>
+            <div class="text-2xl font-bold text-gray-900">{{ broadcasted_spots_count|default:0 }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="bg-white rounded-lg border p-5 bf1-shadow lg:col-span-2">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-gray-900">Campagnes en attente</h2>
+          <a href="{% url 'admin_campaign_list' %}" class="text-sm font-semibold text-bf1-red hover:underline">Voir tout</a>
+        </div>
+        {% if pending_campaigns %}
+          <div class="divide-y">
+            {% for campaign in pending_campaigns %}
+              <div class="py-3 flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                  <div class="font-semibold text-gray-900 truncate">{{ campaign.title }}</div>
+                  <div class="text-sm text-gray-600">{{ campaign.client }}</div>
+                </div>
+                <a href="{% url 'admin_campaign_approve' campaign.id %}" class="text-sm font-semibold text-gray-700 hover:text-bf1-red whitespace-nowrap">Traiter</a>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-gray-600">Aucune campagne en attente.</div>
+        {% endif %}
+      </div>
+
+      <div class="bg-white rounded-lg border p-5 bf1-shadow">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Notifications</h2>
+        {% if notifications %}
+          <div class="space-y-3">
+            {% for notification in notifications %}
+              <div class="p-3 rounded-lg bg-gray-50 border">
+                <div class="text-sm text-gray-900">{{ notification.message }}</div>
+                <div class="text-xs text-gray-500 mt-1">{{ notification.created_at }}</div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-gray-600">Aucune notification.</div>
+        {% endif %}
+      </div>
+
+      <div class="bg-white rounded-lg border p-5 bf1-shadow lg:col-span-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="p-4 rounded-lg bg-gray-50 border">
+            <div class="text-xs text-gray-500">Campagnes</div>
+            <div class="text-2xl font-bold text-gray-900">{{ stats.total_campaigns|default:0 }}</div>
+          </div>
+          <div class="p-4 rounded-lg bg-gray-50 border">
+            <div class="text-xs text-gray-500">Campagnes en attente</div>
+            <div class="text-2xl font-bold text-gray-900">{{ stats.pending_campaigns|default:0 }}</div>
+          </div>
+          <div class="p-4 rounded-lg bg-gray-50 border">
+            <div class="text-xs text-gray-500">Clients</div>
+            <div class="text-2xl font-bold text-gray-900">{{ stats.total_clients|default:0 }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+

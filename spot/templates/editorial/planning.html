@@ -1,0 +1,144 @@
+{% extends 'editorial/base.html' %}
+{% block title %}Planning Éditorial{% endblock %}
+{% block content %}
+<section class="relative overflow-hidden rounded-2xl ed-card text-white border border-black border-opacity-20 shadow-lg mb-6" style="background:linear-gradient(90deg,#FF0000 0%,#D00000 100%);">
+  <div class="absolute inset-0" style="background:radial-gradient(1200px 400px at 10% 0%, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.0) 60%)"></div>
+  <div class="absolute inset-0" style="background:radial-gradient(800px 300px at 90% 100%, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 60%)"></div>
+  <div class="relative z-10 p-8 flex items-start justify-between">
+    <div>
+      <div class="flex items-center gap-3" style="text-shadow:0 1px 2px rgba(0,0,0,0.25)">
+        <i class="fa-solid fa-calendar-days text-white text-2xl"></i>
+        <div class="font-montserrat text-3xl md:text-4xl font-extrabold">Planning Éditorial</div>
+      </div>
+      <div class="mt-2 text-white text-opacity-90" style="text-shadow:0 1px 1px rgba(0,0,0,0.25)">{{ range_label }}</div>
+    </div>
+    <div class="flex items-center gap-2">
+      <div class="inline-flex rounded-lg border border-white border-opacity-50 overflow-hidden" role="tablist" aria-label="Vue">
+        <a href="?view=day&ref={{ base|date:'Y-m-d' }}" role="tab" aria-selected="{% if view == 'day' %}true{% else %}false{% endif %}" class="px-3 py-1.5 text-sm text-white {% if view == 'day' %}bg-white bg-opacity-10{% endif %}">Jour</a>
+        <a href="?view=week&ref={{ base|date:'Y-m-d' }}" role="tab" aria-selected="{% if view == 'week' %}true{% else %}false{% endif %}" class="px-3 py-1.5 text-sm text-white {% if view == 'week' %}bg-white bg-opacity-10{% endif %}">Semaine</a>
+        <a href="?view=month&ref={{ base|date:'Y-m-d' }}" role="tab" aria-selected="{% if view == 'month' %}true{% else %}false{% endif %}" class="px-3 py-1.5 text-sm text-white {% if view == 'month' %}bg-white bg-opacity-10{% endif %}">Mois</a>
+      </div>
+      <div class="inline-flex rounded-lg border border-white border-opacity-50 overflow-hidden">
+        <a href="?view={{ view }}&ref={{ prev_ref }}" class="px-3 py-1.5 text-sm text-white">‹ Préc.</a>
+        <a href="?view={{ view }}&ref={{ next_ref }}" class="px-3 py-1.5 text-sm text-white">Suiv. ›</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="bg-white ed-card p-4">
+  {% if view == 'week' %}
+    <div class="grid grid-cols-1 md:grid-cols-7 gap-4">
+      {% for d in week_days %}
+      <div class="rounded-xl p-4 border bg-white hover:bg-slate-50 transition" data-drop-day="{{ d|date:'Y-m-d' }}" ondragover="window.edHandleDragOver(event)" ondragleave="window.edHandleDragLeave(event)" ondrop="window.edHandleDrop(event)">
+        <h3 class="text-sm font-semibold mb-2">{{ d|date:'EEE d/m' }}</h3>
+        <div class="space-y-3 min-h-[60px]">
+          {% for it in items %}
+            {% if it.date == d %}
+              <a href="{{ it.detail_url }}" class="group block border rounded-lg p-3 hover:shadow-sm hover:-translate-y-0.5 transition" draggable="true" ondragstart="window.edHandleDragStart(event)" data-coverage-id="{{ it.id }}" data-date="{{ it.date|date:'Y-m-d' }}" data-time="{{ it.time|time:'H:i' }}" aria-label="Voir la couverture {{ it.title }}">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="text-sm font-semibold">{{ it.title }}</div>
+                    <div class="text-xs text-slate-600">{{ it.time|time:'H:i' }} • {{ it.address }}</div>
+                  </div>
+                  <span class="text-xs px-2 py-1 rounded
+                    {% if it.type == 'press_conference' %}bg-blue-100 text-blue-800{% endif %}
+                    {% if it.type == 'cultural_sport' %}bg-purple-100 text-purple-800{% endif %}
+                    {% if it.type == 'government_activity' %}bg-red-100 text-red-800{% endif %}
+                    {% if it.type == 'product_launch' %}bg-orange-100 text-orange-800{% endif %}
+                    {% if it.type == 'interviews' %}bg-green-100 text-green-800{% endif %}
+                    {% if it.type == 'other' %}bg-gray-100 text-gray-800{% endif %}
+                  ">{{ it.type|capfirst }}</span>
+                </div>
+                <div class="mt-2 text-xs text-slate-600">Journaliste: {{ it.journalist|default:'—' }} • Chauffeur: {{ it.driver|default:'—' }}</div>
+              </a>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% elif view == 'day' %}
+    <div class="space-y-3">
+      {% for it in items %}
+        <a href="{{ it.detail_url }}" class="group block border rounded-lg p-3 hover:shadow-sm hover:-translate-y-0.5 transition" draggable="true" ondragstart="window.edHandleDragStart(event)" data-coverage-id="{{ it.id }}" data-date="{{ it.date|date:'Y-m-d' }}" data-time="{{ it.time|time:'H:i' }}" aria-label="Voir la couverture {{ it.title }}">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-sm font-semibold">{{ it.title }}</div>
+              <div class="text-xs text-slate-600">{{ it.time|time:'H:i' }} • {{ it.address }}</div>
+            </div>
+            <span class="text-xs px-2 py-1 rounded
+              {% if it.type == 'press_conference' %}bg-blue-100 text-blue-800{% endif %}
+              {% if it.type == 'cultural_sport' %}bg-purple-100 text-purple-800{% endif %}
+              {% if it.type == 'government_activity' %}bg-red-100 text-red-800{% endif %}
+              {% if it.type == 'product_launch' %}bg-orange-100 text-orange-800{% endif %}
+              {% if it.type == 'interviews' %}bg-green-100 text-green-800{% endif %}
+              {% if it.type == 'other' %}bg-gray-100 text-gray-800{% endif %}
+            ">{{ it.type|capfirst }}</span>
+          </div>
+          <div class="mt-2 text-xs text-slate-600">Journaliste: {{ it.journalist|default:'—' }} • Chauffeur: {{ it.driver|default:'—' }}</div>
+        </a>
+      {% empty %}
+        <div class="text-slate-600">Aucune couverture programmée aujourd’hui.</div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {% for it in items %}
+        <a href="{{ it.detail_url }}" class="group block border rounded-lg p-3 hover:shadow-sm hover:-translate-y-0.5 transition" draggable="true" ondragstart="window.edHandleDragStart(event)" data-coverage-id="{{ it.id }}" data-date="{{ it.date|date:'Y-m-d' }}" data-time="{{ it.time|time:'H:i' }}" aria-label="Voir la couverture {{ it.title }}">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-sm font-semibold">{{ it.title }}</div>
+              <div class="text-xs text-slate-600">{{ it.date|date:'d/m/Y' }} • {{ it.time|time:'H:i' }} • {{ it.address }}</div>
+            </div>
+            <span class="text-xs px-2 py-1 rounded
+              {% if it.type == 'press_conference' %}bg-blue-100 text-blue-800{% endif %}
+              {% if it.type == 'cultural_sport' %}bg-purple-100 text-purple-800{% endif %}
+              {% if it.type == 'government_activity' %}bg-red-100 text-red-800{% endif %}
+              {% if it.type == 'product_launch' %}bg-orange-100 text-orange-800{% endif %}
+              {% if it.type == 'interviews' %}bg-green-100 text-green-800{% endif %}
+              {% if it.type == 'other' %}bg-gray-100 text-gray-800{% endif %}
+            ">{{ it.type|capfirst }}</span>
+          </div>
+          <div class="mt-2 text-xs text-slate-600">Journaliste: {{ it.journalist|default:'—' }} • Chauffeur: {{ it.driver|default:'—' }}</div>
+        </a>
+      {% empty %}
+        <div class="text-slate-600">Aucune couverture ce mois.</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+
+<script>
+  (function(){
+    let dragged = null;
+    window.edHandleDragStart = function(e){
+      dragged = e.currentTarget;
+    };
+    window.edHandleDragOver = function(e){
+      e.preventDefault();
+      e.currentTarget.classList.add('ring','ring-red-500');
+    };
+    window.edHandleDragLeave = function(e){
+      e.currentTarget.classList.remove('ring','ring-red-500');
+    };
+    window.edHandleDrop = function(e){
+      e.preventDefault();
+      e.currentTarget.classList.remove('ring','ring-red-500');
+      try {
+        const day = e.currentTarget.getAttribute('data-drop-day');
+        const covId = dragged && dragged.getAttribute('data-coverage-id');
+        const time = dragged && dragged.getAttribute('data-time');
+        if(!day || !covId) return;
+        const fd = new FormData();
+        fd.append('coverage_id', covId);
+        fd.append('new_date', day);
+        if (time) fd.append('new_time', time);
+        fetch('{% url 'editorial_planning_move' %}', {method:'POST', body: fd, headers: {'X-Requested-With':'XMLHttpRequest'}})
+          .then(r=>r.json())
+          .then(function(res){ if(res && res.ok){ location.reload(); } });
+      } catch(_) {}
+    };
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,712 @@
+{% extends 'spot/base.html' %}
+{% load static %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-fuchsia-50 via-rose-50 to-indigo-100 py-8">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-10">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">Créer votre campagne</h1>
+            <p class="text-lg text-gray-600">Uploadez votre spot et créez votre campagne en une seule étape</p>
+        </div>
+
+        {% if messages %}
+        <div class="mb-6">
+            {% for message in messages %}
+            <div class="p-4 rounded-md {% if message.tags == 'success' %}bg-green-50 text-green-700 border border-green-200{% elif message.tags == 'error' %}bg-red-50 text-red-700 border border-red-200{% else %}bg-gray-50 text-gray-700 border border-gray-200{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="flex justify-center mb-6" role="tablist" aria-label="Choix du mode de création">
+            <div class="inline-flex rounded-md shadow-sm" role="group">
+                <button type="button" id="btn-mode-easy" role="tab" aria-selected="true" aria-controls="easy-mode-section"
+                        class="px-4 py-2 text-sm font-medium bg-bf1-red text-white rounded-l-lg hover:bg-bf1-red-dark focus:outline-none focus:ring-2 focus:ring-bf1-red">
+                    Campagne/Spot
+                </button>
+                <button type="button" id="btn-mode-detail" role="tab" aria-selected="false" aria-controls="detailed-mode-section"
+                        class="px-4 py-2 text-sm font-medium bg-gray-200 text-gray-900 rounded-r-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                    Demande de couverture
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <form method="post" enctype="multipart/form-data" id="campaign-spot-form">
+                {% csrf_token %}
+                {% if selection_note or pref_slot_label %}
+                  <div class="p-4 bg-bf1-red/10 border-bf1-red border text-sm">
+                    <span class="font-medium text-gray-900">Sélection depuis Tarifs:</span>
+                    <span class="ml-2 text-gray-800">{{ selection_note }}</span>
+                    {% if pref_slot_label %}
+                      <span class="ml-2 text-gray-800">• Plage: {{ pref_slot_label }}</span>
+                    {% endif %}
+                  </div>
+                {% endif %}
+
+                <!-- Barre de progression -->
+                <div class="px-8 py-6 bg-gradient-to-r from-white via-gray-50 to-white border-b">
+                    <div class="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-gray-600">
+                        <div class="px-2 py-1 rounded-full bg-gray-100">Étape 1: Campagne</div>
+                        <div class="px-2 py-1 rounded-full bg-gray-100">Étape 2: Paramètres</div>
+                        <div class="px-2 py-1 rounded-full bg-gray-100">Étape 3: Spot</div>
+                        <div class="px-2 py-1 rounded-full bg-gray-100">Étape 4: Médias</div>
+                    </div>
+                    <div class="mt-4 h-3 bg-gray-200/70 rounded-full overflow-hidden">
+                        <div id="wizard-progress-bar" class="h-3 bg-gradient-to-r from-bf1-red via-pink-500 to-indigo-600 shadow-lg rounded-full transition-all duration-500 ease-out" style="width:25%"></div>
+                    </div>
+                </div>
+
+                <!-- Viewport (plein écran centré) + Track (carrousel) -->
+                <div class="wizard-viewport relative overflow-hidden min-h-[60vh] flex items-center justify-center">
+                    <div id="wizard-track" class="wizard-track flex w-full transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]">
+
+                        <!-- Étape 1: Campagne -->
+                        <section class="wizard-step min-w-full p-8 bg-gradient-to-br from-white to-gray-50 transition-opacity duration-300 ease-out opacity-0" data-step="0">
+                            <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                                <span class="inline-flex items-center justify-center w-9 h-9 mr-3 rounded-lg bg-blue-600 text-white shadow-md"><i class="fas fa-bullseye"></i></span>
+                                Informations de la campagne
+                            </h2>
+                            <div class="grid grid-cols-12 gap-6">
+                                <div class="col-span-12 md:col-span-6 p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.title.label }} <span class="text-red-600" aria-hidden="true">*</span>
+                                        <i class="fas fa-info-circle ml-2 text-gray-400" title="Nom unique pour votre campagne"></i>
+                                    </label>
+                                    {{ form.title }}
+                                    <p class="mt-1 text-sm text-red-600 hidden" data-error-for="id_title"></p>
+                                </div>
+                                <div class="col-span-12 md:col-span-6 p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.description.label }}
+                                        <i class="fas fa-info-circle ml-2 text-gray-400" title="Description courte et claire"></i>
+                                    </label>
+                                    {{ form.description }}
+                                    <p class="mt-1 text-sm text-red-600 hidden" data-error-for="id_description"></p>
+                                </div>
+                                <div class="col-span-12 md:col-span-6 p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.start_date.label }} <span class="text-red-600" aria-hidden="true">*</span>
+                                        <i class="fas fa-info-circle ml-2 text-gray-400" title="Date de démarrage de la diffusion"></i>
+                                    </label>
+                                    {{ form.start_date }}
+                                    <p class="mt-1 text-sm text-red-600 hidden" data-error-for="id_start_date"></p>
+                                </div>
+                                <div class="col-span-12 md:col-span-6 p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.end_date.label }} <span class="text-red-600" aria-hidden="true">*</span>
+                                        <i class="fas fa-info-circle ml-2 text-gray-400" title="Date de fin de la diffusion"></i>
+                                    </label>
+                                    {{ form.end_date }}
+                                    <p class="mt-1 text-sm text-red-600 hidden" data-error-for="id_end_date"></p>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Étape 2: Paramètres -->
+                        <section class="wizard-step min-w-full p-8 bg-gradient-to-br from-white to-gray-50" data-step="1">
+                            <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                                <span class="inline-flex items-center justify-center w-9 h-9 mr-3 rounded-lg bg-indigo-600 text-white shadow-md"><i class="fas fa-sliders-h"></i></span>
+                                Budget, objectif et canal
+                            </h2>
+                            <div class="grid grid-cols-12 gap-6">
+                                <div class="col-span-12 md:col-span-4 p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.budget.label }} <span class="text-red-600" aria-hidden="true">*</span>
+                                        <i class="fas fa-info-circle ml-2 text-gray-400" title="Montant total alloué à la campagne"></i>
+                                    </label>
+                                    {{ form.budget }}
+                                    <p class="mt-1 text-sm text-red-600 hidden" data-error-for="id_budget"></p>
+                                    <p class="mt-2 text-xs text-gray-500">Exemple: 2 000 000 F CFA pour 2 semaines.</p>
+                                </div>
+                                
+                                <!-- Objectif de la campagne (longue liste guidée, mappée aux 3 objectifs backend) -->
+                                <div class="col-span-12 md:col-span-8 p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Objectif de la campagne <span class="text-red-600" aria-hidden="true">*</span>
+                                        <i class="fas fa-info-circle ml-2 text-gray-400" title="Que voulez-vous obtenir grâce à la campagne ?"></i>
+                                    </label>
+
+                                    <!-- Sélecteur backend (3 valeurs supportées) -->
+                                    <select name="objective" id="id_objective"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-bf1-red focus:border-bf1-red" required>
+                                        <option value="">Sélectionnez un objectif (catégorie)</option>
+                                        <option value="notoriete">Notoriété</option>
+                                        <option value="promotion">Promotion</option>
+                                        <option value="sensibilisation">Sensibilisation</option>
+                                    </select>
+                                    <p class="mt-1 text-sm text-red-600 hidden" data-error-for="id_objective"></p>
+
+                                    <!-- Résumé de choix -->
+                                    <div id="objective-picked" class="mt-2 text-xs text-gray-600 hidden">
+                                        Objectif sélectionné: <span class="inline-block px-2 py-0.5 rounded bg-white border border-gray-300 ml-1" id="objective-picked-label"></span>
+                                    </div>
+                                    <!-- Objectif détaillé pour le backend (libellé humain) -->
+                                    <input type="hidden" name="objective_detail" id="id_objective_detail" value="">
+
+                                    <!-- Recommandés -->
+                                    <div class="mt-3">
+                                        <p class="text-xs text-gray-500 mb-2">Recommandés</p>
+                                        <div class="flex flex-wrap gap-2" id="objective-recommended"></div>
+                                    </div>
+
+                                    <!-- Voir plus (panel extensible avec recherche) -->
+                                    <button type="button" id="objective-expand"
+                                            class="mt-3 text-sm text-bf1-red hover:text-bf1-red-dark underline">
+                                        Voir plus d’objectifs
+                                    </button>
+                                    <div id="objective-more-panel" class="mt-3 hidden">
+                                        <div class="flex items-center gap-2 mb-3">
+                                            <i class="fas fa-search text-gray-400"></i>
+                                            <input type="search" id="objective-search" placeholder="Rechercher un format ou un cas d’usage…"
+                                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-bf1-red focus:border-bf1-red">
+                                        </div>
+                                        <div class="grid grid-cols-2 md:grid-cols-3 gap-2" id="objective-all"></div>
+                                        <p class="mt-2 text-xs text-gray-500">Astuce: choisissez ce qui décrit le mieux votre besoin; nous classons automatiquement l’objectif pour simplifier.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Canal de diffusion (2 options conformes au backend) -->
+                                <div class="col-span-12 md:col-span-4 p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Canal de diffusion <span class="text-red-600" aria-hidden="true">*</span>
+                                        <i class="fas fa-info-circle ml-2 text-gray-400" title="Où votre campagne sera diffusée ?"></i>
+                                    </label>
+                                    <select name="channel" id="id_channel"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-bf1-red focus:border-bf1-red" required>
+                                        <option value="">Choisissez un canal</option>
+                                        <option value="tv">Télévision</option>
+                                        <option value="online">Réseaux sociaux de la chaîne</option>
+                                    </select>
+                                    <p class="mt-2 text-xs text-gray-500">Astuce: commencez en Télévision, puis amplifiez sur les réseaux BF1.</p>
+                                    <p class="mt-1 text-sm text-red-600 hidden" data-error-for="id_channel"></p>
+                                </div>
+
+                                <!-- Message défilant (affichage dynamique) -->
+                                <div id="ticker-message-block" class="col-span-12 p-4 bg-gray-50 rounded-lg border border-gray-200 hidden" aria-live="polite">
+                                    <label for="message_defilant" class="block text-sm font-medium text-gray-700 mb-2">Message défilant</label>
+                                    <textarea name="message_defilant" id="message_defilant" rows="2"
+                                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-bf1-red focus:border-bf1-red"
+                                              aria-describedby="ticker-help"
+                                              placeholder="Ex: Ouverture exceptionnelle ce week-end !"></textarea>
+                                    <p id="ticker-help" class="mt-1 text-xs text-gray-500">Court texte diffusé en bandeau défilant. 10–200 caractères.</p>
+                                    <p class="mt-1 text-sm text-red-600 hidden" data-error-for="message_defilant"></p>
+                                </div>
+
+                                <!-- Options détaillées -->
+                                <div id="detailed-mode-section" class="col-span-12 mt-6 hidden" aria-hidden="true">
+                                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Options détaillées</h3>
+                                    <div class="grid grid-cols-12 gap-6">
+                                        <div class="col-span-12 md:col-span-6">
+                                            <label for="id_campaign_type" class="block text-sm font-medium text-gray-700 mb-2">Type de campagne</label>
+                                            {{ form.campaign_type }}
+                                            {% if form.campaign_type.errors %}<p class="mt-1 text-sm text-red-600">{{ form.campaign_type.errors.0 }}</p>{% endif %}
+                                        </div>
+                                        <div class="col-span-12 md:col-span-6 flex items-center">
+                                            {{ form.requested_creation }}
+                                            <label for="id_requested_creation" class="ml-2 block text-sm text-gray-900">Demander la création du spot</label>
+                                        </div>
+                                        <div class="col-span-12">
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.preferred_time_slots.label }}</label>
+                                            {{ form.preferred_time_slots }}
+                                            {% if form.preferred_time_slots.errors %}
+                                                <p class="mt-1 text-sm text-red-600">{{ form.preferred_time_slots.errors.0 }}</p>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-span-12">
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.languages.label }}</label>
+                                            {{ form.languages }}
+                                            {% if form.languages.errors %}
+                                                <p class="mt-1 text-sm text-red-600">{{ form.languages.errors.0 }}</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div id="creation-details" class="bg-gray-50 p-4 rounded-lg mt-4 hidden">
+                                        <h4 class="text-lg font-semibold text-gray-900 mb-4">Brief de la création</h4>
+                                        <div class="grid grid-cols-12 gap-6">
+                                            <div class="col-span-12 md:col-span-6">
+                                                <label class="block text-sm font-medium text-gray-700 mb-2">Public cible</label>
+                                                {{ form.target_audience }}
+                                                {% if form.target_audience.errors %}<p class="mt-1 text-sm text-red-600">{{ form.target_audience.errors.0 }}</p>{% endif %}
+                                            </div>
+                                            <div class="col-span-12 md:col-span-6">
+                                                <label class="block text-sm font-medium text-gray-700 mb-2">Message clé</label>
+                                                {{ form.key_message }}
+                                                {% if form.key_message.errors %}<p class="mt-1 text-sm text-red-600">{{ form.key_message.errors.0 }}</p>{% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Étape 3: Spot -->
+                        <section class="wizard-step min-w-full p-8 bg-gradient-to-br from-white to-gray-50 transition-opacity duration-300 ease-out opacity-0" data-step="2">
+                            <h2 class="text-2xl font-bold text-gray-900 mb-2 flex items-center">
+                                <span class="inline-flex items-center justify-center w-9 h-9 mr-3 rounded-lg bg-green-600 text-white shadow-md"><i class="fas fa-video"></i></span>
+                                Informations du spot (optionnel)
+                            </h2>
+                            <p class="text-sm text-gray-600 mb-6">Vous pouvez créer la campagne maintenant et ajouter le spot plus tard.</p>
+                            <div class="grid grid-cols-12 gap-6">
+                                <div class="col-span-12 md:col-span-6 p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.spot_title.label }}
+                                        <i class="fas fa-info-circle ml-2 text-gray-400" title="Titre court du spot"></i>
+                                    </label>
+                                    {{ form.spot_title }}
+                                </div>
+                                <div class="col-span-12 md:col-span-6 p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.spot_description.label }}
+                                        <i class="fas fa-info-circle ml-2 text-gray-400" title="Description du spot"></i>
+                                    </label>
+                                    {{ form.spot_description }}
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Étape 4: Médias -->
+                        <section class="wizard-step min-w-full p-8 bg-gradient-to-br from-white to-gray-50 transition-opacity duration-300 ease-out opacity-0" data-step="3">
+                            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                                <span class="inline-flex items-center justify-center w-9 h-9 mr-3 rounded-lg bg-purple-600 text-white shadow-md"><i class="fas fa-photo-video"></i></span>
+                                Type de média et upload
+                            </h2>
+                            <div class="grid grid-cols-12 gap-6">
+                                <div class="col-span-12 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                    <label class="block text-sm font-medium text-gray-700 mb-4">{{ form.media_type.label }}</label>
+                                    <div class="flex flex-wrap gap-x-6 gap-y-2">
+                                        {% for choice in form.media_type %}
+                                            <label class="flex items-center cursor-pointer hover:opacity-80 transition">
+                                                {{ choice.tag }}
+                                                <span class="ml-2 text-sm font-medium text-gray-700">{{ choice.choice_label }}</span>
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="col-span-12 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                    <div id="image-upload-zone" class="upload-zone hidden hover:border-blue-400 transition-colors">
+                                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors cursor-pointer" onclick="document.getElementById('image-upload').click()">
+                                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                            </svg>
+                                            <p class="mt-2 text-sm text-gray-600">Cliquez pour sélectionner une image</p>
+                                            <p class="text-xs text-gray-500">PNG, JPG, GIF jusqu'à 10MB</p>
+                                        </div>
+                                        {{ form.image_file }}
+                                        <div id="image-preview" class="mt-4 hidden"></div>
+                                    </div>
+                                    <div id="video-upload-zone" class="upload-zone hidden hover:border-blue-400 transition-colors">
+                                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors cursor-pointer" onclick="document.getElementById('video-upload').click()">
+                                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                            </svg>
+                                            <p class="mt-2 text-sm text-gray-600">Cliquez pour sélectionner une vidéo</p>
+                                            <p class="text-xs text-gray-500">MP4, AVI, MOV jusqu'à 100MB</p>
+                                        </div>
+                                        {{ form.video_file }}
+                                        <div id="video-preview" class="mt-4 hidden"></div>
+                                    </div>
+                                </div>
+                                <div id="duration-field" class="col-span-12 hidden p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.duration_seconds.label }}</label>
+                                    {{ form.duration_seconds }}
+                                </div>
+                            </div>
+                        </section>
+
+                    </div>
+                </div>
+
+                <!-- Navigation wizard -->
+                <div class="px-8 py-6 bg-gray-50 border-t flex items-center justify-between">
+                    <button type="button" id="wizard-prev" class="px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 shadow-sm">
+                        Précédent
+                    </button>
+                    <div class="flex items-center gap-3">
+                        <button type="button" id="wizard-skip-spot" class="px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 shadow-sm">
+                            Ignorer le spot
+                        </button>
+                        <button type="button" id="wizard-next" class="px-5 py-2.5 rounded-lg bg-bf1-red text-white font-semibold hover:bg-bf1-red-dark focus:outline-none focus:ring-2 focus:ring-bf1-red shadow">
+                            Suivant
+                        </button>
+                        <button type="submit" id="wizard-submit" class="hidden px-5 py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 shadow">
+                            Créer ma campagne
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Upload zones
+    const mediaTypeRadios = document.querySelectorAll('input[name="media_type"]');
+    const imageZone = document.getElementById('image-upload-zone');
+    const videoZone = document.getElementById('video-upload-zone');
+    const durationField = document.getElementById('duration-field');
+    const imageInput = document.getElementById('image-upload');
+    const videoInput = document.getElementById('video-upload');
+
+    function toggleUploadZones() {
+        const selectedType = document.querySelector('input[name="media_type"]:checked')?.value;
+        if (selectedType === 'image') {
+            imageZone.classList.remove('hidden');
+            videoZone.classList.add('hidden');
+            durationField.classList.add('hidden');
+        } else if (selectedType === 'video') {
+            imageZone.classList.add('hidden');
+            videoZone.classList.remove('hidden');
+            durationField.classList.remove('hidden');
+        } else {
+            imageZone.classList.add('hidden');
+            videoZone.classList.add('hidden');
+            durationField.classList.add('hidden');
+        }
+    }
+    mediaTypeRadios.forEach(radio => radio.addEventListener('change', toggleUploadZones));
+    if (imageInput) {
+        imageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('image-preview');
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = `<img src="${e.target.result}" class="max-w-xs rounded-lg shadow-md" alt="Preview">`;
+                    preview.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    if (videoInput) {
+        videoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('video-preview');
+            if (file) {
+                const url = URL.createObjectURL(file);
+                preview.innerHTML = `<video src="${url}" class="max-w-xs rounded-lg shadow-md" controls></video>`;
+                preview.classList.remove('hidden');
+            }
+        });
+    }
+    toggleUploadZones();
+
+    // Mode simplifié / détaillé
+    const btnModeEasy = document.getElementById('btn-mode-easy');
+    const btnModeDetail = document.getElementById('btn-mode-detail');
+    const detailedSection = document.getElementById('detailed-mode-section');
+    function setMode(mode) {
+        if (!btnModeEasy || !detailedSection) return;
+        const easySelected = (mode === 'easy');
+        btnModeEasy.setAttribute('aria-selected', easySelected ? 'true' : 'false');
+        btnModeDetail.setAttribute('aria-selected', easySelected ? 'false' : 'true');
+        detailedSection.classList.toggle('hidden', easySelected);
+        detailedSection.setAttribute('aria-hidden', easySelected ? 'true' : 'false');
+        btnModeEasy.classList.toggle('bg-bf1-red', easySelected);
+        btnModeEasy.classList.toggle('text-white', easySelected);
+        btnModeDetail.classList.toggle('bg-gray-200', easySelected);
+        btnModeDetail.classList.toggle('text-gray-900', easySelected);
+    }
+    if (btnModeEasy) btnModeEasy.addEventListener('click', () => setMode('easy'));
+    if (btnModeDetail) btnModeDetail.addEventListener('click', function() {
+        window.location.href = "{% url 'coverage_request_create' %}";
+    });
+    setMode('easy');
+
+    // Afficher détails de création si demandé
+    const campaignTypeSelect = document.getElementById('id_campaign_type');
+    const requestedCreationCheckbox = document.getElementById('id_requested_creation');
+    const creationDetails = document.getElementById('creation-details');
+    function toggleCreationDetails() {
+        if (!creationDetails) return;
+        const isCreation = (campaignTypeSelect && campaignTypeSelect.value === 'spot_creation') ||
+                           (requestedCreationCheckbox && requestedCreationCheckbox.checked);
+        creationDetails.classList.toggle('hidden', !isCreation);
+    }
+    if (campaignTypeSelect) campaignTypeSelect.addEventListener('change', toggleCreationDetails);
+    if (requestedCreationCheckbox) requestedCreationCheckbox.addEventListener('change', toggleCreationDetails);
+    toggleCreationDetails();
+
+    // Wizard multi-étapes (slide/carrousel)
+    const steps = Array.from(document.querySelectorAll('.wizard-step'));
+    const track = document.getElementById('wizard-track');
+    const progressBar = document.getElementById('wizard-progress-bar');
+    const prevBtn = document.getElementById('wizard-prev');
+    const nextBtn = document.getElementById('wizard-next');
+    const submitBtn = document.getElementById('wizard-submit');
+    const skipSpotBtn = document.getElementById('wizard-skip-spot');
+    let currentStep = 0;
+    let skipSpot = false;
+    let lastStep = 0;
+    
+    // Met à jour barre de progression et nav (inchangé)
+    function updateProgress() {
+        const pct = Math.round(((currentStep + 1) / steps.length) * 100);
+        if (progressBar) progressBar.style.width = pct + '%';
+    }
+    
+    function updateNav() {
+        const isFirst = currentStep === 0;
+        const isLast = currentStep === steps.length - 1;
+        const showSubmitHere = (skipSpot && currentStep === 1) || (!skipSpot && isLast);
+    
+        prevBtn.classList.toggle('opacity-50', isFirst);
+        prevBtn.disabled = isFirst;
+    
+        nextBtn.classList.toggle('hidden', showSubmitHere);
+        submitBtn.classList.toggle('hidden', !showSubmitHere);
+    
+        // "Ignorer le spot" visible uniquement sur la section Spot
+        skipSpotBtn.classList.toggle('hidden', currentStep !== 2);
+    }
+    
+    function showStep(index) {
+        const newStep = Math.max(0, Math.min(index, steps.length - 1));
+        lastStep = currentStep;
+        currentStep = newStep;
+    
+        // Fade-out étape précédente
+        if (steps[lastStep]) {
+            steps[lastStep].classList.remove('opacity-100');
+            steps[lastStep].classList.add('opacity-0');
+        }
+    
+        // Slide vers la nouvelle étape
+        const offsetPercent = -(currentStep * 100);
+        if (track) track.style.transform = `translateX(${offsetPercent}%)`;
+    
+        // Fade-in de la nouvelle étape (léger délai pour synchroniser avec le slide)
+        requestAnimationFrame(() => {
+            steps[currentStep].classList.remove('opacity-0');
+            steps[currentStep].classList.add('opacity-100');
+        });
+    
+        updateProgress();
+        updateNav();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
+    // Init: première étape visible
+    showStep(0);
+    
+    prevBtn.addEventListener('click', () => {
+        if (skipSpot && currentStep > 1) {
+            showStep(1);
+        } else {
+            showStep(currentStep - 1);
+        }
+    });
+    nextBtn.addEventListener('click', () => showStep(currentStep + 1));
+    skipSpotBtn.addEventListener('click', () => {
+        skipSpot = true;
+        submitBtn.textContent = 'Créer ma campagne (sans spot)';
+        showStep(1); // se caler sur Paramètres et activer la soumission directe
+    });
+
+    showStep(0);
+
+    // Mise à jour des valeurs par défaut conformes backend
+    const defaults = [
+        { id: 'id_objective', value: 'promotion' }, // au lieu de 'Notoriété' (texte)
+        { id: 'id_channel', value: 'tv' },          // au lieu de 'TV BF1'
+        { id: 'id_title', value: 'Nouvelle campagne BF1' },
+        { id: 'id_spot_title', value: 'Spot principal' }
+    ];
+    defaults.forEach(d => {
+        const el = document.getElementById(d.id);
+        if (el && !el.value) el.value = d.value;
+    });
+
+    // Liste longue → mappage simple vers les 3 objectifs backend
+    const OBJECTIVE_ITEMS = [
+        { label: 'Diffusion de spot publicitaire', value: 'promotion' },
+        { label: 'Diffusion sur la page Facebook/YouTube', value: 'promotion' },
+        { label: 'Le clip à la Une', value: 'notoriete' },
+        { label: 'Retransmission en direct hors studio hors Ouaga', value: 'promotion' },
+        { label: 'Retransmission en direct hors studio à Ouaga', value: 'promotion' },
+        { label: 'Réalisation d\'émission spéciale en studio BF1', value: 'notoriete' },
+        { label: 'Enregistrement d\'émission spéciale hors studio à Ouaga', value: 'notoriete' },
+        { label: 'Décrochage d\'antenne (Réalisation)', value: 'promotion' },
+        { label: 'PAD (Diffusion)', value: 'promotion' },
+        { label: 'Passage aux émissions', value: 'notoriete' },
+        { label: 'Publireportage', value: 'sensibilisation' },
+        { label: 'Diffusion de message défilant', value: 'promotion' },
+        { label: 'Confection et diffusion de petite annonce', value: 'promotion' },
+        { label: 'Kossi Teedo', value: 'notoriete' }
+    ];
+    const RECOMMENDED = [
+        'Diffusion de spot publicitaire',
+        'Le clip à la Une',
+        'Publireportage'
+    ];
+
+    const objectiveSelect = document.getElementById('id_objective');
+    const pickedWrap = document.getElementById('objective-picked');
+    const pickedLabel = document.getElementById('objective-picked-label');
+    const recWrap = document.getElementById('objective-recommended');
+    const expandBtn = document.getElementById('objective-expand');
+    const morePanel = document.getElementById('objective-more-panel');
+    const searchInput = document.getElementById('objective-search');
+    const allWrap = document.getElementById('objective-all');
+    const objectiveDetailInput = document.getElementById('id_objective_detail');
+    const tickerBlock = document.getElementById('ticker-message-block');
+    const tickerTextarea = document.getElementById('message_defilant');
+
+    function isTicker(label) {
+        return String(label || '').toLowerCase().includes('message défilant');
+    }
+    function toggleTicker(on) {
+        if (!tickerBlock) return;
+        tickerBlock.classList.toggle('hidden', !on);
+        tickerBlock.setAttribute('aria-hidden', on ? 'false' : 'true');
+        if (on && tickerTextarea) {
+            setTimeout(() => tickerTextarea.focus(), 50);
+        }
+    }
+
+    function setObjective(value, label) {
+        if (objectiveSelect) {
+            objectiveSelect.value = value;
+            if (pickedWrap && pickedLabel) {
+                pickedLabel.textContent = label;
+                pickedWrap.classList.remove('hidden');
+            }
+            if (objectiveDetailInput) {
+                objectiveDetailInput.value = label || '';
+            }
+            toggleTicker(isTicker(label));
+        }
+    }
+
+    function makeChip(txt, val) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'px-2.5 py-1 rounded-full text-sm bg-white hover:bg-gray-100 border border-gray-200';
+        b.textContent = txt;
+        b.addEventListener('click', () => setObjective(val, txt));
+        return b;
+    }
+
+    // Recommandés
+    if (recWrap) {
+        RECOMMENDED.forEach(r => {
+            const item = OBJECTIVE_ITEMS.find(i => i.label === r);
+            if (item) recWrap.appendChild(makeChip(item.label, item.value));
+        });
+    }
+
+    // Voir plus: panneau + recherche
+    if (expandBtn && morePanel) {
+        expandBtn.addEventListener('click', () => {
+            morePanel.classList.toggle('hidden');
+        });
+    }
+    function renderAll(filter = '') {
+        if (!allWrap) return;
+        allWrap.innerHTML = '';
+        const lower = filter.trim().toLowerCase();
+        OBJECTIVE_ITEMS
+            .filter(i => !lower || i.label.toLowerCase().includes(lower))
+            .forEach(i => allWrap.appendChild(makeChip(i.label, i.value)));
+    }
+    renderAll();
+    if (searchInput) {
+        searchInput.addEventListener('input', () => renderAll(searchInput.value));
+    }
+
+    // Si la sélection vient des Tarifs (query params), activer le champ défilant
+    const params = new URLSearchParams(window.location.search);
+    const detailFromPricing = params.get('objective_detail') || params.get('objective_sub') || '';
+    const selectionNote = params.get('selection_note') || '';
+    if (detailFromPricing) {
+        if (objectiveDetailInput) objectiveDetailInput.value = detailFromPricing;
+        toggleTicker(isTicker(detailFromPricing));
+    } else if (selectionNote && selectionNote.toLowerCase().includes('message défilant')) {
+        if (objectiveDetailInput) objectiveDetailInput.value = 'Diffusion de message défilant';
+        toggleTicker(true);
+    }
+
+    // Suggestions rapides (objectifs et canaux)
+    function buildChips(containerId, items, targetId) {
+        const c = document.getElementById(containerId);
+        const t = document.getElementById(targetId);
+        if (!c || !t) return;
+        items.forEach(txt => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'px-2.5 py-1 rounded-full text-sm bg-gray-100 hover:bg-gray-200 border border-gray-200';
+            b.textContent = txt;
+            b.addEventListener('click', () => {
+                if (t.tagName === 'SELECT') {
+                    const opt = Array.from(t.options).find(o => o.text === txt || o.value === txt);
+                    if (opt) t.value = opt.value;
+                } else {
+                    t.value = txt;
+                }
+            });
+            c.appendChild(b);
+        });
+    }
+    buildChips('objective-suggestions', ['Notoriété','Trafic','Conversion','Engagement'], 'id_objective');
+    buildChips('channel-suggestions', ['TV BF1','Online','JT'], 'id_channel');
+
+    // Validation proactive (non bloquante)
+    const tickerIsVisible = () => tickerBlock && !tickerBlock.classList.contains('hidden');
+    const rules = {
+        'id_title': v => v && v.length >= 3 || 'Le titre doit contenir au moins 3 caractères.',
+        'id_start_date': v => !!v || 'La date de début est requise.',
+        'id_end_date': v => !!v || 'La date de fin est requise.',
+        'id_budget': v => !v || (!isNaN(parseFloat(v)) && parseFloat(v) >= 0) || 'Budget invalide.',
+        'id_objective': v => !!v || 'Veuillez préciser l’objectif.',
+        'id_channel': v => !!v || 'Veuillez choisir le canal.',
+        'message_defilant': v => !tickerIsVisible() || (v && v.length >= 10 && v.length <= 200) || 'Message défilant requis (10–200 caractères).'
+    };
+    function bindValidation(id) {
+        const el = document.getElementById(id);
+        const err = document.querySelector(`[data-error-for="${id}"]`);
+        if (!el || !err) return;
+        el.addEventListener('input', () => {
+            const rule = rules[id];
+            const ok = !rule || rule(el.value);
+            const msg = typeof ok === 'string' ? ok : '';
+            err.textContent = msg;
+            err.classList.toggle('hidden', !msg);
+            el.classList.toggle('ring-2', !!msg);
+            el.classList.toggle('ring-red-500', !!msg);
+        });
+    }
+    Object.keys(rules).forEach(bindValidation);
+
+    // Envoi fiable du formulaire au clic sur "Créer ma campagne"
+    const formEl = document.getElementById('campaign-spot-form');
+    if (formEl && submitBtn) {
+        submitBtn.addEventListener('click', function(e) {
+            // Ne pas bloquer les validations natives HTML5.
+            // requestSubmit déclenche les validations et l'événement submit,
+            // fallback sur submit pour compatibilité.
+            if (typeof formEl.requestSubmit === 'function') {
+                formEl.requestSubmit();
+            } else {
+                formEl.submit();
+            }
+        });
+    }
+
+    // Persistance du statut utilisateur actif dès soumission réussie
+    if (formEl) {
+        formEl.addEventListener('submit', function() {
+            try { localStorage.setItem('bf1_user_active', '1'); } catch (e) {}
+        });
+    }
+
+    // Micro‑interactions au changement d’étape
+    progressBar && progressBar.addEventListener('transitionend', () => {});
+});
+</script>
+{% endblock %}

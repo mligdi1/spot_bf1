@@ -1,0 +1,49 @@
+{% extends 'spot/base.html' %}
+{% block title %}Nouvelle discussion (Admin){% endblock %}
+{% block content %}
+<section class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="bg-white rounded-lg bf1-shadow p-6 md:p-8">
+    <h1 class="text-2xl font-bold text-gray-900">Démarrer une discussion</h1>
+    <p class="text-gray-600 mt-1">Choisissez l'utilisateur, (optionnel) la campagne, puis saisissez le sujet et le premier message.</p>
+
+    <form method="post" class="mt-6">
+      {% csrf_token %}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Utilisateur</label>
+          <select name="client_id" class="mt-1 w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-bf1-red focus:border-bf1-red" required>
+            <option value="" disabled selected>— Sélectionner —</option>
+            {% for u in users %}
+              <option value="{{ u.id }}">{{ u.username }}{% if u.email %} ({{ u.email }}){% endif %}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Campagne (optionnel)</label>
+          <select name="campaign_id" class="mt-1 w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-bf1-red focus:border-bf1-red">
+            <option value="">— Aucune —</option>
+            {% for c in campaigns %}
+              <option value="{{ c.id }}">{{ c.title }} — {{ c.client.username }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <label class="block text-sm font-medium text-gray-700">Sujet</label>
+        <input name="subject" class="mt-1 w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-bf1-red focus:border-bf1-red" placeholder="Objet de la discussion" required />
+      </div>
+
+      <div class="mt-4">
+        <label class="block text-sm font-medium text-gray-700">Message</label>
+        <textarea name="content" rows="4" class="mt-1 w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-bf1-red focus:border-bf1-red" placeholder="Premier message au client" required></textarea>
+      </div>
+
+      <div class="mt-6 flex gap-3">
+        <button type="submit" class="px-4 py-2 bg-gray-900 text-white rounded hover:bg-black">Créer</button>
+        <a href="{% url 'correspondence_list' %}" class="px-4 py-2 bg-gray-100 text-gray-900 rounded hover:bg-gray-200">Annuler</a>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}

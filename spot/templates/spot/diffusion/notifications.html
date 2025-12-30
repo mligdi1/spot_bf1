@@ -1,0 +1,56 @@
+{% extends 'spot/diffusion/base_diffusion.html' %}
+{% block title %}Notifications diffuseur{% endblock %}
+{% block content %}
+<h1 class="heading text-3xl font-semibold text-gray-800 mb-6 flex items-center"><i class="fa-solid fa-bell mr-2 text-red-600"></i> Notifications</h1>
+
+<div class="bg-white shadow rounded-lg p-6">
+  <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center gap-3">
+      <span class="text-sm text-gray-600">{{ notifications.paginator.count }} notification{{ notifications.paginator.count|pluralize }}</span>
+      {% if unread_count %}
+      <span class="badge badge-red" id="notif-badge-count">{{ unread_count }}</span>
+      {% endif %}
+    </div>
+    <div class="flex items-center gap-3">
+      {% if unread_count %}
+      <button onclick="markAllAsRead()" class="btn btn--outline"><i class="fa-solid fa-check-double mr-2"></i>Tout marquer comme lu</button>
+      {% endif %}
+      <a href="/diffusion/" class="btn btn--ghost"><i class="fa-solid fa-arrow-left mr-2"></i>Retour</a>
+    </div>
+  </div>
+
+  <div id="notificationsList">
+    {% include 'spot/includes/notifications_list.html' %}
+  </div>
+
+  {% if notifications.has_other_pages %}
+  <div class="mt-6 flex items-center justify-between">
+    <div class="text-sm text-gray-600">Affichage de {{ notifications.start_index }} à {{ notifications.end_index }} sur {{ notifications.paginator.count }}</div>
+    <div class="flex gap-2">
+      {% if notifications.has_previous %}
+      <a href="?page={{ notifications.previous_page_number }}" class="px-3 py-2 border rounded text-sm">Précédent</a>
+      {% endif %}
+      {% for num in notifications.paginator.page_range %}
+        {% if notifications.number == num %}
+          <span class="px-3 py-2 bg-red-600 text-white rounded text-sm">{{ num }}</span>
+        {% elif num > notifications.number|add:'-3' and num < notifications.number|add:'3' %}
+          <a href="?page={{ num }}" class="px-3 py-2 border rounded text-sm">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if notifications.has_next %}
+      <a href="?page={{ notifications.next_page_number }}" class="px-3 py-2 border rounded text-sm">Suivant</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+function getCookie(name){const value=`; ${document.cookie}`;const parts=value.split(`; ${name}=`);if(parts.length===2) return parts.pop().split(';').shift();}
+function updateNotifBadge(count){const b=document.getElementById('notif-badge-count');if(!b) return; if(count && count>0){b.textContent=count;b.classList.remove('hidden');} else {b.textContent='';b.classList.add('hidden');}}
+async function reloadNotifications(){try{const res=await fetch('{% url "notifications_list_partial" %}',{headers:{'X-Requested-With':'XMLHttpRequest'}});const data=await res.json();if(data.status==='success'){document.getElementById('notificationsList').innerHTML=data.html;updateNotifBadge(data.unread_count);}}catch(e){console.error(e);}}
+async function markAsRead(notificationId){try{const urlTpl='{% url "notifications_mark_read" id=0 %}';const url=urlTpl.replace('0',notificationId);const res=await fetch(url,{method:'POST',headers:{'X-CSRFToken':getCookie('csrftoken')}});const data=await res.json();if(data.status==='success'){updateNotifBadge(data.unread_count);reloadNotifications();}}catch(e){console.error(e);alert('Erreur lors de la mise à jour.');}}
+async function markAllAsRead(){if(!confirm('Marquer toutes les notifications comme lues ?')) return;try{const res=await fetch('{% url "notifications_mark_all_read" %}',{method:'POST',headers:{'X-CSRFToken':getCookie('csrftoken')}});const data=await res.json();if(data.status==='success'){updateNotifBadge(data.unread_count);reloadNotifications();}}catch(e){console.error(e);}}
+async function deleteNotification(notificationId){if(!confirm('Supprimer cette notification ?')) return;try{const urlTpl='{% url "notifications_delete" id=0 %}';const url=urlTpl.replace('0',notificationId);const res=await fetch(url,{method:'POST',headers:{'X-CSRFToken':getCookie('csrftoken')}});const data=await res.json();if(data.status==='success'){updateNotifBadge(data.unread_count);reloadNotifications();}}catch(e){console.error(e);alert('Erreur lors de la suppression.');}}
+</script>
+{% endblock %}

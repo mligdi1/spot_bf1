@@ -1,0 +1,17 @@
+# Tâches cron pour BF1 TV
+# Installation: crontab crontab
+
+# Nettoyage des fichiers temporaires (tous les jours à 2h)
+0 2 * * * cd /var/www/bf1tv && /var/www/bf1tv/venv/bin/python manage.py shell -c "from spot.utils import cleanup_old_files; cleanup_old_files()"
+
+# Envoi des rappels de campagne (tous les jours à 9h)
+0 9 * * * cd /var/www/bf1tv && /var/www/bf1tv/venv/bin/python manage.py shell -c "from spot.utils import send_campaign_reminder; send_campaign_reminder()"
+
+# Sauvegarde de la base de données (tous les jours à 3h)
+0 3 * * * pg_dump -h localhost -U postgres spot_bf1_db > /var/backups/bf1tv_$(date +\%Y\%m\%d).sql
+
+# Nettoyage des anciennes sauvegardes (tous les dimanches à 4h)
+0 4 * * 0 find /var/backups -name "bf1tv_*.sql" -mtime +30 -delete
+
+# Rotation des logs (tous les jours à 1h)
+0 1 * * * /usr/sbin/logrotate /etc/logrotate.d/bf1tv

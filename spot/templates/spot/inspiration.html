@@ -1,0 +1,63 @@
+{% extends 'spot/base.html' %}
+{% load humanize %}
+{% block content %}
+<div class="max-w-6xl mx-auto">
+  <header class="mb-8 relative">
+    <div aria-hidden="true" class="absolute -inset-x-16 -top-10 h-40 bg-gradient-to-r from-bf1-red/10 via-transparent to-gray-900/5 blur-2xl"></div>
+    <h1 class="text-3xl font-bold text-gray-900 relative">Inspiration</h1>
+    <p class="text-gray-600 mt-2 relative">Études de cas et idées pour booster votre communication.</p>
+  </header>
+
+  {% if cases %}
+    <div class="grid md:grid-cols-3 gap-6">
+      {% for case in cases %}
+        <article class="bg-white p-5 rounded-lg bf1-shadow">
+          <h2 class="text-xl font-semibold text-gray-900">{{ case.title }}</h2>
+          <p class="text-gray-700 mt-2">{{ case.summary }}</p>
+          {% if case.video_url %}
+            <a href="{{ case.video_url }}" target="_blank" class="text-bf1-red mt-2 inline-block">Voir la vidéo</a>
+          {% endif %}
+          <div class="mt-4 flex gap-2">
+            <a href="{% url 'pricing_overview' %}" class="px-4 py-2 bg-gray-800 text-white rounded">Tarifs</a>
+            <a href="{% url 'contact_advisor' %}" class="px-4 py-2 bg-bf1-red text-white rounded">Contact</a>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <section class="px-4 py-8">
+      <h2 class="text-2xl font-bold">Idées de packs</h2>
+      <p class="text-gray-700 mt-2">Des idées de combinaisons basées sur la tarification 2024.</p>
+
+      <div class="mt-6 grid md:grid-cols-3 gap-5">
+        <div class="border rounded p-4">
+          <div class="font-semibold">Semaine active</div>
+          <ul class="text-sm mt-2 list-disc pl-5">
+            <li>Petite annonce (semaine) — {{ 200000|intcomma }} F CFA</li>
+            <li>Message défilant (semaine) — {{ 150000|intcomma }} F CFA</li>
+            <li>2 spots/jour (0–30 s, 11h25–14h25) — {{ 103545|intcomma }} F CFA / spot</li>
+          </ul>
+        </div>
+        <div class="border rounded p-4">
+          <div class="font-semibold">Impact JT</div>
+          <ul class="text-sm mt-2 list-disc pl-5">
+            <li>Publireportage JT 19h30 — {{ 350000|intcomma }} F CFA</li>
+            <li>Spots prime time (0–30 s) — {{ 103545|intcomma }} F CFA</li>
+            <li>Rediffusion selon offre — <span class="italic">voir Premium</span></li>
+          </ul>
+        </div>
+        <div class="border rounded p-4">
+          <div class="font-semibold">Événement</div>
+          <ul class="text-sm mt-2 list-disc pl-5">
+            <li>PAD ≤ 13 min — {{ 500000|intcomma }} F CFA</li>
+            <li>La télé s’amuse — annonce — {{ 50000|intcomma }} F CFA</li>
+            <li>Spot vidéo Facebook/YouTube — {{ 50000|intcomma }} F CFA</li>
+          </ul>
+        </div>
+      </div>
+
+      <p class="text-gray-600 mt-6 text-sm">Les packs sont indicatifs pour inspirer la construction de votre plan média.</p>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

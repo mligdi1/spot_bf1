@@ -1,0 +1,110 @@
+{% extends 'spot/admin_base.html' %}
+{% block admin_header %}Campagnes{% endblock %}
+{% block admin_content %}
+<div class="space-y-6">
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">
+            <i class="fas fa-bullhorn text-bf1-red mr-2"></i>
+            Liste des campagnes (Administration)
+        </h1>
+        <p class="text-gray-600">Recherche, filtres et actions d’approbation</p>
+    </div>
+
+    <form method="get" class="bg-white p-4 rounded-lg bf1-shadow mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Recherche</label>
+                <input type="text" name="q" value="{{ q|default:'' }}" placeholder="Titre ou client"
+                       class="w-full border-gray-300 rounded-md shadow-sm focus:ring-bf1-red focus:border-bf1-red">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+                <select name="status" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-bf1-red focus:border-bf1-red">
+                    <option value="" {% if not status %}selected{% endif %}>Tous</option>
+                    <option value="pending" {% if status == 'pending' %}selected{% endif %}>En attente</option>
+                    <option value="approved" {% if status == 'approved' %}selected{% endif %}>Approuvée</option>
+                    <option value="active" {% if status == 'active' %}selected{% endif %}>Active</option>
+                    <option value="rejected" {% if status == 'rejected' %}selected{% endif %}>Rejetée</option>
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="bg-bf1-red text-white px-4 py-2 rounded-md hover:bg-bf1-red-dark transition-colors">
+                    <i class="fas fa-search mr-2"></i>Filtrer
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <div class="bg-white rounded-lg bf1-shadow p-6">
+        {% if page_obj.object_list %}
+        <div class="flex flex-wrap items-center justify-end gap-2 mb-4">
+            <button id="sort-campaign-title" class="px-3 py-1 rounded border text-sm">Trier par titre</button>
+            <button id="sort-campaign-date" class="px-3 py-1 rounded border text-sm">Trier par date</button>
+        </div>
+        <div id="campaign-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for campaign in page_obj.object_list %}
+            <div class="border rounded-xl p-4 hover:border-bf1-red" data-title="{{ campaign.title|lower }}" data-date="{{ campaign.created_at|date:'Ymd' }}">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <div class="font-semibold">{{ campaign.title }}</div>
+                        <div class="text-sm text-gray-500">{{ campaign.description|default:''|truncatechars:100 }}</div>
+                        <div class="text-sm mt-2">Client: {{ campaign.client.username }}{% if campaign.client.company %} • {{ campaign.client.company }}{% endif %}</div>
+                        <div class="text-xs text-gray-500 mt-1">Budget: {{ campaign.budget|floatformat:0 }} FCFA • {{ campaign.created_at|date:"d/m/Y" }}</div>
+                    </div>
+                    <span class="px-2 py-1 rounded-full text-xs 
+                        {% if campaign.status == 'active' %}bg-green-100 text-green-800{% endif %}
+                        {% if campaign.status == 'pending' %}bg-yellow-100 text-yellow-800{% endif %}
+                        {% if campaign.status == 'approved' %}bg-blue-100 text-blue-800{% endif %}
+                        {% if campaign.status == 'rejected' %}bg-red-100 text-red-800{% endif %}">{{ campaign.get_status_display }}</span>
+                </div>
+                <div class="mt-3 flex items-center gap-3 text-sm">
+                    <a href="{% url 'campaign_detail' campaign.id %}" class="text-bf1-red hover:text-bf1-red-dark">Voir</a>
+                    {% if campaign.status == 'pending' %}
+                        <a href="{% url 'admin_campaign_approve' campaign.id %}" class="text-blue-600 hover:text-blue-800">Examiner</a>
+                        {% if not campaign.spots.exists %}
+                            <span class="text-gray-400">Spot manquant</span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center text-gray-500 py-6">Aucune campagne trouvée</div>
+        {% endif %}
+    </div>
+
+    <script>
+      (function(){
+        const grid = document.getElementById('campaign-grid');
+        if(!grid) return;
+        const items = Array.from(grid.children);
+        const byTitle = () => items.sort((a,b)=>a.dataset.title.localeCompare(b.dataset.title));
+        const byDate = () => items.sort((a,b)=>a.dataset.date.localeCompare(b.dataset.date));
+        const render = sorted => { sorted.forEach(el=>grid.appendChild(el)); };
+        const st = document.getElementById('sort-campaign-title');
+        const sd = document.getElementById('sort-campaign-date');
+        if(st) st.addEventListener('click',()=>render(byTitle()));
+        if(sd) sd.addEventListener('click',()=>render(byDate()));
+      })();
+    </script>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="mt-4 flex items-center justify-between">
+        <div class="text-sm text-gray-600">
+            Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+        </div>
+        <div class="space-x-2">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if status %}&status={{ status }}{% endif %}{% if q %}&q={{ q }}{% endif %}"
+                   class="px-3 py-1 border rounded-md hover:bg-gray-50">Précédent</a>
+            {% endif %}
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if status %}&status={{ status }}{% endif %}{% if q %}&q={{ q }}{% endif %}"
+                   class="px-3 py-1 border rounded-md hover:bg-gray-50">Suivant</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

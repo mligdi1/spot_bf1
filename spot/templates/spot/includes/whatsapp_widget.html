@@ -1,0 +1,246 @@
+{% comment %}
+  Global WhatsApp chat widget, configurable via settings exposed by context processor.
+  Accessibility: aria-label, high contrast, focus styles.
+{% endcomment %}
+{% if WHATSAPP_WIDGET.enabled and WHATSAPP_WIDGET.phone %}
+  {% with phone=WHATSAPP_WIDGET.phone msg=WHATSAPP_WIDGET.message pos=WHATSAPP_WIDGET.position color=WHATSAPP_WIDGET.color size=WHATSAPP_WIDGET.size %}
+  <div id="bf1-wa-draggable" class="fixed z-40 cursor-grab"
+       style="{% if pos == 'bottom-left' %}left:16px;{% else %}right:16px;{% endif %} bottom:16px;">
+    <a id="bf1-whatsapp-widget-link"
+       href="https://wa.me/{{ phone|urlencode }}?text={{ msg|urlencode }}"
+       target="_blank" rel="noopener"
+       aria-label="Contacter le support via WhatsApp"
+       class="group inline-flex items-center justify-center rounded-full shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bf1-red transition transform hover:scale-105 pointer-events-auto"
+       style="background-color: {{ color }}; width: {% if size == 'sm' %}48px{% elif size == 'lg' %}64px{% else %}56px{% endif %}; height: {% if size == 'sm' %}48px{% elif size == 'lg' %}64px{% else %}56px{% endif %};">
+      <span class="sr-only">WhatsApp</span>
+      <i class="fab fa-whatsapp text-white" aria-hidden="true"
+         style="font-size: {% if size == 'sm' %}20px{% elif size == 'lg' %}28px{% else %}24px{% endif %};"></i>
+    </a>
+  </div>
+
+  <!-- Accessible confirmation dialog -->
+  <div id="bf1-whatsapp-confirm-overlay" class="fixed inset-0 z-50 bg-black/40 hidden" aria-hidden="true"></div>
+  <div id="bf1-whatsapp-confirm" role="dialog" aria-modal="true" aria-labelledby="bf1-wa-title" aria-describedby="bf1-wa-desc"
+       class="fixed inset-0 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen px-4">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-md bf1-shadow" style="outline: none;">
+        <div class="px-6 pt-6">
+          <h2 id="bf1-wa-title" class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <i class="fab fa-whatsapp text-bf1-red" aria-hidden="true"></i>
+            Redirection WhatsApp
+          </h2>
+          <p id="bf1-wa-desc" class="mt-2 text-gray-700">
+            Vous allez être redirigé vers WhatsApp. Souhaitez-vous continuer ?
+          </p>
+        </div>
+        <div class="px-6 pb-6 pt-4 flex items-center justify-end gap-3">
+          <button type="button" id="bf1-wa-cancel"
+                  class="px-4 py-2 rounded bg-gray-100 text-gray-900 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300">
+            Non, annuler
+          </button>
+          <button type="button" id="bf1-wa-confirm"
+                  class="px-4 py-2 rounded bg-bf1-red text-white hover:bg-bf1-red-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bf1-red">
+            Oui, continuer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const link = document.getElementById('bf1-whatsapp-widget-link');
+      const bubble = document.getElementById('bf1-wa-draggable');
+      const modal = document.getElementById('bf1-whatsapp-confirm');
+      const overlay = document.getElementById('bf1-whatsapp-confirm-overlay');
+      const btnConfirm = document.getElementById('bf1-wa-confirm');
+      const btnCancel = document.getElementById('bf1-wa-cancel');
+      if (!link || !bubble || !modal || !overlay || !btnConfirm || !btnCancel) return;
+
+      const openModal = () => {
+        overlay.classList.remove('hidden');
+        modal.classList.remove('hidden');
+        btnConfirm.focus();
+        document.addEventListener('keydown', handleKeydown);
+      };
+
+      const closeModal = () => {
+        overlay.classList.add('hidden');
+        modal.classList.add('hidden');
+        link.focus();
+        document.removeEventListener('keydown', handleKeydown);
+      };
+
+      const handleKeydown = (e) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          closeModal();
+        } else if (e.key === 'Tab') {
+          // Simple focus trap between the two buttons
+          const focusables = [btnCancel, btnConfirm];
+          const idx = focusables.indexOf(document.activeElement);
+          if (idx === -1) {
+            btnCancel.focus();
+            e.preventDefault();
+          } else {
+            const nextIdx = e.shiftKey ? (idx - 1 + focusables.length) % focusables.length : (idx + 1) % focusables.length;
+            focusables[nextIdx].focus();
+            e.preventDefault();
+          }
+        }
+      };
+
+      let lastDragAt = 0;
+
+      link.addEventListener('click', function(e) {
+        // Prevent default and show confirmation dialog
+        if (Date.now() - lastDragAt < 350) {
+          e.preventDefault();
+          return;
+        }
+        e.preventDefault();
+        openModal();
+      }, { passive: false });
+
+      overlay.addEventListener('click', function() {
+        closeModal();
+      });
+
+      btnCancel.addEventListener('click', function() {
+        closeModal();
+      });
+
+      btnConfirm.addEventListener('click', function() {
+        // Analytics hook if available
+        try {
+          if (window.gtag) {
+            window.gtag('event', 'whatsapp_redirect_confirmed', { event_category: 'engagement', event_label: 'widget_bubble' });
+          } else if (window.dataLayer) {
+            window.dataLayer.push({ event: 'whatsapp_redirect_confirmed', source: 'widget_bubble' });
+          } else if (window.analytics && window.analytics.track) {
+            window.analytics.track('WhatsApp Redirect Confirmed', { source: 'widget_bubble' });
+          }
+        } catch (_) {}
+        // Proceed to WhatsApp in a new window/tab
+        const url = link.getAttribute('href');
+        window.open(url, '_blank', 'noopener');
+        closeModal();
+      });
+
+      // --- Drag & drop du bouton flottant ---
+      (function enableDrag() {
+        let dragging = false;
+        let moved = false;
+        let startX = 0, startY = 0;
+        let origLeft = 0, origTop = 0;
+        const MARGIN = 8;
+        const storageKey = 'bf1-wa-pos-v1';
+        const HOLD_MS = 250;
+        const MOVE_PX = 8;
+        let holdTimer = null;
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        // Appliquer la position mémorisée si disponible
+        try {
+          const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+          if (saved && typeof saved.left === 'number' && typeof saved.top === 'number') {
+            bubble.style.left = saved.left + 'px';
+            bubble.style.top = saved.top + 'px';
+            bubble.style.right = 'auto';
+            bubble.style.bottom = 'auto';
+          }
+        } catch (_) {}
+
+        const startDrag = (x, y) => {
+          bubble.classList.add('cursor-grabbing');
+          dragging = true;
+          moved = false;
+          startX = x || 0;
+          startY = y || 0;
+          const rect = bubble.getBoundingClientRect();
+          origLeft = rect.left;
+          origTop = rect.top;
+          // Passer en position top/left absolue
+          bubble.style.right = 'auto';
+          bubble.style.bottom = 'auto';
+        };
+
+        const onPointerMove = (e) => {
+          if (!dragging) return;
+          const x = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+          const y = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+          const dx = x - startX;
+          const dy = y - startY;
+          if (!moved && (Math.abs(dx) > 2 || Math.abs(dy) > 2)) moved = true;
+          const rect = bubble.getBoundingClientRect();
+          const newLeft = Math.max(MARGIN, Math.min(origLeft + dx, window.innerWidth - rect.width - MARGIN));
+          const newTop = Math.max(MARGIN, Math.min(origTop + dy, window.innerHeight - rect.height - MARGIN));
+          bubble.style.left = newLeft + 'px';
+          bubble.style.top = newTop + 'px';
+          e.preventDefault();
+        };
+
+        const endDrag = () => {
+          if (!dragging) return;
+          dragging = false;
+          bubble.classList.remove('cursor-grabbing');
+          if (moved) {
+            lastDragAt = Date.now();
+            try {
+              const rect = bubble.getBoundingClientRect();
+              localStorage.setItem(storageKey, JSON.stringify({ left: rect.left, top: rect.top }));
+            } catch (_) {}
+          }
+        };
+
+        bubble.addEventListener('mousedown', (e) => {
+          if (e.button !== 0) return;
+          startDrag(e.clientX, e.clientY);
+          e.preventDefault();
+        });
+        window.addEventListener('mousemove', (e) => {
+          if (!dragging) return;
+          onPointerMove(e);
+        }, { passive: false });
+        window.addEventListener('mouseup', () => endDrag());
+
+        bubble.addEventListener('touchstart', (e) => {
+          const t = e.touches && e.touches[0];
+          if (!t) return;
+          touchStartX = t.clientX;
+          touchStartY = t.clientY;
+          holdTimer = window.setTimeout(() => {
+            startDrag(touchStartX, touchStartY);
+          }, HOLD_MS);
+        }, { passive: true });
+
+        window.addEventListener('touchmove', (e) => {
+          const t = e.touches && e.touches[0];
+          if (!t) return;
+          if (!dragging) {
+            const dx = t.clientX - touchStartX;
+            const dy = t.clientY - touchStartY;
+            if (Math.abs(dx) > MOVE_PX || Math.abs(dy) > MOVE_PX) {
+              if (holdTimer) {
+                clearTimeout(holdTimer);
+                holdTimer = null;
+              }
+            }
+            return;
+          }
+          onPointerMove(e);
+        }, { passive: false });
+
+        window.addEventListener('touchend', () => {
+          if (holdTimer) {
+            clearTimeout(holdTimer);
+            holdTimer = null;
+          }
+          endDrag();
+        });
+      })();
+    })();
+  </script>
+  {% endwith %}
+{% endif %}

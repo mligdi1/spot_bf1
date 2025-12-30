@@ -1,0 +1,170 @@
+{% extends 'spot/base.html' %}
+
+{% block title %}Notifications - BF1{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- En-tête -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+            <i class="fas fa-bell text-bf1-red mr-2"></i>
+            Mes notifications
+            {% if unread_count %}
+              <span class="px-2 py-0.5 rounded-full text-sm border bg-bf1-red-light text-bf1-red border-bf1-red-light">
+                {{ unread_count }} non lus
+              </span>
+            {% endif %}
+        </h1>
+        <p class="text-gray-600">
+            Restez informé de toutes les activités liées à vos campagnes
+        </p>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="bg-white p-4 rounded-lg bf1-shadow mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center space-x-4">
+                <span class="text-sm text-gray-600">
+                    {{ notifications.paginator.count }} notification{{ notifications.paginator.count|pluralize }}
+                </span>
+                {% if unread_count %}
+                    <button onclick="markAllAsRead()" class="text-bf1-red hover:text-bf1-red-dark text-sm font-medium">
+                        <i class="fas fa-check-double mr-1"></i>
+                        Tout marquer comme lu
+                    </button>
+                {% endif %}
+            </div>
+            <div class="mt-2 sm:mt-0">
+                <a href="{% url 'dashboard' %}" class="text-bf1-red hover:text-bf1-red-dark font-medium">
+                    <i class="fas fa-arrow-left mr-1"></i>
+                    Retour au tableau de bord
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des notifications -->
+    <div id="notificationsList">
+      {% include 'spot/includes/notifications_list.html' %}
+    </div>
+    
+    <!-- Pagination -->
+        {% if notifications.has_other_pages %}
+        <div class="mt-8 flex items-center justify-between">
+            <div class="text-sm text-gray-700">
+                Affichage de {{ notifications.start_index }} à {{ notifications.end_index }} 
+                sur {{ notifications.paginator.count }} notifications
+            </div>
+            
+            <div class="flex space-x-2">
+                {% if notifications.has_previous %}
+                    <a href="?page={{ notifications.previous_page_number }}" 
+                       class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Précédent
+                    </a>
+                {% endif %}
+                
+                {% for num in notifications.paginator.page_range %}
+                    {% if notifications.number == num %}
+                        <span class="px-3 py-2 bg-bf1-red text-white rounded-md text-sm font-medium">
+                            {{ num }}
+                        </span>
+                    {% elif num > notifications.number|add:'-3' and num < notifications.number|add:'3' %}
+                        <a href="?page={{ num }}" 
+                           class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            {{ num }}
+                        </a>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if notifications.has_next %}
+                    <a href="?page={{ notifications.next_page_number }}" 
+                       class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Suivant
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+</div>
+
+<script>
+// CSRF depuis cookie
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+function updateNotifBadge(count) {
+  const badge = document.getElementById('notif-badge-count');
+  if (!badge) return;
+  if (count && count > 0) {
+    badge.textContent = count;
+    badge.classList.remove('hidden');
+  } else {
+    badge.textContent = '';
+    badge.classList.add('hidden');
+  }
+}
+
+async function reloadNotifications() {
+  try {
+    const res = await fetch('{% url "notifications_list_partial" %}', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+    const data = await res.json();
+    if (data.status === 'success') {
+      document.getElementById('notificationsList').innerHTML = data.html;
+      updateNotifBadge(data.unread_count);
+    }
+  } catch (e) { console.error(e); }
+}
+
+async function markAsRead(notificationId) {
+  try {
+    const urlTpl = '{% url "notifications_mark_read" id=0 %}';
+    const url = urlTpl.replace('0', notificationId);
+    const res = await fetch(url, { method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken') } });
+    const data = await res.json();
+    if (data.status === 'success') {
+      updateNotifBadge(data.unread_count);
+      reloadNotifications();
+    }
+  } catch (e) {
+    console.error('Erreur:', e);
+    alert('Erreur lors de la mise à jour.');
+  }
+}
+
+async function markAllAsRead() {
+  if (!confirm('Marquer toutes les notifications comme lues ?')) return;
+  try {
+    const res = await fetch('{% url "notifications_mark_all_read" %}', { method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken') } });
+    const data = await res.json();
+    if (data.status === 'success') {
+      updateNotifBadge(data.unread_count);
+      reloadNotifications();
+    }
+  } catch (e) { console.error(e); }
+}
+
+async function deleteNotification(notificationId) {
+  if (!confirm('Supprimer cette notification ?')) return;
+  try {
+    const urlTpl = '{% url "notifications_delete" id=0 %}';
+    const url = urlTpl.replace('0', notificationId);
+    const res = await fetch(url, { method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken') } });
+    const data = await res.json();
+    if (data.status === 'success') {
+      updateNotifBadge(data.unread_count);
+      reloadNotifications();
+    }
+  } catch (e) {
+    console.error('Erreur:', e);
+    alert('Erreur lors de la suppression.');
+  }
+}
+
+// Auto-refresh optionnel
+// setInterval(reloadNotifications, 30000);
+</script>
+{% endblock %}

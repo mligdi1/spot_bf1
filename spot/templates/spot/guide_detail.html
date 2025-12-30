@@ -1,0 +1,106 @@
+{% extends 'spot/base.html' %}
+{% block content %}
+<section class="max-w-6xl mx-auto px-4 py-10">
+  <div class="relative overflow-hidden rounded-xl bg-gradient-to-r from-bf1-red/10 to-gray-900/5 p-6 bf1-shadow">
+    <h1 class="text-3xl md:text-4xl font-bold">{{ article.title|default:"Guide BF1" }}</h1>
+    {% if article and article.published_at %}
+      <p class="text-sm text-gray-500 mt-2">Publié le {{ article.published_at|date:"d/m/Y" }}</p>
+    {% endif %}
+  </div>
+
+  <div class="mt-8 grid md:grid-cols-[1fr_280px] gap-6">
+    <div>
+      <div id="readingProgress" class="h-1 bg-bf1-red rounded w-0" aria-hidden="true"></div>
+      <div id="guideContent" class="prose max-w-none mt-4">
+        {% if article %}
+          {{ article.content|safe }}
+        {% else %}
+          <!-- contenu existant non publié -->
+          {% if slug == 'choisir-plage-horaire' %}
+            <h2>Plages horaires et objectifs</h2>
+            <ul>
+              <li>6h–11h: excellente répétition matinale, coût contenu.</li>
+              <li>11h25–14h25 et 14h30–16h55: trafic utile (pause, midi, après-midi).</li>
+              <li>17h55–19h: pré-access stratégique.</li>
+              <li>Prime time 19h25–20h55: impact maximal, tarif supérieur.</li>
+              <li>21h55–fin: couverture tardive, utile pour rappel.</li>
+            </ul>
+          {% elif slug == 'formats-et-durees' %}
+            <h2>Formats et durées</h2>
+            <ul>
+              <li>Spots 0–30 s: message clair et efficace.</li>
+              <li>Spots 31–60 s: storytelling renforcé, coût majoré.</li>
+              <li>Supplément/seconde (HT): à prévoir pour dépassement de durée.</li>
+              <li>PAD: formats longs (≤13/26/52 min) selon besoin.</li>
+              <li>Publireportage: idéal pour démonstrations, chiffrage au JT 13h/19h30.</li>
+            </ul>
+          {% elif slug == 'mix-tv-digital' %}
+            <h2>Mixer TV et digital</h2>
+            <ul>
+              <li>Relayer vos spots sur Facebook/YouTube (vidéo ou visuel).</li>
+              <li>Utiliser le message défilant pour présence continue.</li>
+              <li>Associer petite annonce et spot vidéo pour conversions.</li>
+            </ul>
+          {% elif slug == 'gerer-le-budget' %}
+            <h2>Gérer un budget</h2>
+            <ul>
+              <li>Commencer par une petite annonce à la semaine.</li>
+              <li>Choisir 1–2 plages TV selon l’audience cible.</li>
+              <li>Ajouter un JT (13h ou 19h30) pour pic d’attention.</li>
+              <li>Privilégier les durées 0–30 s pour optimiser le coût.</li>
+            </ul>
+          {% else %}
+            <p>Ce guide sera publié prochainement.</p>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+
+    <aside class="hidden md:block">
+      <div class="sticky top-24 bg-white rounded-lg p-4 bf1-shadow">
+        <h2 class="text-sm font-semibold text-gray-900">Sommaire</h2>
+        <nav id="toc" class="mt-3 space-y-2 text-sm text-gray-700" aria-label="Sommaire généré"></nav>
+      </div>
+      <!-- Nouveau: CTA collants -->
+      <div class="sticky top-[360px] mt-4 bg-white rounded-lg p-4 bf1-shadow">
+        <div class="grid grid-cols-1 gap-3">
+          <a href="{% url 'pricing_overview' %}" class="px-4 py-2 bg-gray-800 text-white rounded text-center bf1-hover"><i class="fas fa-tags mr-2"></i> Tarifs</a>
+          <a href="{% url 'contact_advisor' %}" class="px-4 py-2 bg-bf1-red text-white rounded text-center bf1-hover"><i class="fas fa-envelope mr-2"></i> Contact</a>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Progression de lecture
+    const content = document.getElementById('guideContent');
+    const progress = document.getElementById('readingProgress');
+    const updateProgress = () => {
+      const rect = content.getBoundingClientRect();
+      const total = content.scrollHeight - window.innerHeight;
+      const scrolled = window.scrollY - content.offsetTop;
+      const ratio = Math.min(Math.max(scrolled / total, 0), 1);
+      progress.style.width = `${ratio * 100}%`;
+    };
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    updateProgress();
+
+    // TOC auto depuis h2/h3
+    const toc = document.getElementById('toc');
+    const headings = content.querySelectorAll('h2, h3');
+    headings.forEach((h, idx) => {
+      const id = h.id || `h-${idx}`;
+      h.id = id;
+      const a = document.createElement('a');
+      a.href = `#${id}`;
+      a.textContent = h.textContent;
+      a.className = (h.tagName === 'H2') ? 'block font-medium hover:text-bf1-red' : 'block pl-3 text-gray-600 hover:text-bf1-red';
+      toc.appendChild(a);
+    });
+  });
+</script>
+{% endblock %}

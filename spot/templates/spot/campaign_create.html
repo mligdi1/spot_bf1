@@ -1,0 +1,255 @@
+{% extends 'spot/base.html' %}
+
+{% block title %}Nouvelle campagne - BF1 TV{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- En-tête -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-4">
+            <i class="fas fa-plus text-bf1-red mr-2"></i>
+            Créer une nouvelle campagne
+        </h1>
+        <p class="text-gray-600">
+            Remplissez les informations ci-dessous pour créer votre campagne publicitaire.
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Formulaire principal -->
+        <div class="lg:col-span-2">
+            <div class="bg-white p-6 rounded-lg bf1-shadow">
+                <h2 class="text-xl font-semibold text-gray-900 mb-6">
+                    <i class="fas fa-edit text-bf1-red mr-2"></i>
+                    Informations de la campagne
+                </h2>
+                
+                <form method="post" id="campaignForm">
+                    {% csrf_token %}
+                    <div class="space-y-6">
+                        <!-- Titre -->
+                        <div>
+                            <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Titre de la campagne *
+                            </label>
+                            <input type="text" 
+                                   id="{{ form.title.id_for_label }}" 
+                                   name="{{ form.title.name }}" 
+                                   required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-bf1-red focus:border-bf1-red"
+                                   placeholder="Ex: Campagne promotionnelle été 2024"
+                                   value="{{ form.title.value|default:'' }}">
+                            {% if form.title.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.title.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Description de la campagne *
+                            </label>
+                            <textarea id="{{ form.description.id_for_label }}" 
+                                      name="{{ form.description.name }}" 
+                                      rows="4"
+                                      required
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-bf1-red focus:border-bf1-red"
+                                      placeholder="Décrivez votre campagne publicitaire, vos objectifs, votre message...">{{ form.description.value|default:'' }}</textarea>
+                            {% if form.description.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.description.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Dates -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="{{ form.start_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Date de début *
+                                </label>
+                                <input type="date" 
+                                       id="{{ form.start_date.id_for_label }}" 
+                                       name="{{ form.start_date.name }}" 
+                                       required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-bf1-red focus:border-bf1-red"
+                                       value="{{ form.start_date.value|default:'' }}">
+                                {% if form.start_date.errors %}
+                                    <div class="text-red-600 text-sm mt-1">{{ form.start_date.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div>
+                                <label for="{{ form.end_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Date de fin *
+                                </label>
+                                <input type="date" 
+                                       id="{{ form.end_date.id_for_label }}" 
+                                       name="{{ form.end_date.name }}" 
+                                       required
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-bf1-red focus:border-bf1-red"
+                                       value="{{ form.end_date.value|default:'' }}">
+                                {% if form.end_date.errors %}
+                                    <div class="text-red-600 text-sm mt-1">{{ form.end_date.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Budget -->
+                        <div>
+                            <label for="{{ form.budget.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Budget prévu (FCFA) *
+                            </label>
+                            <div class="relative">
+                                <input type="number" 
+                                       id="{{ form.budget.id_for_label }}" 
+                                       name="{{ form.budget.name }}" 
+                                       min="10000"
+                                       step="1000"
+                                       required
+                                       class="w-full px-3 py-2 pr-12 border border-gray-300 rounded-md focus:outline-none focus:ring-bf1-red focus:border-bf1-red"
+                                       placeholder="100000"
+                                       value="{{ form.budget.value|default:'' }}">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 sm:text-sm">FCFA</span>
+                                </div>
+                            </div>
+                            {% if form.budget.errors %}
+                                <div class="text-red-600 text-sm mt-1">{{ form.budget.errors.0 }}</div>
+                            {% endif %}
+                            <p class="text-sm text-gray-500 mt-1">Budget minimum: 10,000 FCFA</p>
+                        </div>
+
+                        <!-- Boutons -->
+                        <div class="flex flex-col sm:flex-row gap-4 pt-6">
+                            <button type="submit" class="flex-1 bg-bf1-red text-white py-2 px-4 rounded-md hover:bg-bf1-red-dark focus:outline-none focus:ring-2 focus:ring-bf1-red transition-colors">
+                                <i class="fas fa-save mr-2"></i>
+                                Créer la campagne
+                            </button>
+                            <a href="{% url 'campaign_list' %}" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors text-center">
+                                <i class="fas fa-times mr-2"></i>
+                                Annuler
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Sidebar avec conseils -->
+        <div class="space-y-6">
+            <!-- Conseils -->
+            <div class="bg-bf1-red-light p-6 rounded-lg">
+                <h3 class="text-lg font-semibold text-bf1-red mb-4">
+                    <i class="fas fa-lightbulb mr-2"></i>
+                    Conseils pour votre campagne
+                </h3>
+                <ul class="text-sm text-gray-700 space-y-3">
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-bf1-red mr-2 mt-1"></i>
+                        <span>Choisissez un titre clair et descriptif</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-bf1-red mr-2 mt-1"></i>
+                        <span>Définissez des objectifs mesurables</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-bf1-red mr-2 mt-1"></i>
+                        <span>Planifiez sur une période cohérente</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-bf1-red mr-2 mt-1"></i>
+                        <span>Estimez votre budget avec le simulateur</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Simulateur rapide -->
+            <div class="bg-white p-6 rounded-lg bf1-shadow">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-calculator text-bf1-red mr-2"></i>
+                    Estimation rapide
+                </h3>
+                <p class="text-sm text-gray-600 mb-4">
+                    Utilisez notre simulateur pour estimer le coût de votre campagne.
+                </p>
+                <a href="{% url 'cost_simulator' %}" class="w-full bg-bf1-red text-white py-2 px-4 rounded-md hover:bg-bf1-red-dark transition-colors text-center block">
+                    <i class="fas fa-calculator mr-2"></i>
+                    Ouvrir le simulateur
+                </a>
+            </div>
+
+            <!-- Étapes suivantes -->
+            <div class="bg-gray-50 p-6 rounded-lg">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-list-ol text-bf1-red mr-2"></i>
+                    Étapes suivantes
+                </h3>
+                <ol class="text-sm text-gray-700 space-y-2">
+                    <li class="flex items-start">
+                        <span class="bg-bf1-red text-white text-xs rounded-full w-5 h-5 flex items-center justify-center mr-2 mt-0.5">1</span>
+                        <span>Créer la campagne</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="bg-gray-300 text-gray-700 text-xs rounded-full w-5 h-5 flex items-center justify-center mr-2 mt-0.5">2</span>
+                        <span>Télécharger le spot publicitaire</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="bg-gray-300 text-gray-700 text-xs rounded-full w-5 h-5 flex items-center justify-center mr-2 mt-0.5">3</span>
+                        <span>Attendre l'approbation</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="bg-gray-300 text-gray-700 text-xs rounded-full w-5 h-5 flex items-center justify-center mr-2 mt-0.5">4</span>
+                        <span>Effectuer le paiement</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="bg-gray-300 text-gray-700 text-xs rounded-full w-5 h-5 flex items-center justify-center mr-2 mt-0.5">5</span>
+                        <span>Suivre la diffusion</span>
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Validation côté client
+document.getElementById('campaignForm').addEventListener('submit', function(e) {
+    const startDate = new Date(document.getElementById('{{ form.start_date.id_for_label }}').value);
+    const endDate = new Date(document.getElementById('{{ form.end_date.id_for_label }}').value);
+    const today = new Date();
+    
+    if (startDate < today) {
+        e.preventDefault();
+        alert('La date de début ne peut pas être dans le passé.');
+        return;
+    }
+    
+    if (endDate <= startDate) {
+        e.preventDefault();
+        alert('La date de fin doit être postérieure à la date de début.');
+        return;
+    }
+    
+    const budget = parseInt(document.getElementById('{{ form.budget.id_for_label }}').value);
+    if (budget < 10000) {
+        e.preventDefault();
+        alert('Le budget minimum est de 10,000 FCFA.');
+        return;
+    }
+});
+
+// Calculer automatiquement la durée
+function calculateDuration() {
+    const startDate = new Date(document.getElementById('{{ form.start_date.id_for_label }}').value);
+    const endDate = new Date(document.getElementById('{{ form.end_date.id_for_label }}').value);
+    
+    if (startDate && endDate && endDate > startDate) {
+        const diffTime = Math.abs(endDate - startDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        console.log(`Durée de campagne: ${diffDays} jours`);
+    }
+}
+
+document.getElementById('{{ form.start_date.id_for_label }}').addEventListener('change', calculateDuration);
+document.getElementById('{{ form.end_date.id_for_label }}').addEventListener('change', calculateDuration);
+</script>
+{% endblock %}

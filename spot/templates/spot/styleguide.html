@@ -1,0 +1,121 @@
+{% extends 'spot/base.html' %}
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <header class="mb-10">
+      <h1 class="text-2xl font-bold text-gray-900">Styleguide UI — Spot BF</h1>
+      <p class="mt-2 text-gray-600">Bibliothèque de composants Tailwind et états interactifs.</p>
+    </header>
+
+    <!-- Palette -->
+    <section aria-labelledby="palette" class="mb-12">
+      <h2 id="palette" class="text-xl font-semibold text-gray-900">Palette</h2>
+      <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="p-4 rounded-lg bg-indigo-600 text-white">Indigo 600</div>
+        <div class="p-4 rounded-lg bg-blue-600 text-white">Blue 600</div>
+        <div class="p-4 rounded-lg bg-emerald-600 text-white">Emerald 600</div>
+        <div class="p-4 rounded-lg bg-rose-600 text-white">Rose 600</div>
+      </div>
+    </section>
+
+    <!-- Typographie -->
+    <section aria-labelledby="typo" class="mb-12">
+      <h2 id="typo" class="text-xl font-semibold text-gray-900">Typographie</h2>
+      <div class="mt-4 space-y-2">
+        <p class="text-3xl font-bold">Titre H1</p>
+        <p class="text-2xl font-semibold">Titre H2</p>
+        <p class="text-lg font-medium">Sous-titre</p>
+        <p class="text-base text-gray-700">Paragraphe standard pour le contenu.</p>
+        <p class="text-sm text-gray-500">Légende / aide contextuelle.</p>
+      </div>
+    </section>
+
+    <!-- Métriques -->
+    <section aria-labelledby="metrics" class="mb-12">
+      <h2 id="metrics" class="text-xl font-semibold text-gray-900">Cartes métriques</h2>
+      <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white rounded-xl shadow-sm border p-6">
+          <p class="text-sm text-gray-500">Statut</p>
+          <p class="mt-1 text-lg font-semibold">Approuvée</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border p-6">
+          <p class="text-sm text-gray-500">Budget</p>
+          <p class="mt-1 text-lg font-semibold">250 000 FCFA</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border p-6">
+          <p class="text-sm text-gray-500">Durée</p>
+          <p class="mt-1 text-lg font-semibold">30 s</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Chip de statut -->
+    <section aria-labelledby="status" class="mb-12">
+      <h2 id="status" class="text-xl font-semibold text-gray-900">Chip de statut</h2>
+      <div class="mt-4 flex gap-3">
+        <span class="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Approuvée</span>
+        <span class="inline-flex items-center px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">En attente</span>
+        <span class="inline-flex items-center px-3 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200">Rejetée</span>
+      </div>
+    </section>
+
+    <!-- Mockup TV -->
+    <section aria-labelledby="mockup" class="mb-12">
+      <h2 id="mockup" class="text-xl font-semibold text-gray-900">Mockup TV</h2>
+      <div class="mt-4">
+        <div class="bg-gray-900 rounded-2xl p-4 shadow-lg">
+          <div class="bg-black rounded-lg overflow-hidden">
+            <div class="aspect-video bg-gray-800 flex items-center justify-center text-gray-400">Prévisualisation vidéo</div>
+          </div>
+          <div class="mt-4 flex flex-wrap items-center gap-2 text-gray-300">
+            <button class="px-3 py-1.5 bg-gray-800 rounded">Lecture</button>
+            <button class="px-3 py-1.5 bg-gray-800 rounded">Pause</button>
+            <button class="px-3 py-1.5 bg-gray-800 rounded">x1</button>
+            <button class="px-3 py-1.5 bg-gray-800 rounded">x1.5</button>
+            <button class="px-3 py-1.5 bg-gray-800 rounded">x2</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Boutons -->
+    <section aria-labelledby="buttons" class="mb-12">
+      <h2 id="buttons" class="text-xl font-semibold text-gray-900">Boutons</h2>
+      <div class="mt-4 flex flex-wrap gap-3">
+        <button class="px-4 py-2 rounded-lg bg-indigo-600 text-white shadow-sm">Primaire</button>
+        <button class="px-4 py-2 rounded-lg bg-gray-800 text-white">Secondaire</button>
+        <button class="px-4 py-2 rounded-lg border border-gray-300">Ternaire</button>
+        <button class="px-4 py-2 rounded-lg bg-rose-600 text-white">Danger</button>
+      </div>
+    </section>
+
+    <!-- Form inputs -->
+    <section aria-labelledby="forms" class="mb-12">
+      <h2 id="forms" class="text-xl font-semibold text-gray-900">Champs de formulaire</h2>
+      <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Titre</label>
+          <input type="text" class="mt-1 w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" placeholder="Titre de campagne" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Budget</label>
+          <input type="number" class="mt-1 w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" placeholder="0" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-gray-700">Description</label>
+          <textarea class="mt-1 w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" rows="3" placeholder="Décrivez la campagne"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <!-- États -->
+    <section aria-labelledby="states" class="mb-12">
+      <h2 id="states" class="text-xl font-semibold text-gray-900">États interactifs</h2>
+      <div class="mt-4 space-y-2">
+        <button class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Hover + Focus</button>
+        <button class="px-4 py-2 rounded-lg bg-gray-800 text-white disabled:opacity-50" disabled>Désactivé</button>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

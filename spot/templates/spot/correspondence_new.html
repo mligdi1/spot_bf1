@@ -1,0 +1,30 @@
+{% extends 'spot/base.html' %}
+{% block title %}Nouvelle correspondance{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <h1 class="text-2xl font-bold mb-2">Nouvelle demande</h1>
+  <form method="post">
+    {% csrf_token %}
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 mb-2">Sujet</label>
+      <input type="text" name="subject" class="w-full border px-3 py-2 rounded" required>
+    </div>
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 mb-2">Campagne liée (optionnel)</label>
+      <select name="campaign_id" class="w-full border px-3 py-2 rounded">
+        <option value="">-- Aucune --</option>
+        {% for c in campaigns %}
+          <option value="{{ c.id }}">{{ c.title }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="mb-6">
+      <label class="block text-sm font-medium text-gray-700 mb-2">Message</label>
+      <textarea name="content" rows="6" class="w-full border px-3 py-2 rounded" required></textarea>
+    </div>
+    <div class="flex justify-end">
+      <button class="bg-bf1-red text-white px-4 py-2 rounded">Envoyer</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

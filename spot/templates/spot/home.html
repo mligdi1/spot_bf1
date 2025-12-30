@@ -1,0 +1,556 @@
+{% extends 'spot/base.html' %}
+{% load static %}
+
+{% block title %}BF1 - Gestionnaire Service Commercial{% endblock %}
+
+{% block content %}
+<section class="bg-white py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <div class="flex flex-col sm:flex-row items-center justify-center mb-6">
+                <div class="flex flex-col sm:flex-row items-center">
+    <img src="{% static 'logo_bf1.jpg' %}" alt="Logo BF1" class="h-14 sm:h-16 w-auto mb-3 sm:mb-0">
+                    <div class="ml-0 sm:ml-3 text-center sm:text-left">
+                        <h1 class="text-3xl sm:text-4xl font-bold text-bf1-gray-dark font-montserrat">BF1 <span class="text-bf1-red">TV</span></h1>
+                        <p class="text-gray-600 italic heart-text">La chaîne au cœur de nos défis</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-bf1-red text-white p-6 sm:p-10 rounded-lg mb-8 shadow-xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-24 sm:w-32 h-24 sm:h-32 opacity-10">
+                    <svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full">
+                        <path d="M21 3H3C1.89 3 1 3.89 1 5V17C1 18.1 1.89 19 3 19H8V21H16V19H21C22.1 19 23 18.1 23 17V5C23 3.89 22.1 3 21 3M21 17H3V5H21V17M16 11L9 15V7L16 11Z"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-extrabold mb-4 relative z-10 font-montserrat elegant-appear">Bienvenue au service commercial de BF1</h2>
+                <div class="relative overflow-hidden elegant-appear">
+            <div class="bf1-marquee-container mt-1" aria-label="BF1 — Première audience télé au Burkina Faso; Une télé proche des populations et des jeunes">
+              <div class="bf1-marquee-track text-base sm:text-lg opacity-90 relative z-10 py-1">
+                <span class="bf1-marquee-item">Première audience télé au Burkina Faso avec près de 5 millions d'abonnés sur les réseaux sociaux</span>
+                <span class="bf1-marquee-sep">•</span>
+                <span class="bf1-marquee-item">Une télé proche des populations et des jeunes</span>
+                <!-- duplication pour défilement continu sans saut -->
+                <span class="bf1-marquee-item">Première audience télé au Burkina Faso avec près de 5 millions d'abonnés sur les réseaux sociaux</span>
+                <span class="bf1-marquee-sep">•</span>
+                <span class="bf1-marquee-item">Une télé proche des populations et des jeunes</span>
+              </div>
+            </div>
+                </div>
+                <!-- CTA mis en valeur dans la bannière -->
+                <div class="mt-4 relative z-10">
+                    {% if user.is_authenticated and user.role == 'admin' %}
+                    <a href="{% url 'admin_dashboard' %}" class="inline-flex items-center px-5 py-3 bg-white text-bf1-red font-semibold rounded-lg shadow hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white">
+                        <i class="fas fa-gauge mr-2"></i> Tableau de bord
+                    </a>
+                    {% else %}
+                    <a href="{% url 'campaign_spot_create' %}" class="inline-flex items-center px-5 py-3 bg-white text-bf1-red font-semibold rounded-lg shadow hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white">
+                        <i class="fas fa-bullhorn mr-2"></i> Créer ma campagne
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions rapides MASQUÉES -->
+        <!--
+        <section class="mb-12" aria-label="Actions rapides" data-animate="fade-up">
+            ...
+        </section>
+        -->
+        <section class="mb-12" data-animate="fade-up">
+    <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center md:text-left">Processus publicitaire BF1</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="bg-white p-6 rounded-lg bf1-shadow">
+                    <div class="inline-flex items-center px-3 py-1 rounded-full bg-bf1-red text-white text-sm font-semibold">1. Demande</div>
+                    <p class="text-gray-700 mt-3">Expliquez votre objectif, votre message, votre public et la période souhaitée.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg bf1-shadow">
+                    <div class="inline-flex items-center px-3 py-1 rounded-full bg-gray-900 text-white text-sm font-semibold">2. Conseil</div>
+                    <p class="text-gray-700 mt-3">Nous recommandons le format, la durée et un budget indicatif.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg bf1-shadow">
+                    <div class="inline-flex items-center px-3 py-1 rounded-full bg-blue-600 text-white text-sm font-semibold">3. Diffusion</div>
+                    <p class="text-gray-700 mt-3">Votre campagne est diffusée à la TV, en ligne et au JT, avec un suivi simple.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg bf1-shadow">
+                    <div class="inline-flex items-center px-3 py-1 rounded-full bg-green-600 text-white text-sm font-semibold">4. Mesure</div>
+                    <p class="text-gray-700 mt-3">Nous regardons les résultats, restons disponibles et améliorons la campagne au fur et à mesure.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="mb-12 grid md:grid-cols-[1fr_420px] gap-6 items-center" data-animate="fade-up">
+            <div class="bg-white p-6 rounded-lg bf1-shadow">
+    <h2 class="text-2xl font-bold text-gray-900 mb-3">BF1, toujours plus proche de vous</h2>
+                <p class="text-gray-700">Diffuser le bon message, au bon moment, avec un budget maîtrisé.</p>
+                <div class="mt-4 flex gap-3">
+                    <a href="{% url 'pricing_overview' %}" class="px-4 py-2 bg-gray-800 text-white rounded bf1-hover"><i class="fas fa-tags mr-2"></i> Voir les tarifs</a>
+                    <a href="{% url 'contact_advisor' %}" class="px-4 py-2 bg-bf1-red text-white rounded bf1-hover"><i class="fas fa-envelope mr-2"></i> Contact rapide</a>
+                </div>
+            </div>
+            <div class="relative overflow-hidden rounded-lg bf1-shadow bg-white">
+            <img src="{% static 'teambf1.jpg' %}" alt="Équipe BF1" class="w-full h-full object-cover">
+            </div>
+        </section>
+
+        <section class="mb-16" data-animate="fade-up">
+            <div class="bg-gray-900 text-white rounded-lg p-6 md:p-8 bf1-shadow flex flex-col md:flex-row items-center justify-between gap-4">
+                <div>
+                    <h3 class="text-xl font-semibold">Prêt à lancer votre campagne ?</h3>
+                    <p class="text-gray-300 text-sm mt-1">Choisissez vos créneaux et nous vous accompagnons.</p>
+                </div>
+                <!-- CTA "Créer ma pub" : style accentué -->
+                {% if user.is_authenticated %}
+                    <a href="{% url 'campaign_spot_create' %}" class="px-6 py-3 bg-gradient-to-r from-bf1-red to-red-600 text-white rounded-lg shadow-lg bf1-hover focus:outline-none focus:ring-4 focus:ring-bf1-red text-base font-semibold">
+                        <i class="fas fa-magic mr-2"></i> Créer ma pub
+                    </a>
+                {% else %}
+                    <div class="flex flex-wrap gap-3">
+                        <a href="{% url 'pricing_overview' %}" class="px-4 py-2 bg-white text-gray-900 rounded bf1-hover"><i class="fas fa-tags mr-2"></i> Voir les tarifs</a>
+                        <a href="{% url 'contact_advisor' %}" class="px-4 py-2 bg-bf1-red text-white rounded bf1-hover"><i class="fas fa-envelope mr-2"></i> Parler à un conseiller</a>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+
+        {% if not user.is_authenticated or user.role != 'admin' %}
+        <!-- Guide rapide: bouton flottant + badge + modal -->
+        <style>
+          @keyframes pulse-glow {
+            0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.5); }
+            70% { box-shadow: 0 0 0 16px rgba(220, 38, 38, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+          }
+        </style>
+
+        <!-- Badge aide, masqué dès interaction -->
+        <div
+          id="quick-guide-badge"
+          class="fixed bottom-20 right-6 z-40 px-3 py-1.5 rounded-full bg-white text-gray-900 text-sm font-medium shadow border border-gray-200"
+          role="note"
+          aria-live="polite"
+        >
+          Besoin d’aide ?
+        </div>
+
+        <!-- Bouton toujours visible -->
+        <button
+          id="quick-guide-launcher"
+          type="button"
+          class="fixed bottom-6 right-6 z-40 px-5 py-3 rounded-full shadow-2xl bg-bf1-red text-white text-base font-bold hover:bg-bf1-red-dark focus:outline-none focus:ring-4 focus:ring-bf1-red/40"
+          style="animation: pulse-glow 2s infinite"
+          aria-haspopup="dialog"
+          aria-controls="quick-guide-modal"
+          aria-label="Ouvrir le guide rapide"
+        >
+          <i class="fas fa-compass mr-2"></i> Guide rapide
+        </button>
+
+        <div
+          id="quick-guide-modal"
+          class="hidden fixed inset-0 z-50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="quick-guide-title"
+        >
+          <div id="quick-guide-overlay" class="absolute inset-0 bg-black/40"></div>
+          <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="w-full max-w-md rounded-lg bg-white shadow-2xl">
+              <div class="flex items-center justify-between px-5 py-4 border-b">
+                <h3 id="quick-guide-title" class="text-lg font-semibold text-gray-900">Où souhaitez-vous aller ?</h3>
+                <button id="quick-guide-close" type="button" class="text-gray-500 hover:text-gray-700" aria-label="Fermer">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+
+              <div id="quick-guide-options" class="px-5 py-4 space-y-3"></div>
+
+              <div class="px-5 py-4 border-t flex items-center justify-between">
+                <label class="inline-flex items-center gap-2 text-sm text-gray-600">
+                  <input id="quick-guide-dontshow" type="checkbox" class="rounded border-gray-300">
+                  Ne plus me proposer aujourd’hui
+                </label>
+                <button id="quick-guide-continue" type="button" class="px-4 py-2 bg-gray-900 text-white rounded hover:bg-gray-800">
+                  Continuer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- /Guide rapide -->
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const textSlider = document.getElementById('text-slider');
+  if (textSlider && !reduceMotion) {
+    const slides = textSlider.querySelectorAll('p');
+    let currentSlide = 0;
+    function nextSlide() {
+      currentSlide = (currentSlide + 1) % slides.length;
+      textSlider.style.transform = `translateY(-${currentSlide * slides[0].offsetHeight}px)`;
+    }
+    setInterval(nextSlide, 3000);
+  }
+
+  const animated = document.querySelectorAll('[data-animate="fade-up"]');
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = 1;
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+  animated.forEach(el => {
+    el.style.opacity = 0;
+    el.style.transform = 'translateY(10px)';
+    el.style.transition = 'opacity 400ms ease, transform 400ms ease';
+    io.observe(el);
+  });
+
+  if (!reduceMotion) {
+    document.querySelectorAll('.home-card').forEach(card => {
+      card.style.willChange = 'transform';
+      card.addEventListener('mousemove', (e) => {
+        const r = card.getBoundingClientRect();
+        const x = e.clientX - r.left - r.width/2;
+        const y = e.clientY - r.top - r.height/2;
+        card.style.transform = `rotateX(${(-y/r.height)*3}deg) rotateY(${(x/r.width)*3}deg)`;
+      });
+      card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+    });
+  }
+
+  const heroBlock = document.querySelector('section.bg-white .bg-bf1-red.text-white');
+  if (heroBlock && !reduceMotion) {
+    heroBlock.style.willChange = 'transform';
+    window.addEventListener('scroll', () => {
+      const y = window.scrollY || 0;
+      heroBlock.style.transform = `translateY(${Math.min(y * 0.04, 20)}px)`;
+    }, { passive: true });
+  }
+
+  const cards = Array.from(document.querySelectorAll('.home-card'));
+  cards.forEach(c => c.setAttribute('tabindex', '0'));
+  document.addEventListener('keydown', (e) => {
+    if (['ArrowRight', 'ArrowLeft'].includes(e.key) && document.activeElement && document.activeElement.classList.contains('home-card')) {
+      const idx = cards.indexOf(document.activeElement);
+      const nextIdx = e.key === 'ArrowRight' ? Math.min(idx + 1, cards.length - 1) : Math.max(idx - 1, 0);
+      cards[nextIdx].focus();
+    }
+  });
+
+  {% if not user.is_authenticated or user.role != 'admin' %}
+  // Quick Guide logic (permanent launcher + auto-open conditional)
+  const launcher = document.getElementById('quick-guide-launcher');
+  const badge = document.getElementById('quick-guide-badge');
+  const modal = document.getElementById('quick-guide-modal');
+  const overlay = document.getElementById('quick-guide-overlay');
+  const closeBtn = document.getElementById('quick-guide-close');
+  const dontShow = document.getElementById('quick-guide-dontshow');
+  const continueBtn = document.getElementById('quick-guide-continue');
+  const optionsContainer = modal ? modal.querySelector('#quick-guide-options') : null;
+
+  function isActiveUser() {
+    try { return localStorage.getItem('bf1_user_active') === '1'; } catch { return false; }
+  }
+
+  function attachOptionListeners() {
+    if (!optionsContainer) return;
+    const btns = Array.from(optionsContainer.querySelectorAll('button[data-target]'));
+    btns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.getAttribute('data-target');
+        navigateTo(target);
+        if (dontShow && dontShow.checked) disableAutoOpenToday();
+      });
+    });
+  }
+
+  function renderQuickGuideOptions(active) {
+    if (!optionsContainer) return;
+    const base = `
+      <button data-target="create" class="w-full text-left px-4 py-3 rounded bg-bf1-red text-white hover:bg-bf1-red-dark">
+        <span class="font-semibold">Créer une campagne</span>
+        <div class="text-sm opacity-90">Démarrer la création de votre campagne</div>
+      </button>
+      <button data-target="contact" class="w-full text-left px-4 py-3 rounded bg-gray-50 hover:bg-gray-100">
+        <span class="font-medium text-gray-900">Contacter un conseiller</span>
+        <div class="text-sm text-gray-600">Obtenir de l’aide rapidement</div>
+      </button>
+    `;
+    const extra = `
+      <button data-target="spots" class="w-full text-left px-4 py-3 rounded bg-gray-50 hover:bg-gray-100">
+        <span class="font-medium text-gray-900">Mes spots</span>
+        <div class="text-sm text-gray-600">Gérer vos spots publicitaires</div>
+      </button>
+      <button data-target="reports" class="w-full text-left px-4 py-3 rounded bg-gray-50 hover:bg-gray-100">
+        <span class="font-medium text-gray-900">Rapports</span>
+        <div class="text-sm text-gray-600">Consulter bilans et activités</div>
+      </button>
+    `;
+    optionsContainer.innerHTML = active ? base + extra : base;
+    attachOptionListeners();
+  }
+
+  function todayKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  // Désactive uniquement l’auto-ouverture pour la journée
+  function shouldAutoOpen() {
+    try {
+      const disabledOn = localStorage.getItem('bf1_quick_guide_disable_auto_for_day');
+      return disabledOn !== todayKey();
+    } catch { return true; }
+  }
+  function disableAutoOpenToday() {
+    try { localStorage.setItem('bf1_quick_guide_disable_auto_for_day', todayKey()); } catch {}
+  }
+
+  function hideBadge() { if (badge) badge.classList.add('hidden'); }
+  function openModal() {
+    if (!modal) return;
+    hideBadge();
+    modal.classList.remove('hidden');
+    const first = modal.querySelector('button[data-target]');
+    if (first) first.focus();
+    document.addEventListener('keydown', onKeyDown);
+    renderQuickGuideOptions(isActiveUser());
+  }
+  function closeModal() {
+    if (!modal) return;
+    modal.classList.add('hidden');
+    document.removeEventListener('keydown', onKeyDown);
+  }
+  function onKeyDown(e) { if (e.key === 'Escape') closeModal(); }
+  function navigateTo(target) {
+    switch (target) {
+      case 'create': window.location.href = "{% url 'campaign_spot_create' %}"; break;
+      case 'grid': window.location.href = "{% url 'broadcast_grid' %}"; break;
+      case 'reports': window.location.href = "{% url 'report_overview' %}"; break;
+      case 'spots': window.location.href = "{% url 'spot_list' %}"; break;
+      case 'contact': window.location.href = "{% url 'contact_advisor' %}"; break;
+    }
+  }
+
+  if (shouldAutoOpen()) { openModal(); }
+  if (launcher) launcher.addEventListener('click', () => { openModal(); });
+  if (overlay) overlay.addEventListener('click', closeModal);
+  if (closeBtn) closeBtn.addEventListener('click', closeModal);
+
+  if (continueBtn) {
+    continueBtn.addEventListener('click', () => {
+      if (dontShow && dontShow.checked) disableAutoOpenToday();
+      closeModal();
+    });
+  }
+
+  // Rendu initial (au cas où le modal serait déjà visible)
+  renderQuickGuideOptions(isActiveUser());
+
+  // Mise à jour en temps réel après création d’activité (autres onglets)
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'bf1_user_active' && e.newValue === '1') {
+      renderQuickGuideOptions(true);
+    }
+  });
+  {% endif %}
+});
+</script>
+{% endblock %}
+
+<!-- Hero d’accueil BF1TV -->
+<div class="relative overflow-hidden rounded-xl bg-gradient-to-r from-bf1-red/10 to-gray-900/5 p-6 bf1-shadow mb-8">
+    <div class="flex items-center gap-4">
+            <img src="{% static 'logo_bf1.jpg' %}" alt="BF1" class="w-14 h-14 rounded-lg shadow" />
+        <div>
+            <h1 class="text-3xl md:text-4xl font-bold">BF1 — votre partenaire pub</h1>
+            <p class="text-gray-700 mt-2">Comprendre, planifier et suivre vos diffusions.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Actions rapides (navigation immédiate) MASQUÉES -->
+<!--
+<section class="mb-12" aria-label="Actions rapides" data-animate="fade-up">
+    <h2 class="text-2xl font-bold text-gray-900 mb-6">Actions rapides</h2>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <a href="{% url 'advisory_wizard' %}" class="home-card bg-white p-6 rounded-lg bf1-shadow hover:shadow-xl transition focus:outline-none focus:ring-2 focus:ring-bf1-red">
+            <div class="text-center">
+                <div class="w-20 h-20 rounded-full bg-bf1-red text-white flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-lightbulb text-3xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-1">Conseils publicitaires</h3>
+                <p class="text-gray-600 text-sm">Objectifs → format/durée → repères de budget</p>
+            </div>
+        </a>
+        <a href="{% url 'guides_list' %}" class="home-card bg-white p-6 rounded-lg bf1-shadow hover:shadow-xl transition focus:outline-none focus:ring-2 focus:ring-bf1-red">
+            <div class="text-center">
+                <div class="w-20 h-20 rounded-full bg-blue-500 text-white flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-book text-3xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-1">Guides pratiques</h3>
+                <p class="text-gray-600 text-sm">Pas à pas pour réussir vos campagnes</p>
+            </div>
+        </a>
+        <a href="{% url 'inspiration' %}" class="home-card bg-white p-6 rounded-lg bf1-shadow hover:shadow-xl transition focus:outline-none focus:ring-2 focus:ring-bf1-red">
+            <div class="text-center">
+                <div class="w-20 h-20 rounded-full bg-purple-500 text-white flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-fire text-3xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-1">Inspiration</h3>
+                <p class="text-gray-600 text-sm">Exemples et idées pour votre message</p>
+            </div>
+        </a>
+        <a href="{% url 'pricing_overview' %}" class="home-card bg-white p-6 rounded-lg bf1-shadow hover:shadow-xl transition focus:outline-none focus:ring-2 focus:ring-bf1-red">
+            <div class="text-center">
+                <div class="w-20 h-20 rounded-full bg-green-500 text-white flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-tags text-3xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-1">Tarifs & packs</h3>
+                <p class="text-gray-600 text-sm">Options claires adaptées à votre budget</p>
+            </div>
+        </a>
+    </div>
+</section>
+-->
+
+
+<!-- Processus, Pourquoi, Exemples, Marque & CTA (inchangés) -->
+<section class="mb-12" data-animate="fade-up"> 
+    <h2 class="text-2xl font-bold text-gray-900 mb-6">Exemples de campagnes</h2>
+    <div class="grid md:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-lg bf1-shadow">
+            <h3 class="font-semibold text-gray-900">Visibilité rapide</h3>
+            <p class="text-gray-600 text-sm mt-2">Spots courts + annonces sur 7 jours pour émerger vite.</p>
+            <div class="mt-4">
+                <a href="{% url 'pricing_overview' %}" class="px-4 py-2 bg-gray-800 text-white rounded bf1-hover"><i class="fas fa-tags mr-2"></i> Voir les repères</a>
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-lg bf1-shadow">
+            <h3 class="font-semibold text-gray-900">Trafic en magasin</h3>
+            <p class="text-gray-600 text-sm mt-2">Diffusions régulières en journée + message défilant.</p>
+            <div class="mt-4">
+                <a href="{% url 'guides_list' %}" class="px-4 py-2 bg-bf1-red text-white rounded bf1-hover"><i class="fas fa-book mr-2"></i> Lire les guides</a>
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-lg bf1-shadow">
+            <h3 class="font-semibold text-gray-900">Institutionnel JT</h3>
+            <p class="text-gray-600 text-sm mt-2">Publireportage au JT + spots prime pour maximum d’impact.</p>
+            <div class="mt-4">
+                <a href="{% url 'contact_advisor' %}" class="px-4 py-2 bg-bf1-red text-white rounded bf1-hover"><i class="fas fa-envelope mr-2"></i> Demander un devis</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- Marque & équipe -->
+<section class="mb-12 grid md:grid-cols-[1fr_420px] gap-6 items-center" data-animate="fade-up">
+    <div class="bg-white p-6 rounded-lg bf1-shadow">
+    <h2 class="text-2xl font-bold text-gray-900 mb-3">BF1, proche des entreprises</h2>
+        <p class="text-gray-700">Nous vous aidons à diffuser le bon message, au bon moment, avec un budget maîtrisé.</p>
+        <div class="mt-4 flex gap-3">
+            <a href="{% url 'pricing_overview' %}" class="px-4 py-2 bg-gray-800 text-white rounded bf1-hover"><i class="fas fa-tags mr-2"></i> Voir les tarifs</a>
+            <a href="{% url 'contact_advisor' %}" class="px-4 py-2 bg-bf1-red text-white rounded bf1-hover"><i class="fas fa-envelope mr-2"></i> Contact rapide</a>
+        </div>
+    </div>
+    <div class="relative overflow-hidden rounded-lg bf1-shadow bg-white">
+            <img src="{% static 'teambf1.jpg' %}" alt="Équipe BF1" class="w-full h-full object-cover">
+    </div>
+</section>
+
+<!-- Appel à l’action final -->
+<section class="mb-16" data-animate="fade-up">
+    <div class="bg-gray-900 text-white rounded-lg p-6 md:p-8 bf1-shadow flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+            <h3 class="text-xl font-semibold">Prêt à lancer votre campagne ?</h3>
+            <p class="text-gray-300 text-sm mt-1">Choisissez vos créneaux et nous vous accompagnons.</p>
+        </div>
+        {% if user.is_authenticated %}
+            <a href="{% url 'campaign_spot_create' %}" class="px-5 py-2.5 bg-bf1-red text-white rounded-lg bf1-hover"><i class="fas fa-magic mr-2"></i> Créer ma pub</a>
+        {% else %}
+            <div class="flex flex-wrap gap-3">
+                <a href="{% url 'pricing_overview' %}" class="px-4 py-2 bg-white text-gray-900 rounded bf1-hover"><i class="fas fa-tags mr-2"></i> Voir les tarifs</a>
+                <a href="{% url 'contact_advisor' %}" class="px-4 py-2 bg-bf1-red text-white rounded bf1-hover"><i class="fas fa-envelope mr-2"></i> Parler à un conseiller</a>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+    {% if not user.is_authenticated or user.role != 'admin' %}
+    <!-- Guide rapide: bouton flottant + badge + modal -->
+    <style>
+      @keyframes pulse-glow {
+        0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.5); }
+        70% { box-shadow: 0 0 0 16px rgba(220, 38, 38, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+      }
+    </style>
+
+    <!-- Badge aide, masqué dès interaction -->
+    <div
+      id="quick-guide-badge"
+      class="fixed bottom-20 right-6 z-40 px-3 py-1.5 rounded-full bg-white text-gray-900 text-sm font-medium shadow border border-gray-200"
+      role="note"
+      aria-live="polite"
+    >
+      Besoin d’aide ?
+    </div>
+
+    <!-- Bouton toujours visible -->
+    <button
+      id="quick-guide-launcher"
+      type="button"
+      class="fixed bottom-6 right-6 z-40 px-5 py-3 rounded-full shadow-2xl bg-bf1-red text-white text-base font-bold hover:bg-bf1-red-dark focus:outline-none focus:ring-4 focus:ring-bf1-red/40"
+      style="animation: pulse-glow 2s infinite"
+      aria-haspopup="dialog"
+      aria-controls="quick-guide-modal"
+      aria-label="Ouvrir le guide rapide"
+    >
+      <i class="fas fa-compass mr-2"></i> Guide rapide
+    </button>
+
+    <div
+      id="quick-guide-modal"
+      class="hidden fixed inset-0 z-50"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="quick-guide-title"
+    >
+      <div id="quick-guide-overlay" class="absolute inset-0 bg-black/40"></div>
+      <div class="absolute inset-0 flex items-center justify-center p-4">
+        <div class="w-full max-w-md rounded-lg bg-white shadow-2xl">
+          <div class="flex items-center justify-between px-5 py-4 border-b">
+            <h3 id="quick-guide-title" class="text-lg font-semibold text-gray-900">Où souhaitez-vous aller ?</h3>
+            <button id="quick-guide-close" type="button" class="text-gray-500 hover:text-gray-700" aria-label="Fermer">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+
+          <div id="quick-guide-options" class="px-5 py-4 space-y-3"></div>
+
+          <div class="px-5 py-4 border-t flex items-center justify-between">
+            <label class="inline-flex items-center gap-2 text-sm text-gray-600">
+              <input id="quick-guide-dontshow" type="checkbox" class="rounded border-gray-300">
+              Ne plus me proposer aujourd’hui
+            </label>
+            <button id="quick-guide-continue" type="button" class="px-4 py-2 bg-gray-900 text-white rounded hover:bg-gray-800">
+              Continuer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /Guide rapide -->
+    {% endif %}
+</section>
+

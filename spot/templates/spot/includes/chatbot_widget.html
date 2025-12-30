@@ -1,0 +1,336 @@
+{% if CHATBOT.enabled %}
+  {% with provider=CHATBOT.provider escalate=CHATBOT.escalate_mode suggestions=CHATBOT.suggestions %}
+  {% with pos=WHATSAPP_WIDGET.position|default:'bottom-left' %}
+  <div id="bf1-chat-draggable" class="fixed z-40 cursor-grab"
+       style="{% if pos == 'bottom-left' %}left:16px;{% else %}right:16px;{% endif %} bottom:88px;">
+    <button type="button" id="bf1-chatbot-toggle"
+            aria-label="Ouvrir l’assistant BF1"
+            class="relative group inline-flex items-center gap-2 rounded-2xl shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bf1-red transition transform hover:scale-[1.03] pointer-events-auto text-white"
+            style="height:54px; padding:0 14px; touch-action:manipulation; background: linear-gradient(135deg, #dc2626, #b91c1c);">
+      <span class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white/15">
+        <i class="fas fa-robot" aria-hidden="true" style="font-size:18px;"></i>
+      </span>
+      <span class="text-sm font-semibold tracking-wide">Assistant</span>
+    </button>
+  </div>
+  {% endwith %}
+
+  <div id="bf1-chatbot-panel"
+       role="dialog"
+       aria-modal="false"
+       aria-labelledby="bf1-chatbot-title"
+       class="fixed z-40 hidden w-[92vw] max-w-sm sm:w-96"
+       style="{% if pos == 'bottom-left' %}left:16px;{% else %}right:16px;{% endif %} bottom:156px;">
+    <div class="bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
+      <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between text-white"
+           style="background: linear-gradient(135deg, rgba(220,38,38,0.95), rgba(185,28,28,0.95));">
+        <h2 id="bf1-chatbot-title" class="text-sm font-semibold flex items-center gap-2">
+          <i class="fas fa-robot" aria-hidden="true"></i>
+          Assistant BF1
+        </h2>
+        <button type="button" id="bf1-chatbot-close" class="p-2 -mr-2 rounded hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white/70" aria-label="Fermer">
+          <i class="fas fa-times" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="p-3 space-y-2">
+        {% if suggestions %}
+        <div id="cb-quick-suggestions" class="flex flex-wrap gap-2">
+          {% for s in suggestions %}
+            <button type="button" class="px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bf1-red">{{ s }}</button>
+          {% endfor %}
+        </div>
+        {% endif %}
+        <div id="bf1-chatbot-thread" class="bg-gray-50 border border-gray-200 rounded p-3 h-72 overflow-y-auto" aria-live="polite" aria-relevant="additions">
+          <div class="text-sm text-gray-600">Bonjour. Comment puis-je vous aider ?</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <label for="bf1-chatbot-input" class="sr-only">Votre message</label>
+          <input id="bf1-chatbot-input" type="text" class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bf1-red" placeholder="Posez votre question…" />
+          <button type="button" id="bf1-chatbot-send" class="px-3 py-2 rounded text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bf1-red"
+                  style="background: linear-gradient(135deg, #dc2626, #b91c1c);">
+            Envoyer
+          </button>
+        </div>
+        {% if escalate == 'contact' %}
+        <div class="pt-1">
+          <a href="/contact/" class="text-xs text-bf1-red hover:underline">Parler à un humain</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // Restore bubble position
+      const bubble = document.getElementById('bf1-chat-draggable');
+      const toggleBtn = document.getElementById('bf1-chatbot-toggle');
+      const panel = document.getElementById('bf1-chatbot-panel');
+      const closeBtn = document.getElementById('bf1-chatbot-close');
+      const input = document.getElementById('bf1-chatbot-input');
+      const send = document.getElementById('bf1-chatbot-send');
+      const thread = document.getElementById('bf1-chatbot-thread');
+
+      if (!bubble || !toggleBtn || !panel || !closeBtn || !input || !send || !thread) return;
+
+      try {
+        const saved = JSON.parse(localStorage.getItem('bf1-chat-pos-v1') || 'null');
+        if (saved && typeof saved.left === 'number' && typeof saved.top === 'number') {
+          bubble.style.left = saved.left + 'px';
+          bubble.style.top = saved.top + 'px';
+          bubble.style.right = 'auto';
+          bubble.style.bottom = 'auto';
+        }
+      } catch(_) {}
+
+      // Draggable bubble
+      let dragging = false;
+      let moved = false;
+      let startX = 0, startY = 0;
+      let origLeft = 0, origTop = 0;
+      let lastDragAt = 0;
+      const MARGIN = 8;
+      const HOLD_MS = 250;
+      const MOVE_PX = 8;
+      let holdTimer = null;
+      let touchStartX = 0;
+      let touchStartY = 0;
+
+      const startDrag = (x, y) => {
+        bubble.classList.add('cursor-grabbing');
+        dragging = true;
+        moved = false;
+        startX = x || 0;
+        startY = y || 0;
+        const rect = bubble.getBoundingClientRect();
+        origLeft = rect.left;
+        origTop = rect.top;
+        bubble.style.right = 'auto';
+        bubble.style.bottom = 'auto';
+      };
+
+      const onMove = (x, y) => {
+        if (!dragging) return;
+        const dx = (x || 0) - startX;
+        const dy = (y || 0) - startY;
+        if (!moved && (Math.abs(dx) > 2 || Math.abs(dy) > 2)) moved = true;
+        const rect = bubble.getBoundingClientRect();
+        const nextLeft = Math.max(MARGIN, Math.min(origLeft + dx, window.innerWidth - rect.width - MARGIN));
+        const nextTop = Math.max(MARGIN, Math.min(origTop + dy, window.innerHeight - rect.height - MARGIN));
+        bubble.style.left = nextLeft + 'px';
+        bubble.style.top = nextTop + 'px';
+        if (!panel.classList.contains('hidden')) placePanel();
+      };
+
+      const endDrag = () => {
+        if (!dragging) return;
+        dragging = false;
+        bubble.classList.remove('cursor-grabbing');
+        if (moved) {
+          lastDragAt = Date.now();
+          try {
+            const rect = bubble.getBoundingClientRect();
+            localStorage.setItem('bf1-chat-pos-v1', JSON.stringify({ left: rect.left, top: rect.top }));
+          } catch(_) {}
+        }
+      };
+
+      bubble.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        startDrag(e.clientX, e.clientY);
+        e.preventDefault();
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        onMove(e.clientX, e.clientY);
+        e.preventDefault();
+      }, { passive: false });
+
+      window.addEventListener('mouseup', () => endDrag());
+
+      bubble.addEventListener('touchstart', (e) => {
+        const t = e.touches && e.touches[0];
+        if (!t) return;
+        touchStartX = t.clientX;
+        touchStartY = t.clientY;
+        holdTimer = window.setTimeout(() => {
+          startDrag(touchStartX, touchStartY);
+        }, HOLD_MS);
+      }, { passive: true });
+
+      window.addEventListener('touchmove', (e) => {
+        const t = e.touches && e.touches[0];
+        if (!t) return;
+        if (!dragging) {
+          const dx = t.clientX - touchStartX;
+          const dy = t.clientY - touchStartY;
+          if (Math.abs(dx) > MOVE_PX || Math.abs(dy) > MOVE_PX) {
+            if (holdTimer) {
+              clearTimeout(holdTimer);
+              holdTimer = null;
+            }
+          }
+          return;
+        }
+        onMove(t.clientX, t.clientY);
+        e.preventDefault();
+      }, { passive: false });
+
+      window.addEventListener('touchend', () => {
+        if (holdTimer) {
+          clearTimeout(holdTimer);
+          holdTimer = null;
+        }
+        endDrag();
+      });
+
+      const PANEL_MARGIN = 8;
+      const placePanel = () => {
+        const rect = bubble.getBoundingClientRect();
+        const panelRect = panel.getBoundingClientRect();
+        const w = panelRect.width || 360;
+        const h = panelRect.height || 420;
+        const left = Math.max(PANEL_MARGIN, Math.min(rect.right - w, window.innerWidth - w - PANEL_MARGIN));
+        const top = Math.max(PANEL_MARGIN, Math.min(rect.top - h - 12, window.innerHeight - h - PANEL_MARGIN));
+        panel.style.left = left + 'px';
+        panel.style.top = top + 'px';
+        panel.style.right = 'auto';
+        panel.style.bottom = 'auto';
+      };
+
+      // Toggle panel
+      const openPanel = () => {
+        panel.classList.remove('hidden');
+        placePanel();
+        input.focus();
+        document.addEventListener('keydown', onKey);
+      };
+      const closePanel = () => {
+        panel.classList.add('hidden');
+        toggleBtn.focus();
+        document.removeEventListener('keydown', onKey);
+      };
+      const onKey = (e) => {
+        if (e.key === 'Escape') { e.preventDefault(); closePanel(); }
+      };
+      toggleBtn.addEventListener('click', () => {
+        if (Date.now() - lastDragAt < 350) return;
+        if (!panel.classList.contains('hidden')) closePanel();
+        else openPanel();
+      });
+      closeBtn.addEventListener('click', () => closePanel());
+      window.addEventListener('resize', () => {
+        if (panel.classList.contains('hidden')) return;
+        placePanel();
+      });
+
+      const addMessage = (role, text) => {
+        const wrap = document.createElement('div');
+        const isUser = role === 'user';
+        wrap.className = 'text-sm my-1 flex ' + (isUser ? 'justify-end' : 'justify-start');
+        const bubbleEl = document.createElement('div');
+        bubbleEl.className = (isUser
+          ? 'max-w-[85%] bg-bf1-red text-white rounded-2xl px-3 py-2'
+          : 'max-w-[85%] bg-white border border-gray-200 text-gray-900 rounded-2xl px-3 py-2');
+        bubbleEl.textContent = text || '';
+        wrap.appendChild(bubbleEl);
+        thread.appendChild(wrap);
+        thread.scrollTop = thread.scrollHeight;
+      };
+      const getCsrfToken = () => {
+        const name = 'csrftoken=';
+        const parts = document.cookie.split(';');
+        for (let c of parts) {
+          c = c.trim();
+          if (c.startsWith(name)) return c.substring(name.length);
+        }
+        return '';
+      };
+
+      const renderActions = (actions) => {
+        if (!Array.isArray(actions)) return;
+        const wrap = document.createElement('div');
+        wrap.className = 'mt-2 flex flex-wrap gap-2';
+        actions.forEach(a => {
+          const btn = document.createElement('a');
+          btn.className = 'px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 text-sm text-gray-900';
+          btn.href = a.href || '#';
+          btn.textContent = a.label || 'Action';
+          wrap.appendChild(btn);
+        });
+        thread.appendChild(wrap);
+        thread.scrollTop = thread.scrollHeight;
+      };
+
+      const typing = () => {
+        const el = document.createElement('div');
+        el.className = 'text-sm text-gray-500';
+        el.textContent = 'Assistant BF1 est en train de répondre…';
+        thread.appendChild(el);
+        thread.scrollTop = thread.scrollHeight;
+        return el;
+      };
+
+      const doSend = async () => {
+        const text = (input.value || '').trim();
+        if (!text) return;
+        addMessage('user', text);
+        input.value = '';
+        const hold = typing();
+        try {
+          const resp = await fetch('/api/chat/query/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': getCsrfToken(),
+            },
+            body: JSON.stringify({ text }),
+          });
+          const ct = resp.headers.get('content-type') || '';
+          let data = null;
+          if (ct.includes('application/json')) {
+            data = await resp.json();
+          } else {
+            // Non-JSON (e.g., CSRF failure or redirected HTML)
+            await resp.text();
+            data = null;
+          }
+          hold.remove();
+          if (data && data.ok) {
+            addMessage('bot', data.message || '');
+            renderActions(data.actions);
+          } else {
+            addMessage('bot', 'Désolé, une erreur est survenue.');
+          }
+        } catch (e) {
+          hold.remove();
+          addMessage('bot', 'Désolé, une erreur réseau est survenue.');
+        }
+      };
+
+      send.addEventListener('click', doSend);
+      input.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') {
+          ev.preventDefault();
+          doSend();
+        }
+      });
+
+      const suggestionsRoot = document.getElementById('cb-quick-suggestions');
+      if (suggestionsRoot) {
+        suggestionsRoot.addEventListener('click', (ev) => {
+          const t = ev.target;
+          if (t && t.matches('button, .cb-suggestion')) {
+            const txt = (t.textContent || '').trim();
+            if (txt) {
+              input.value = txt;
+              doSend();
+            }
+          }
+        });
+      }
+    })();
+  </script>
+  {% endwith %}
+{% endif %}

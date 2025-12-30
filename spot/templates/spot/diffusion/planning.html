@@ -1,0 +1,407 @@
+{% extends 'spot/diffusion/base_diffusion.html' %}
+{% block title %}Planning{% endblock %}
+{% block content %}
+<h1 class="heading text-3xl font-semibold text-gray-900 mb-6 flex items-center"><i class="fa-solid fa-calendar-days text-red-600 mr-3"></i>Planning</h1>
+
+<div class="flex gap-3 mb-4 card p-2 hover-raise" role="navigation" aria-label="Changer la vue du planning">
+  <a class="btn {% if view == 'day' %}btn--primary{% else %}btn--outline{% endif %}"
+     data-ripple="true" aria-current="{% if view == 'day' %}page{% endif %}" href="?view=day"><i class="fa-solid fa-sun mr-2"></i>Jour</a>
+  <a class="btn {% if view == 'week' %}btn--primary{% else %}btn--outline{% endif %}"
+     data-ripple="true" aria-current="{% if view == 'week' %}page{% endif %}" href="?view=week"><i class="fa-solid fa-calendar-week mr-2"></i>Semaine</a>
+  <a class="btn {% if view == 'month' %}btn--primary{% else %}btn--outline{% endif %}"
+     data-ripple="true" aria-current="{% if view == 'month' %}page{% endif %}" href="?view=month"><i class="fa-solid fa-calendar-days mr-2"></i>Mois</a>
+</div>
+
+<div class="bg-white shadow rounded-lg overflow-hidden">
+  <div class="p-4">
+    <script>
+      // Corrige l'affichage "tout blanc" après un clic retour (bfcache)
+      // Certains navigateurs restaurent la page depuis le cache sans relancer les scripts.
+      // On force un rafraîchissement uniquement si la page provient du Back/Forward Cache.
+      window.addEventListener('pageshow', function(e){
+        if (e && e.persisted) {
+          try { location.reload(); } catch(_) {}
+        }
+      });
+
+      // Fallback supplémentaire: au retour, si le contenu principal est vide, on recharge.
+      (function(){
+        function isPlanningContentEmpty(){
+          const container = document.querySelector('.bg-white.shadow.rounded-lg .p-4');
+          if (!container) return true;
+          // Vérifie qu'il y a au moins un élément (ex: titre, grilles, articles)
+          return container.children.length === 0 || container.innerText.trim() === '';
+        }
+        function maybeReload(){
+          try {
+            if (document.visibilityState === 'visible' && isPlanningContentEmpty()) {
+              location.reload();
+            }
+          } catch(_) {}
+        }
+        // Détection quand la page redevient visible (retour arrière)
+        document.addEventListener('visibilitychange', function(){
+          if (document.visibilityState === 'visible') { maybeReload(); }
+        });
+        // Vérification rapide après montage du script
+        setTimeout(maybeReload, 50);
+      })();
+    </script>
+    {% if view == 'week' %}
+    <div class="grid grid-cols-1 md:grid-cols-7 gap-4">
+      {% for d in week_days %}
+      <div class="glass rounded-xl p-4" data-drop-day="{{ d|date:'Y-m-d' }}" ondragover="event.preventDefault()" ondrop="window.handleDrop(event)" ondragenter="window.handleDragEnter(event)" ondragleave="window.handleDragLeave(event)">
+        <h3 class="text-sm font-semibold text-gray-700 mb-2">{{ d|date:'EEE d/m' }}</h3>
+        <div class="space-y-3 min-h-[60px]">
+          {% for s in schedules %}
+            {% if s.broadcast_date == d %}
+            <article class="card p-3 hover-raise" draggable="true" ondragstart="window.handleDragStart(event)" data-schedule-id="{{ s.id }}" data-broadcast-date="{{ d|date:'Y-m-d' }}">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="text-sm font-semibold">{{ s.spot.title }}</h4>
+                  <p class="text-xs text-gray-500">{{ s.broadcast_time|time:'H:i' }}</p>
+                </div>
+                <span class="text-xs text-gray-600">{{ s.spot.media_type|title }}</span>
+                </div>
+                <div class="mt-2 flex gap-2 items-center">
+                  <a class="text-xs text-blue-600 hover:underline" href="{% url 'diffusion_spot_detail' s.spot.id %}">Voir</a>
+                  {% if s.spot.video_file or s.spot.image_file %}
+                  <a class="text-xs text-red-600 hover:underline" href="{% url 'diffusion_download_spot' s.spot.id %}">Télécharger</a>
+                  {% endif %}
+                  {% if d == today and not s.is_broadcasted %}
+                  <button type="button" class="text-xs px-2 py-1 rounded bg-green-600 text-white hover:bg-green-700" onclick="window.confirmBroadcast('{{ s.id }}')">Confirmer la diffusion</button>
+                  {% elif s.is_broadcasted %}
+                  <span class="text-xs text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">Diffusé</span>
+                  {% endif %}
+                </div>
+              </article>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if view != 'week' %}<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {% for s in schedules %}
+      <article class="card p-4 hover-raise" data-schedule-id="{{ s.id }}" data-broadcast-date="{{ s.broadcast_date|date:'Y-m-d' }}">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-semibold text-gray-800">{{ s.spot.title }}</h2>
+            <p class="text-sm text-gray-500">{{ s.broadcast_date|date:'d/m/Y' }} • {{ s.broadcast_time|time:'H:i' }}</p>
+            <p class="text-sm text-gray-500">{{ s.spot.campaign.client.username }}</p>
+          </div>
+          <div class="text-right">
+            <span class="inline-flex items-center px-2 py-1 text-xs bg-gray-100 rounded">
+              {% if s.spot.media_type == 'video' %}
+                🎬 Vidéo
+              {% elif s.spot.media_type == 'image' %}
+                🖼️ Image
+              {% else %}
+                📄 Média
+              {% endif %}
+            </span>
+            <div class="mt-2 text-xs text-gray-600">Durée: {{ s.spot.duration_seconds }}s</div>
+          </div>
+        </div>
+        <div class="mt-4 h-2 bg-gray-100 rounded">
+          {% with dur=s.spot.duration_seconds|default:30 %}
+          {% if dur <= 15 %}
+            <div class="h-2 bg-red-600 rounded" style="width:25%"></div>
+          {% elif dur <= 30 %}
+            <div class="h-2 bg-red-600 rounded" style="width:50%"></div>
+          {% elif dur <= 60 %}
+            <div class="h-2 bg-red-600 rounded" style="width:75%"></div>
+          {% else %}
+            <div class="h-2 bg-red-600 rounded" style="width:100%"></div>
+          {% endif %}
+          {% endwith %}
+        </div>
+        <div class="mt-4 flex gap-2 items-center">
+          <a class="btn btn--sm btn--outline" href="{% url 'diffusion_spot_detail' s.spot.id %}" title="Voir le spot"><i class="fa-solid fa-eye mr-1"></i> Voir</a>
+          {% if s.spot.video_file or s.spot.image_file %}
+          <a class="btn btn--sm btn--primary" href="{% url 'diffusion_download_spot' s.spot.id %}" title="Télécharger le média"><i class="fa-solid fa-download mr-1"></i> Télécharger</a>
+          {% endif %}
+          {% if s.broadcast_date == today and not s.is_broadcasted %}
+          <button type="button" class="btn btn--sm btn--primary" onclick="window.confirmBroadcast('{{ s.id }}')"><i class="fa-solid fa-check mr-1"></i> Confirmer la diffusion</button>
+          {% elif s.is_broadcasted %}
+          <span class="text-xs text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1">Diffusé</span>
+          {% endif %}
+        </div>
+      </article>
+      {% empty %}
+      <div class="card p-6 text-gray-500">Aucun créneau programmé.</div>
+      {% endfor %}
+    </div>{% endif %}
+    <script>
+      const VIEW = '{{ view }}';
+      const TODAY = '{{ today|date:'Y-m-d' }}';
+      function getCookie(name){
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if(parts.length === 2) return parts.pop().split(';').shift();
+      }
+      window.handleDragStart = function(e){
+        const id = e.currentTarget.getAttribute('data-schedule-id');
+        e.dataTransfer.setData('text/plain', id);
+      };
+      window.handleDragEnter = function(e){
+        e.currentTarget.classList.add('ring-2','ring-red-500');
+      };
+      window.handleDragLeave = function(e){
+        e.currentTarget.classList.remove('ring-2','ring-red-500');
+      };
+      window.handleDrop = function(e){
+        e.preventDefault();
+        const id = e.dataTransfer.getData('text/plain');
+        const day = e.currentTarget.getAttribute('data-drop-day');
+        if(!id || !day) return;
+        const form = new FormData();
+        form.append('schedule_id', id);
+        form.append('broadcast_date', day);
+        fetch('{% url 'diffusion_planning_move' %}', {
+          method:'POST',
+          body:form,
+          headers:{'X-CSRFToken': getCookie('csrftoken')}
+        }).then(r=>r.json()).then(function(res){
+          if(res && res.ok){ location.reload(); }
+        });
+      };
+
+      function isValidTimeStr(s){
+        return /^\d{2}:\d{2}$/.test(s || '');
+      }
+      function findDateIsoForSchedule(scheduleId){
+        const el = document.querySelector(`[data-schedule-id="${scheduleId}"]`);
+        if (!el) return '';
+        return el.getAttribute('data-broadcast-date') || (el.closest('[data-drop-day]') ? el.closest('[data-drop-day]').getAttribute('data-drop-day') : '');
+      }
+      window.promptEditTime = function(evt){
+        const el = evt.currentTarget.closest('[data-schedule-id]');
+        if (!el) return;
+        const id = el.getAttribute('data-schedule-id');
+        const curEl = el.querySelector('.text-xs.text-gray-500');
+        const cur = curEl ? (curEl.textContent||'').trim().slice(0,5) : '';
+        const t = prompt('Nouvelle heure (HH:MM)', cur || '');
+        if (!t || !isValidTimeStr(t)) return;
+        const d = el.getAttribute('data-broadcast-date') || findDateIsoForSchedule(id);
+        updateScheduleTime(id, t, d);
+      };
+      window.promptEditTimeById = function(id, dateIso){
+        const curEl = document.querySelector(`[data-schedule-id="${id}"] .text-xs.text-gray-500`);
+        const cur = curEl ? (curEl.textContent||'').trim().slice(0,5) : '';
+        const t = prompt('Nouvelle heure (HH:MM)', cur || '');
+        if (!t || !isValidTimeStr(t)) return;
+        const d = dateIso || findDateIsoForSchedule(id);
+        updateScheduleTime(id, t, d);
+      };
+      function updateScheduleTime(id, timeStr, dateIso){
+        if (!id || !timeStr || !dateIso) return;
+        const form = new FormData();
+        form.append('schedule_id', id);
+        form.append('broadcast_date', dateIso);
+        form.append('broadcast_time', timeStr);
+        fetch('{% url 'diffusion_planning_move' %}', {
+          method:'POST',
+          body:form,
+          headers:{'X-CSRFToken': getCookie('csrftoken')}
+        }).then(r=>r.json()).then(function(res){
+          if(res && res.ok){ location.reload(); }
+          else { alert('Erreur lors de la mise à jour de l\'heure'); }
+        }).catch(function(){ alert('Erreur réseau'); });
+      }
+
+      // Confirmation de diffusion (avec option d'annulation)
+      window.confirmBroadcast = function(scheduleId){
+        try {
+          const form = new FormData();
+          form.append('schedule_id', scheduleId);
+          fetch('{% url 'diffusion_planning_confirm_broadcast' %}', {
+            method:'POST',
+            body:form,
+            headers:{'X-CSRFToken': getCookie('csrftoken')}
+          }).then(r=>r.json()).then(function(res){
+            if(!res || !res.ok){
+              const code = (res && res.error) || 'unknown_error';
+              alert('Confirmation impossible: ' + code);
+              return;
+            }
+            // Feedback visuel immédiat: badge + lien Annuler
+            const card = document.querySelector(`[data-schedule-id="${scheduleId}"]`);
+            if (card){
+              const actions = card.querySelector('.mt-2.flex.gap-2') || card.querySelector('.mt-4.flex.gap-2');
+              if (actions){
+                // Supprimer le bouton "Confirmer la diffusion" s'il est présent
+                const btn = actions.querySelector('button') || actions.querySelector('a.btn.btn--sm.btn--primary');
+                if (btn && /confirmBroadcast/.test(String(btn.onclick||'')+btn.getAttribute('onclick')||'')) {
+                  btn.remove();
+                }
+                // Ajouter le badge de statut si absent
+                if (!actions.querySelector('.js-confirm-badge')){
+                  const badge = document.createElement('span');
+                  badge.className = 'js-confirm-badge text-xs text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1';
+                  badge.textContent = 'Diffusé';
+                  actions.appendChild(badge);
+                }
+                // Ajouter le lien Annuler
+                if (!actions.querySelector('.js-undo-link')){
+                  const undo = document.createElement('a');
+                  undo.href = '#';
+                  undo.className = 'js-undo-link text-xs text-gray-600 underline ml-2';
+                  undo.textContent = 'Annuler';
+                  undo.onclick = function(ev){ ev.preventDefault(); window.undoBroadcast(scheduleId); };
+                  actions.appendChild(undo);
+                }
+              }
+            }
+          }).catch(function(){ alert('Erreur réseau'); });
+        } catch(_) { /* ignore */ }
+      };
+
+      window.undoBroadcast = function(scheduleId){
+        try {
+          const form = new FormData();
+          form.append('schedule_id', scheduleId);
+          fetch('{% url 'diffusion_planning_undo_broadcast' %}', {
+            method:'POST',
+            body:form,
+            headers:{'X-CSRFToken': getCookie('csrftoken')}
+          }).then(r=>r.json()).then(function(res){
+            if(!res || !res.ok){
+              const code = (res && res.error) || 'unknown_error';
+              alert('Annulation impossible: ' + code);
+              return;
+            }
+            location.reload();
+          }).catch(function(){ alert('Erreur réseau'); });
+        } catch(_) { /* ignore */ }
+      };
+
+      // Live updates via WebSocket
+      (function(){
+        const loc = window.location;
+        const proto = loc.protocol === 'https:' ? 'wss' : 'ws';
+        const wsUrl = proto + '://' + loc.host + '/ws/diffusion/planning/';
+
+        const spotDetailHref = (id) => '/diffusion/spots/' + String(id) + '/';
+        const spotDownloadHref = (id) => '/diffusion/telechargements/spot/' + String(id) + '/';
+
+        // Cache des items
+        const items = new Map();
+
+        function formatCard(item){
+          const mediaBadge = (item.media_type === 'video') ? '🎬 Vidéo' : (item.media_type === 'image' ? '🖼️ Image' : '📄 Média');
+          const dur = Number(item.duration_seconds || 30);
+          let bar = '50%';
+          if (dur <= 15) bar = '25%'; else if (dur <= 30) bar = '50%'; else if (dur <= 60) bar = '75%'; else bar = '100%';
+          const confirmBtn = (!item.is_broadcasted && String(item.date_iso) === String(TODAY)) ? `<button type="button" class="btn btn--sm btn--primary" onclick="window.confirmBroadcast('${item.id}')"><i class=\"fa-solid fa-check mr-1\"></i> Confirmer la diffusion</button>` : '';
+          const statusBadge = item.is_broadcasted ? `<span class=\"text-xs text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1\">Diffusé</span>` : '';
+          return `
+          <article class="card p-4 hover-raise" data-schedule-id="${item.id}" data-broadcast-date="${item.date_iso||''}">
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="text-lg font-semibold text-gray-800">${item.title || ''}</h2>
+                <p class="text-sm text-gray-500">${item.date_str} • ${item.time_str}</p>
+                <p class="text-sm text-gray-500">${item.client || ''}</p>
+              </div>
+              <div class="text-right">
+                <span class="inline-flex items-center px-2 py-1 text-xs bg-gray-100 rounded">${mediaBadge}</span>
+                <div class="mt-2 text-xs text-gray-600">Durée: ${dur}s</div>
+              </div>
+            </div>
+            <div class="mt-4 h-2 bg-gray-100 rounded">
+              <div class="h-2 bg-red-600 rounded" style="width:${bar}"></div>
+            </div>
+            <div class="mt-4 flex gap-2 items-center">
+              <a class="btn btn--sm btn--outline" href="${spotDetailHref(item.spot_id || '')}" title="Voir le spot"><i class="fa-solid fa-eye mr-1"></i> Voir</a>
+              ${item.has_media ? `<a class="btn btn--sm btn--primary" href="${spotDownloadHref(item.spot_id || '')}" title="Télécharger le média"><i class="fa-solid fa-download mr-1"></i> Télécharger</a>` : ''}
+              ${confirmBtn || statusBadge}
+            </div>
+          </article>`;
+        }
+
+        function sortByDateTime(a, b){
+          const ad = (a.date_iso||'') + 'T' + (a.time_iso||'00:00:00');
+          const bd = (b.date_iso||'') + 'T' + (b.time_iso||'00:00:00');
+          if (ad < bd) return -1;
+          if (ad > bd) return 1;
+          return 0;
+        }
+
+        function renderNonWeek(){
+          const grid = document.querySelector('.grid.grid-cols-1.md\:grid-cols-2');
+          if (!grid) return;
+          const arr = Array.from(items.values()).sort(sortByDateTime);
+          grid.innerHTML = arr.map(formatCard).join('') || '<div class="card p-6 text-gray-500">Aucun créneau programmé.</div>';
+        }
+
+        function renderWeek(){
+          const containers = document.querySelectorAll('[data-drop-day]');
+          if (!containers || containers.length === 0) return;
+          const byDay = {};
+          for (const it of items.values()){
+            byDay[it.date_iso] = byDay[it.date_iso] || [];
+            byDay[it.date_iso].push(it);
+          }
+          for (const el of containers){
+            const day = el.getAttribute('data-drop-day');
+            const list = (byDay[day]||[]).sort(sortByDateTime);
+            el.querySelector('.space-y-3').innerHTML = list.map(function(it){
+              const mediaLabel = (it.media_type === 'video') ? 'Vidéo' : (it.media_type === 'image' ? 'Image' : 'Média');
+              const confirmWeekBtn = (!it.is_broadcasted && String(it.date_iso) === String(TODAY)) ? `<button type=\"button\" class=\"text-xs px-2 py-1 rounded bg-green-600 text-white hover:bg-green-700\" onclick=\"window.confirmBroadcast('${it.id}')\">Confirmer la diffusion</button>` : '';
+              const statusWeekBadge = it.is_broadcasted ? `<span class=\"text-xs text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1\">Diffusé</span>` : '';
+              return `
+              <article class="card p-3 hover-raise" draggable="true" ondragstart="window.handleDragStart(event)" data-schedule-id="${it.id}" data-broadcast-date="${day}">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h4 class="text-sm font-semibold">${it.title||''}</h4>
+                    <p class="text-xs text-gray-500">${it.time_str}</p>
+                  </div>
+                  <span class="text-xs text-gray-600">${mediaLabel}</span>
+                </div>
+                <div class="mt-2 flex gap-2 items-center">
+                  <a class="text-xs text-blue-600 hover:underline" href="${spotDetailHref(it.spot_id || '')}">Voir</a>
+                  ${it.has_media ? `<a class="text-xs text-red-600 hover:underline" href="${spotDownloadHref(it.spot_id || '')}">Télécharger</a>` : ''}
+                  ${confirmWeekBtn || statusWeekBadge}
+                </div>
+              </article>`;
+            }).join('');
+          }
+        }
+
+        function render(){
+          if (VIEW === 'week') renderWeek(); else renderNonWeek();
+        }
+
+        function applySnapshot(itemsList){
+          items.clear();
+          for (const it of (itemsList||[])){
+            items.set(String(it.id), it);
+          }
+          render();
+        }
+
+        function upsertItem(it){
+          if (!it || !it.id) return;
+          items.set(String(it.id), it);
+          render();
+        }
+
+        function connect(){
+          try {
+            const ws = new WebSocket(wsUrl);
+            ws.onmessage = (evt) => {
+              try {
+                const data = JSON.parse(evt.data);
+                if (data && data.type === 'snapshot') applySnapshot(data.items);
+                else if (data && data.type === 'update' && data.action === 'upsert') upsertItem(data.item);
+              } catch(_){ /* ignore */ }
+            };
+            ws.onclose = () => setTimeout(connect, 10000);
+          } catch(_){ /* ignore */ }
+        }
+        connect();
+      })();
+    </script>
+  </div>
+{% endblock %}

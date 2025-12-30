@@ -1,0 +1,151 @@
+{% extends 'spot/diffusion/base_diffusion.html' %}
+{% block title %}Spots diffusés{% endblock %}
+{% block content %}
+<h1 class="heading text-3xl font-semibold text-gray-900 mb-6 flex items-center"><i class="fa-solid fa-signal text-blue-700 mr-3"></i>Spots diffusés</h1>
+
+<div class="border-b mb-4 flex items-center gap-6">
+  <a href="{% url 'diffusion_spots' %}"
+     class="px-3 py-2 -mb-px border-b-2 border-transparent text-gray-600 hover:text-blue-700 inline-flex items-center gap-2">
+    <i class="fa-solid fa-list"></i> À diffuser
+  </a>
+  <a href="{% url 'diffusion_spots_broadcasted' %}"
+     class="px-3 py-2 -mb-px border-b-2 border-blue-600 text-blue-700 font-semibold inline-flex items-center gap-2">
+    <i class="fa-solid fa-signal"></i> Diffusés
+  </a>
+  <span class="flex-1"></span>
+</div>
+
+<form method="get" action="{% url 'diffusion_spots_broadcasted' %}" class="card p-4 mb-4 grid grid-cols-1 md:grid-cols-6 gap-3 hover-raise">
+  <div class="form__group">
+    <input id="filter-q" name="q" value="{{ request.GET.q }}" class="form__control" placeholder="Titre spot, campagne, client" />
+    <label for="filter-q" class="form__label">Rechercher</label>
+    <i class="form__icon fa-solid fa-magnifying-glass"></i>
+  </div>
+
+  <div class="form__group">
+    <input id="filter-client" name="client" value="{{ request.GET.client }}" class="form__control" placeholder="Client" />
+    <label for="filter-client" class="form__label">Client</label>
+    <i class="form__icon fa-solid fa-user"></i>
+  </div>
+
+  <div class="form__group form__group--static">
+    <select id="filter-type" name="type" class="form__control">
+      <option value="">Tous</option>
+      <option value="image" {% if request.GET.type == 'image' %}selected{% endif %}>Image</option>
+      <option value="video" {% if request.GET.type == 'video' %}selected{% endif %}>Vidéo</option>
+    </select>
+    <label for="filter-type" class="form__label">Type</label>
+    <i class="form__icon fa-solid fa-chevron-down"></i>
+  </div>
+
+  <div class="form__group form__group--static">
+    <select id="filter-channel" name="channel" class="form__control">
+      <option value="">Tous</option>
+      {% for val,label in channels %}
+        <option value="{{ val }}" {% if request.GET.channel == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <label for="filter-channel" class="form__label">Canal</label>
+    <i class="form__icon fa-solid fa-chevron-down"></i>
+  </div>
+
+  <div class="grid grid-cols-2 gap-2">
+    <div class="form__group form__group--static">
+      <input id="filter-date-from" type="date" name="date_from" value="{{ request.GET.date_from }}" class="form__control" />
+      <label for="filter-date-from" class="form__label">Du</label>
+    </div>
+    <div class="form__group form__group--static">
+      <input id="filter-date-to" type="date" name="date_to" value="{{ request.GET.date_to }}" class="form__control" />
+      <label for="filter-date-to" class="form__label">Au</label>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-2">
+    <div class="form__group form__group--static">
+      <input id="filter-dur-min" type="number" name="dur_min" value="{{ request.GET.dur_min }}" class="form__control" min="5" placeholder="Durée min" />
+      <label for="filter-dur-min" class="form__label">Durée min (s)</label>
+    </div>
+    <div class="form__group form__group--static">
+      <input id="filter-dur-max" type="number" name="dur_max" value="{{ request.GET.dur_max }}" class="form__control" max="300" placeholder="Durée max" />
+      <label for="filter-dur-max" class="form__label">Durée max (s)</label>
+    </div>
+  </div>
+
+  <div class="form__group form__group--static">
+    <select id="filter-sort" name="sort" class="form__control">
+      <option value="date_desc" {% if request.GET.sort == 'date_desc' %}selected{% endif %}>Date (récent → ancien)</option>
+      <option value="date_asc" {% if request.GET.sort == 'date_asc' %}selected{% endif %}>Date (ancien → récent)</option>
+      <option value="client_asc" {% if request.GET.sort == 'client_asc' %}selected{% endif %}>Client (A→Z)</option>
+      <option value="client_desc" {% if request.GET.sort == 'client_desc' %}selected{% endif %}>Client (Z→A)</option>
+    </select>
+    <label for="filter-sort" class="form__label">Trier par</label>
+    <i class="form__icon fa-solid fa-chevron-down"></i>
+  </div>
+
+  <div class="flex items-center gap-2">
+    <button type="submit" class="btn btn--primary" data-ripple="true"><i class="fa-solid fa-filter mr-2"></i>Filtrer</button>
+    <a class="btn btn--ghost" href="{% url 'diffusion_spots_broadcasted' %}">Réinitialiser</a>
+    <a class="btn btn--secondary" data-ripple="true" href="{% url 'diffusion_export_spots_broadcasted_pdf' %}?{{ request.GET.urlencode }}"><i class="fa-solid fa-file-pdf mr-2"></i>Exporter en PDF</a>
+  </div>
+</form>
+
+<div class="bg-white shadow rounded-lg overflow-x-auto">
+  <table class="min-w-full table-auto">
+    <thead class="bg-gray-50">
+      <tr>
+        <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Spot</th>
+        <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
+        <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+        <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Heure</th>
+        <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durée</th>
+        <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Canal</th>
+        <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Média</th>
+        <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Métadonnées</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-200 text-sm">
+      {% for s in page_obj %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-3 sm:px-6 py-4">
+            <div class="font-semibold">{{ s.spot.title }}</div>
+            <div class="text-xs text-gray-500">Campagne: {{ s.spot.campaign.title }}</div>
+          </td>
+          <td class="px-3 sm:px-6 py-4">{{ s.spot.campaign.client.username }}</td>
+          <td class="px-3 sm:px-6 py-4 whitespace-nowrap">{{ s.broadcast_date|date:'d/m/Y' }}</td>
+          <td class="px-3 sm:px-6 py-4 whitespace-nowrap">{{ s.broadcast_time|time:'H:i' }}</td>
+          <td class="px-3 sm:px-6 py-4">{% if s.spot.duration_seconds %}{{ s.spot.duration_seconds }}s{% else %}-{% endif %}</td>
+          <td class="px-3 sm:px-6 py-4">{% if s.spot.campaign.channel %}{{ s.spot.campaign.channel|title }}{% else %}-{% endif %}</td>
+          <td class="px-3 sm:px-6 py-4">
+            {% if s.spot.video_file %}
+              <span class="inline-flex items-center"><i class="fa-solid fa-film mr-2 text-red-600"></i> Vidéo</span>
+              <a class="btn btn--ghost text-red-600 ml-2" data-ripple="true" href="{% url 'diffusion_download_spot' s.spot.id %}"><i class="fa-solid fa-download mr-1"></i> Télécharger</a>
+            {% elif s.spot.image_file %}
+              <span class="inline-flex items-center"><i class="fa-regular fa-image mr-2 text-red-600"></i> Image</span>
+              <a class="btn btn--ghost text-red-600 ml-2" data-ripple="true" href="{% url 'diffusion_download_spot' s.spot.id %}"><i class="fa-solid fa-download mr-1"></i> Télécharger</a>
+            {% else %}-{% endif %}
+          </td>
+          <td class="px-3 sm:px-6 py-4">
+            {% if s.time_slot %}<span class="inline-flex items-center rounded bg-gray-100 text-gray-700 px-2 py-1 text-xs mr-1"><i class="fa-regular fa-clock mr-1"></i> {{ s.time_slot.name }}</span>{% endif %}
+            {% if s.price %}<span class="inline-flex items-center rounded bg-blue-100 text-blue-700 px-2 py-1 text-xs mr-1"><i class="fa-solid fa-tag mr-1"></i> {{ s.price }} FCFA</span>{% endif %}
+            {% if s.spot.media_type %}<span class="inline-flex items-center rounded bg-amber-100 text-amber-700 px-2 py-1 text-xs mr-1"><i class="fa-solid fa-layer-group mr-1"></i> {{ s.spot.media_type }}</span>{% endif %}
+            {% if s.spot.description %}<span class="inline-flex items-center rounded bg-green-100 text-green-700 px-2 py-1 text-xs mr-1"><i class="fa-solid fa-note-sticky mr-1"></i> {{ s.spot.description|truncatechars:60 }}</span>{% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="8" class="px-6 py-4 text-center text-gray-500">Aucun spot diffusé trouvé.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="mt-4 flex justify-between items-center">
+  <div>
+    {% if page_obj.has_previous %}<a class="btn btn--outline" data-ripple="true" href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}">← Précédent</a>{% endif %}
+  </div>
+  <div>Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</div>
+  <div>
+    {% if page_obj.has_next %}<a class="btn btn--outline" data-ripple="true" href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}">Suivant →</a>{% endif %}
+  </div>
+</div>
+
+{% endblock %}

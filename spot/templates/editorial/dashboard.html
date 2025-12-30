@@ -1,0 +1,216 @@
+{% extends 'editorial/base.html' %}
+{% load static %}
+{% block title %}Dashboard Rédaction{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <section class="relative overflow-hidden rounded-2xl ed-card p-0 border border-black border-opacity-20">
+    <img src="{% static 'redaction.jpg' %}" alt="BF1 Rédaction" class="absolute inset-0 w-full h-full object-cover opacity-70" loading="eager">
+    <div class="absolute inset-0 hero-overlay"></div>
+    <div class="relative z-10 p-8 text-white">
+      <div class="flex items-start justify-between">
+        <div>
+          <div class="font-montserrat hero-title text-3xl md:text-4xl font-extrabold">BF1 Rédaction – La maîtrise de vos couvertures</div>
+          <div class="mt-2 hero-sub">Planifiez, gérez et pilotez vos couvertures avec fluidité. Une interface premium conçue pour aller vite et voir clair.</div>
+        </div>
+        <div class="flex items-center gap-3">
+          <a href="{% url 'editorial_coverages' %}" class="px-5 py-3 bg-white text-red-700 rounded-lg shadow hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white" aria-label="Voir les couvertures">
+            <i class="fa-solid fa-newspaper mr-2"></i> Voir les couvertures
+          </a>
+          <a href="{% url 'editorial_planning' %}" class="px-5 py-3 bg-red-700 text-white rounded-lg shadow hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-white" aria-label="Voir le planning">
+            <i class="fa-solid fa-calendar-days mr-2"></i> Voir le planning
+          </a>
+        </div>
+      </div>
+      {% if late_coverages and late_coverages|length > 0 %}
+        <div class="mt-6">
+          <div class="rounded-xl bg-black bg-opacity-35 ring-1 ring-white ring-opacity-20 px-4 py-3 text-sm" role="status" aria-live="polite">{{ late_coverages|length }} couverture(s) en retard à traiter</div>
+        </div>
+      {% endif %}
+      <div id="hero_kpis" class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-black bg-opacity-30 rounded-xl p-4">
+          <div class="text-sm">En attente</div>
+          <div class="text-2xl font-bold kpi" data-target="{{ pending_coverages|length }}">0</div>
+        </div>
+        <div class="bg-black bg-opacity-30 rounded-xl p-4">
+          <div class="text-sm">Aujourd’hui</div>
+          <div class="text-2xl font-bold kpi" data-target="{{ todays_coverages|length }}">0</div>
+        </div>
+        <div class="bg-black bg-opacity-30 rounded-xl p-4">
+          <div class="text-sm">En retard</div>
+          <div class="text-2xl font-bold kpi" data-target="{{ late_coverages|length }}">0</div>
+        </div>
+        <div class="bg-black bg-opacity-30 rounded-xl p-4">
+          <div class="text-sm">Équipe dispo</div>
+          <div class="text-2xl font-bold kpi" data-target="{{ journalists_available|length }}">0</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="grid grid-cols-12 gap-6">
+    <section class="col-span-12 lg:col-span-6 bg-white card p-6 hover:shadow-lg transition-all duration-300 fade-up">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold">Couvertures en attente</h2>
+        <div class="px-3 py-1 rounded-full text-xs bg-red-50 text-red-700">{{ pending_coverages|length }}</div>
+      </div>
+      {% if pending_coverages %}
+        <div class="grid grid-cols-1 gap-3">
+          {% for cv in pending_coverages %}
+            <a href="{% url 'editorial_coverage_detail' cv.id %}" class="block border rounded-xl p-4 hover:border-red-300 bg-red-50 border-red-200 transition-transform duration-200 transform hover:-translate-y-0.5" aria-label="Ouvrir couverture">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="font-medium">{{ cv.event_title }}</div>
+                  <div class="text-sm text-slate-600">{{ cv.contact_name }}{% if cv.contact_phone %} · {{ cv.contact_phone }}{% endif %}</div>
+                </div>
+                <div class="text-sm">{{ cv.event_date|date:'d/m/Y' }}{% if cv.start_time %} · {{ cv.start_time }}{% endif %}</div>
+              </div>
+              <div class="mt-2 text-xs px-2 py-1 rounded-full inline-block bg-red-50 text-red-700">Assignation requise</div>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-slate-600">Aucune demande en attente.</div>
+      {% endif %}
+    </section>
+
+    <section class="col-span-12 lg:col-span-6 bg-white card p-6 hover:shadow-lg transition-all duration-300 fade-up">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold">Couvertures du jour</h2>
+        <div class="px-3 py-1 rounded-full text-xs bg-red-50 text-red-700">{{ todays_coverages|length }}</div>
+      </div>
+      {% if todays_coverages %}
+        <div class="relative pl-6">
+          <div class="absolute left-2 top-0 bottom-0 border-l-2 border-red-200"></div>
+          <ul class="space-y-3">
+            {% for cv in todays_coverages %}
+              <li class="flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                  <span class="w-2 h-2 rounded-full bg-red-600"></span>
+                  <div>
+                    <div class="font-medium">{{ cv.event_title }}</div>
+                    <div class="text-sm text-slate-600">{{ cv.address }}</div>
+                  </div>
+                </div>
+                <div class="text-sm">{{ cv.start_time }}{% if cv.end_time %} – {{ cv.end_time }}{% endif %}</div>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% else %}
+        <div class="text-slate-600">Aucune couverture prévue aujourd’hui.</div>
+      {% endif %}
+    </section>
+
+    <section class="col-span-12 lg:col-span-6 bg-white card p-6 hover:shadow-lg transition-all duration-300 fade-up">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold">Couvertures en retard</h2>
+        <div class="px-3 py-1 rounded-full text-xs bg-red-50 text-red-700">{{ late_coverages|length }}</div>
+      </div>
+      {% if late_coverages %}
+        <ul class="divide-y">
+          {% for cv in late_coverages %}
+            <li class="py-3 flex items-center justify-between">
+              <div>
+                <div class="font-medium">{{ cv.event_title }}</div>
+                <div class="text-sm text-slate-600">{{ cv.response_deadline|date:'d/m/Y' }}</div>
+              </div>
+              <a href="{% url 'editorial_coverage_detail' cv.id %}" class="btn btn--primary px-3 py-1 text-xs">Gérer</a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="text-slate-600">Aucun retard détecté.</div>
+      {% endif %}
+    </section>
+
+    <section class="col-span-12 lg:col-span-6 bg-white card p-6 hover:shadow-lg transition-all duration-300 fade-up">
+      <h2 class="text-xl font-semibold mb-4">Disponibilités</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <div class="font-medium mb-2">Journalistes disponibles</div>
+          {% if journalists_available %}
+            <div class="flex flex-wrap gap-3">
+              {% for j in journalists_available %}
+                <div class="flex items-center gap-2">
+                  {% if j.photo %}
+                    <img src="{{ j.photo.url }}" alt="{{ j.name }}" class="w-8 h-8 rounded-full object-cover" loading="lazy" />
+                  {% else %}
+                    <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-xs">{{ j.name|slice:":1"|upper }}</div>
+                  {% endif %}
+                  <div class="text-xs">{{ j.name }}</div>
+                  <span class="w-2 h-2 rounded-full {% if j.status == 'available' %}bg-green-500{% elif j.status == 'on_mission' %}bg-red-500{% elif j.status == 'resting' %}bg-yellow-500{% else %}bg-slate-400{% endif %}"></span>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-slate-600 text-sm">Aucun journaliste disponible.</div>
+          {% endif %}
+        </div>
+        <div>
+          <div class="font-medium mb-2">Chauffeurs disponibles</div>
+          {% if drivers_available %}
+            <div class="flex flex-wrap gap-3">
+              {% for d in drivers_available %}
+                <div class="flex items-center gap-2">
+                  {% if d.photo %}
+                    <img src="{{ d.photo.url }}" alt="{{ d.name }}" class="w-8 h-8 rounded-full object-cover" loading="lazy" />
+                  {% else %}
+                    <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-xs">{{ d.name|slice:":1"|upper }}</div>
+                  {% endif %}
+                  <div class="text-xs">{{ d.name }}</div>
+                  <span class="w-2 h-2 rounded-full {% if d.status == 'available' %}bg-green-500{% elif d.status == 'on_mission' %}bg-red-500{% elif d.status == 'resting' %}bg-yellow-500{% else %}bg-slate-400{% endif %}"></span>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-slate-600 text-sm">Aucun chauffeur disponible.</div>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+  </div>
+  <style>
+    .hero-overlay{background:linear-gradient(120deg, rgba(10,11,14,.65) 0%, rgba(179,31,37,.70) 60%)}
+    .hero-title{text-shadow:0 2px 12px rgba(0,0,0,.35)}
+    .hero-sub{color:rgba(255,255,255,.92);text-shadow:0 1px 8px rgba(0,0,0,.30)}
+    .fade-up{opacity:0;transform:translateY(10px);transition:opacity .4s ease, transform .4s ease}
+    .fade-up.is-visible{opacity:1;transform:none}
+    .kpi{transition:transform .2s ease}
+    .kpi:hover{transform:scale(1.05)}
+    @media (prefers-reduced-motion: reduce){.fade-up{transition:none}.kpi{transition:none}}
+  </style>
+  <script>
+    (function(){
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var inview = document.querySelectorAll('.fade-up');
+      if('IntersectionObserver' in window){
+        var io = new IntersectionObserver(function(entries){
+          entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('is-visible'); }});
+        }, {threshold:0.1});
+        inview.forEach(function(el){ io.observe(el); });
+      } else { inview.forEach(function(el){ el.classList.add('is-visible'); }); }
+      function animateKpis(){
+        if(reduce) return;
+        var ks = document.querySelectorAll('.kpi[data-target]');
+        ks.forEach(function(el){
+          var target = parseInt(el.getAttribute('data-target')||'0',10);
+          var cur = 0; var step = Math.max(1, Math.ceil(target/40)); var raf;
+          function tick(){
+            cur += step;
+            if(cur >= target){ el.textContent = target; cancelAnimationFrame(raf); return; }
+            el.textContent = cur; raf = requestAnimationFrame(tick);
+          }
+          el.textContent = '0'; requestAnimationFrame(tick);
+        });
+      }
+      var kpis = document.getElementById('hero_kpis');
+      if(kpis && 'IntersectionObserver' in window){
+        var io2 = new IntersectionObserver(function(entries){
+          entries.forEach(function(e){ if(e.isIntersecting){ animateKpis(); io2.disconnect(); }});
+        }, {threshold:0.2});
+        io2.observe(kpis);
+      } else { animateKpis(); }
+    })();
+  </script>
+</div>
+{% endblock %}

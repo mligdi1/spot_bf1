@@ -1,0 +1,141 @@
+{% extends 'spot/base.html' %}
+
+{% block title %}Inscription - BF1{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <div>
+            <div class="flex justify-center">
+                <div class="bg-bf1-red text-white p-3 rounded-lg">
+                    <i class="fas fa-tv text-3xl"></i>
+                </div>
+            </div>
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                Créer votre compte
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-600">
+                Ou
+                <a href="{% url 'login' %}" class="font-medium text-bf1-red hover:text-bf1-red-dark">
+                    connectez-vous à votre compte existant
+                </a>
+            </p>
+        </div>
+        
+        <form class="mt-8 space-y-6" method="post">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <div>
+                    <label for="id_username" class="block text-sm font-medium text-gray-700">Nom d'utilisateur</label>
+                    <input id="id_username" name="username" type="text" required 
+                           class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-bf1-red focus:border-bf1-red sm:text-sm" 
+                           placeholder="Choisissez un nom d'utilisateur" value="{{ form.username.value|default:'' }}">
+                    {% if form.username.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.username.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="id_email" class="block text-sm font-medium text-gray-700">Adresse email</label>
+                    <input id="id_email" name="email" type="email" required 
+                           class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-bf1-red focus:border-bf1-red sm:text-sm" 
+                           placeholder="votre@email.com" value="{{ form.email.value|default:'' }}">
+                    {% if form.email.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="id_first_name" class="block text-sm font-medium text-gray-700">Prénom</label>
+                    <input id="id_first_name" name="first_name" type="text" 
+                           class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-bf1-red focus:border-bf1-red sm:text-sm" 
+                           placeholder="Votre prénom" value="{{ form.first_name.value|default:'' }}">
+                    {% if form.first_name.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.first_name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="id_last_name" class="block text-sm font-medium text-gray-700">Nom</label>
+                    <input id="id_last_name" name="last_name" type="text" 
+                           class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-bf1-red focus:border-bf1-red sm:text-sm" 
+                           placeholder="Votre nom" value="{{ form.last_name.value|default:'' }}">
+                    {% if form.last_name.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.last_name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="id_phone" class="block text-sm font-medium text-gray-700">Téléphone</label>
+                    <input id="id_phone" name="phone" type="tel" 
+                           class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-bf1-red focus:border-bf1-red sm:text-sm" 
+                           placeholder="+226 XX XX XX XX" value="{{ form.phone.value|default:'' }}">
+                    {% if form.phone.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.phone.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="id_company" class="block text-sm font-medium text-gray-700">Entreprise (optionnel)</label>
+                    <input id="id_company" name="company" type="text" 
+                           class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-bf1-red focus:border-bf1-red sm:text-sm" 
+                           placeholder="Nom de votre entreprise" value="{{ form.company.value|default:'' }}">
+                    {% if form.company.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.company.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="id_password1" class="block text-sm font-medium text-gray-700">Mot de passe</label>
+                    <input id="id_password1" name="password1" type="password" required 
+                           class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-bf1-red focus:border-bf1-red sm:text-sm" 
+                           placeholder="Choisissez un mot de passe sécurisé">
+                    {% if form.password1.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.password1.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="id_password2" class="block text-sm font-medium text-gray-700">Confirmer le mot de passe</label>
+                    <input id="id_password2" name="password2" type="password" required 
+                           class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-bf1-red focus:border-bf1-red sm:text-sm" 
+                           placeholder="Confirmez votre mot de passe">
+                    {% if form.password2.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.password2.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="flex items-center">
+                <input id="terms" name="terms" type="checkbox" required
+                       class="h-4 w-4 text-bf1-red focus:ring-bf1-red border-gray-300 rounded">
+                <label for="terms" class="ml-2 block text-sm text-gray-900">
+                    J'accepte les 
+                    <a href="#" class="text-bf1-red hover:text-bf1-red-dark">conditions d'utilisation</a>
+                    et la 
+                    <a href="#" class="text-bf1-red hover:text-bf1-red-dark">politique de confidentialité</a>
+                </label>
+            </div>
+
+            <div>
+                <button type="submit" 
+                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-bf1-red hover:bg-bf1-red-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bf1-red">
+                    <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                        <i class="fas fa-user-plus text-bf1-red-light group-hover:text-white"></i>
+                    </span>
+                    Créer mon compte
+                </button>
+            </div>
+
+            <div class="text-center">
+                <p class="text-sm text-gray-600">
+                    Déjà un compte ? 
+                    <a href="{% url 'login' %}" class="font-medium text-bf1-red hover:text-bf1-red-dark">
+                        Connectez-vous ici
+                    </a>
+                </p>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

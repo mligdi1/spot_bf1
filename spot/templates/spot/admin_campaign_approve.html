@@ -1,0 +1,325 @@
+{% extends 'spot/admin_base.html' %}
+
+{% block title %}Approbation campagne - BF1{% endblock %}
+
+{% block admin_header %}Approbation campagne{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-4xl mx-auto space-y-8">
+    <!-- En-tête -->
+    <div class="mb-8">
+        <nav class="flex mb-4" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-4">
+                <li>
+                    <a href="{% url 'admin_dashboard' %}" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-cogs mr-1"></i>
+                        Administration
+                    </a>
+                </li>
+                <li>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                </li>
+                <li>
+                    <span class="text-gray-900 font-medium">Approbation campagne</span>
+                </li>
+            </ol>
+        </nav>
+        
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">
+            <i class="fas fa-check-circle text-bf1-red mr-2"></i>
+            Approbation de campagne
+        </h1>
+        <p class="text-gray-600">
+            Examinez et approuvez ou rejetez la campagne "{{ campaign.title }}"
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Informations de la campagne -->
+        <div class="lg:col-span-2">
+            <div class="bg-white p-6 rounded-lg bf1-shadow">
+                <h2 class="text-xl font-semibold text-gray-900 mb-6">
+                    <i class="fas fa-info-circle text-bf1-red mr-2"></i>
+                    Détails de la campagne
+                </h2>
+                
+                <div class="space-y-6">
+                    <!-- Informations générales -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500 mb-2">Titre</h3>
+                            <p class="text-gray-900">{{ campaign.title }}</p>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500 mb-2">Statut actuel</h3>
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                {{ campaign.get_status_display }}
+                            </span>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500 mb-2">Client</h3>
+                            <p class="text-gray-900">{{ campaign.client.username }}</p>
+                            {% if campaign.client.company %}
+                                <p class="text-sm text-gray-600">{{ campaign.client.company }}</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500 mb-2">Date de création</h3>
+                            <p class="text-gray-900">{{ campaign.created_at|date:"d/m/Y à H:i" }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500 mb-2">Description</h3>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-gray-900">{{ campaign.description }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Période et budget -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500 mb-2">Date de début</h3>
+                            <p class="text-gray-900">{{ campaign.start_date|date:"d/m/Y" }}</p>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500 mb-2">Date de fin</h3>
+                            <p class="text-gray-900">{{ campaign.end_date|date:"d/m/Y" }}</p>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500 mb-2">Budget</h3>
+                            <p class="text-2xl font-bold text-bf1-red">{{ campaign.budget|floatformat:0 }} FCFA</p>
+                        </div>
+                    </div>
+
+                    <!-- Informations client -->
+                    <div class="bg-bf1-red-light p-4 rounded-lg">
+                        <h3 class="text-sm font-medium text-bf1-red mb-3">Informations du client</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="font-medium">Nom d'utilisateur:</span>
+                                <span class="ml-2">{{ campaign.client.username }}</span>
+                            </div>
+                            <div>
+                                <span class="font-medium">Email:</span>
+                                <span class="ml-2">{{ campaign.client.email }}</span>
+                            </div>
+                            {% if campaign.client.phone %}
+                            <div>
+                                <span class="font-medium">Téléphone:</span>
+                                <span class="ml-2">{{ campaign.client.phone }}</span>
+                            </div>
+                            {% endif %}
+                            {% if campaign.client.company %}
+                            <div>
+                                <span class="font-medium">Entreprise:</span>
+                                <span class="ml-2">{{ campaign.client.company }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions d'approbation -->
+        <div class="space-y-6">
+            <!-- Actions -->
+            <div class="bg-white p-6 rounded-lg bf1-shadow">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-gavel text-bf1-red mr-2"></i>
+                    Actions d'approbation
+                </h3>
+                
+                <form method="post" id="approvalForm">
+                    {% csrf_token %}
+                    <div class="space-y-4">
+                        <!-- Approbation -->
+                        <div>
+                            <button type="submit" 
+                                    name="action" 
+                                    value="approve"
+                                    class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors">
+                                <i class="fas fa-check mr-2"></i>
+                                Approuver la campagne
+                            </button>
+                        </div>
+
+                        <!-- Rejet -->
+                        <div>
+                            <button type="button" 
+                                    onclick="toggleRejectForm()"
+                                    class="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors">
+                                <i class="fas fa-times mr-2"></i>
+                                Rejeter la campagne
+                            </button>
+                        </div>
+
+                        <!-- Formulaire de rejet -->
+                        <div id="rejectForm" class="hidden">
+                            <div class="border border-red-200 rounded-lg p-4 bg-red-50">
+                                <h4 class="text-sm font-medium text-red-800 mb-2">Raison du rejet</h4>
+                                <textarea name="rejection_reason" 
+                                          rows="3"
+                                          class="w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500"
+                                          placeholder="Expliquez la raison du rejet..."></textarea>
+                                <div class="mt-3 flex space-x-2">
+                                    <button type="submit" 
+                                            name="action" 
+                                            value="reject"
+                                            class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors">
+                                        Confirmer le rejet
+                                    </button>
+                                    <button type="button" 
+                                            onclick="toggleRejectForm()"
+                                            class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors">
+                                        Annuler
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Statistiques -->
+            <div class="bg-white p-6 rounded-lg bf1-shadow">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-chart-bar text-bf1-red mr-2"></i>
+                    Statistiques
+                </h3>
+                
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Durée de campagne:</span>
+                        <span class="text-sm font-medium">{{ campaign.duration_days }} jours</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Coût par jour:</span>
+                        <span class="text-sm font-medium">{% widthratio campaign.budget campaign.duration_days 1|floatformat:0 %} FCFA</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">TVA (18%):</span>
+                        <span class="text-sm font-medium">{% widthratio campaign.budget 100 18|floatformat:0 %} FCFA</span>
+                    </div>
+                    <hr class="my-2">
+                    <div class="flex justify-between">
+                        <span class="text-sm font-medium">Total TTC:</span>
+                        <span class="text-sm font-bold text-bf1-red">{% widthratio campaign.budget 100 118|floatformat:0 %} FCFA</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historique -->
+            <div class="bg-white p-6 rounded-lg bf1-shadow">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-history text-bf1-red mr-2"></i>
+                    Historique
+                </h3>
+                
+                <div class="space-y-3">
+                    <div class="flex items-start space-x-3">
+                        <div class="flex-shrink-0">
+                            <div class="w-6 h-6 bg-bf1-red-light rounded-full flex items-center justify-center">
+                                <i class="fas fa-plus text-bf1-red text-xs"></i>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm text-gray-900">Campagne créée</p>
+                            <p class="text-xs text-gray-500">{{ campaign.created_at|date:"d/m/Y H:i" }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start space-x-3">
+                        <div class="flex-shrink-0">
+                            <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-check text-green-600 text-xs"></i>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm text-gray-900">Campagne approuvée</p>
+                            <p class="text-xs text-gray-500">{{ campaign.approved_at|date:"d/m/Y H:i" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+function toggleRejectForm() {
+    const rejectForm = document.getElementById('rejectForm');
+    rejectForm.classList.toggle('hidden');
+}
+
+// Confirmation avant approbation
+document.getElementById('approvalForm').addEventListener('submit', function(e) {
+    const action = e.submitter.value;
+    
+    if (action === 'approve') {
+        if (!confirm('Êtes-vous sûr de vouloir approuver cette campagne ?')) {
+            e.preventDefault();
+        }
+    } else if (action === 'reject') {
+        const reason = document.querySelector('textarea[name="rejection_reason"]').value;
+        if (!reason.trim()) {
+            e.preventDefault();
+            alert('Veuillez indiquer la raison du rejet.');
+        } else if (!confirm('Êtes-vous sûr de vouloir rejeter cette campagne ?')) {
+            e.preventDefault();
+        }
+    }
+});
+</script>
+
+    <div class="mt-8 bg-white p-6 rounded-lg bf1-shadow">
+        <h2 class="text-xl font-semibold text-gray-900 mb-6">
+            <i class="fas fa-video text-bf1-red mr-2"></i>
+            Spot publicitaire
+        </h2>
+        {% if spot %}
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500 mb-2">Titre</h3>
+                        <p class="text-gray-900">{{ spot.title }}</p>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500 mb-2">Durée</h3>
+                        <p class="text-gray-900">{{ spot.duration_seconds }} secondes</p>
+                    </div>
+                </div>
+
+                {% if spot.description %}
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500 mb-2">Description</h3>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-gray-900">{{ spot.description }}</p>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if spot.video_file %}
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500 mb-2">Aperçu</h3>
+                    <div class="bg-gray-900 rounded-lg overflow-hidden">
+                        <video controls class="w-full">
+                            <source src="{{ spot.video_file.url }}" type="video/mp4">
+                            Votre navigateur ne supporte pas la lecture de vidéos.
+                        </video>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="bg-yellow-50 p-4 rounded-lg">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle text-yellow-500 text-xl mr-3"></i>
+                    <p class="text-yellow-700">Aucun spot n'a été téléchargé pour cette campagne (optionnel).</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

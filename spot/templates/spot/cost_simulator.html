@@ -1,0 +1,257 @@
+{% extends 'spot/base.html' %}
+
+{% block title %}Simulateur de coût - BF1{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- En-tête -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">
+            <i class="fas fa-calculator text-bf1-red mr-2"></i>
+            Simulateur de coût publicitaire
+        </h1>
+        <p class="text-gray-600">
+            Estimez le coût de votre campagne publicitaire en quelques clics
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Formulaire -->
+        <div class="bg-white rounded-lg shadow-md">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-900">Paramètres de votre campagne</h2>
+                <p class="text-gray-600 text-sm mt-1">Ajustez les paramètres pour voir l'estimation en temps réel</p>
+            </div>
+            
+            <form method="post" class="p-6 space-y-6" id="simulator-form">
+                {% csrf_token %}
+                
+                <div>
+                    <label for="id_duration" class="block text-sm font-medium text-gray-700 mb-2">
+                        Durée du spot (secondes) *
+                    </label>
+                    <input type="number" name="duration" id="id_duration" required min="5" max="300" step="5"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bf1-red focus:border-bf1-red"
+                           placeholder="Ex: 30" value="{{ form.duration.value|default:30 }}">
+                    {% if form.duration.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.duration.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-sm text-gray-500">Entre 5 et 300 secondes</p>
+                </div>
+
+                <div>
+                    <label for="id_time_slot" class="block text-sm font-medium text-gray-700 mb-2">
+                        Créneau horaire *
+                    </label>
+                    <select name="time_slot" id="id_time_slot" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bf1-red focus:border-bf1-red">
+                        <option value="">Sélectionnez un créneau</option>
+                        {% for slot in time_slots %}
+                        <option value="{{ slot.id }}" 
+                                data-multiplier="{{ slot.price_multiplier }}"
+                                {% if form.time_slot.value == slot.id %}selected{% endif %}>
+                            {{ slot.name }} ({{ slot.start_time }} - {{ slot.end_time }}) - x{{ slot.price_multiplier }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if form.time_slot.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.time_slot.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="id_broadcast_count" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nombre de diffusions *
+                    </label>
+                    <input type="number" name="broadcast_count" id="id_broadcast_count" required min="1" max="1000"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bf1-red focus:border-bf1-red"
+                           placeholder="Ex: 10" value="{{ form.broadcast_count.value|default:10 }}">
+                    {% if form.broadcast_count.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.broadcast_count.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-sm text-gray-500">Nombre de fois que votre spot sera diffusé</p>
+                </div>
+
+                <div>
+                    <label for="id_campaign_duration" class="block text-sm font-medium text-gray-700 mb-2">
+                        Durée de la campagne (jours) *
+                    </label>
+                    <input type="number" name="campaign_duration" id="id_campaign_duration" required min="1" max="365"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bf1-red focus:border-bf1-red"
+                           placeholder="Ex: 30" value="{{ form.campaign_duration.value|default:30 }}">
+                    {% if form.campaign_duration.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.campaign_duration.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-sm text-gray-500">Sur combien de jours votre campagne va s'étaler</p>
+                </div>
+
+                <button type="submit" class="w-full bg-bf1-red text-white py-3 rounded-lg hover:bg-bf1-red-dark transition-colors">
+                    <i class="fas fa-calculator mr-2"></i>
+                    Calculer le coût
+                </button>
+            </form>
+        </div>
+
+        <!-- Résultats -->
+        <div class="space-y-6">
+            <!-- Estimation en temps réel -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Estimation en temps réel</h3>
+                <div id="real-time-estimation" class="text-center py-8">
+                    <div class="text-gray-400 mb-4">
+                        <i class="fas fa-calculator text-4xl"></i>
+                    </div>
+                    <p class="text-gray-600">Remplissez le formulaire pour voir l'estimation</p>
+                </div>
+            </div>
+
+            <!-- Résultat du calcul -->
+            {% if estimated_cost is not None %}
+            <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+                <div class="text-center">
+                    <div class="text-green-600 mb-4">
+                        <i class="fas fa-check-circle text-4xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-green-800 mb-2">Coût estimé</h3>
+                    <p class="text-4xl font-extrabold text-green-900">{{ estimated_cost|floatformat:0 }} FCFA</p>
+                    <p class="text-green-700 mt-2">TVA incluse (18%)</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Détail du calcul -->
+            {% if calculation_details %}
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Détail du calcul</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Prix de base ({{ calculation_details.duration }}s):</span>
+                        <span class="font-semibold">{{ calculation_details.base_price|floatformat:0 }} FCFA</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Multiplicateur créneau:</span>
+                        <span class="font-semibold">x{{ calculation_details.time_multiplier }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Nombre de diffusions:</span>
+                        <span class="font-semibold">{{ calculation_details.broadcast_count }}</span>
+                    </div>
+                    <div class="flex justify-between border-t pt-2">
+                        <span class="text-gray-600">Sous-total:</span>
+                        <span class="font-semibold">{{ calculation_details.subtotal|floatformat:0 }} FCFA</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">TVA (18%):</span>
+                        <span class="font-semibold">{{ calculation_details.tax|floatformat:0 }} FCFA</span>
+                    </div>
+                    <div class="flex justify-between border-t pt-2 text-lg">
+                        <span class="font-bold text-gray-900">Total:</span>
+                        <span class="font-bold text-bf1-red">{{ calculation_details.total|floatformat:0 }} FCFA</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Conseils -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-blue-900 mb-4">
+                    <i class="fas fa-lightbulb mr-2"></i>
+                    Conseils pour optimiser votre budget
+                </h3>
+                <ul class="space-y-2 text-blue-800">
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-blue-600 mr-2 mt-1"></i>
+                        <span>Les créneaux de nuit sont moins chers</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-blue-600 mr-2 mt-1"></i>
+                        <span>Les spots courts (5-15s) sont plus économiques</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-blue-600 mr-2 mt-1"></i>
+                        <span>Planifiez sur plusieurs semaines pour un meilleur impact</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="mt-8 flex items-center justify-between">
+        <a href="{% url 'dashboard' %}" class="text-gray-600 hover:text-gray-900 flex items-center">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Retour au tableau de bord
+        </a>
+        
+        {% if estimated_cost is not None %}
+        <a href="{% url 'campaign_create' %}" class="bg-bf1-red text-white px-6 py-3 rounded-lg hover:bg-bf1-red-dark transition-colors">
+            <i class="fas fa-plus mr-2"></i>
+            Créer cette campagne
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+{# Export JSON des règles pour le script #}
+{{ pricing_rules|json_script:"pricing-rules-data" }}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('simulator-form');
+    const estimationDiv = document.getElementById('real-time-estimation');
+    const rulesEl = document.getElementById('pricing-rules-data');
+    const pricingRules = rulesEl ? JSON.parse(rulesEl.textContent) : [];
+    const taxRate = {{ tax_rate|default:0.18 }};
+
+    function getBasePricePerSecond(duration) {
+        for (const r of pricingRules) {
+            if (duration >= r.duration_min && duration <= r.duration_max) {
+                return parseFloat(r.base_price);
+            }
+        }
+        // Fallback si aucune règle ne couvre la durée
+        return 1000;
+    }
+    
+    function calculateEstimation() {
+        const duration = parseInt(document.getElementById('id_duration').value) || 0;
+        const timeSlotSelect = document.getElementById('id_time_slot');
+        const broadcastCount = parseInt(document.getElementById('id_broadcast_count').value) || 0;
+        
+        if (duration > 0 && timeSlotSelect.value && broadcastCount > 0) {
+            const selectedOption = timeSlotSelect.options[timeSlotSelect.selectedIndex];
+            const multiplier = parseFloat(selectedOption.dataset.multiplier) || 1;
+
+            const basePrice = getBasePricePerSecond(duration);
+            const subtotal = basePrice * duration * multiplier * broadcastCount;
+            const tax = subtotal * taxRate;
+            const total = subtotal + tax;
+            
+            estimationDiv.innerHTML = `
+                <div class="text-center">
+                    <div class="text-bf1-red mb-4">
+                        <i class="fas fa-calculator text-4xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Estimation</h3>
+                    <p class="text-3xl font-extrabold text-bf1-red">${total.toLocaleString()} FCFA</p>
+                    <p class="text-gray-600 mt-2">TVA incluse</p>
+                </div>
+            `;
+        } else {
+            estimationDiv.innerHTML = `
+                <div class="text-center py-8">
+                    <div class="text-gray-400 mb-4">
+                        <i class="fas fa-calculator text-4xl"></i>
+                    </div>
+                    <p class="text-gray-600">Remplissez le formulaire pour voir l'estimation</p>
+                </div>
+            `;
+        }
+    }
+    
+    form.addEventListener('input', calculateEstimation);
+    form.addEventListener('change', calculateEstimation);
+    calculateEstimation();
+});
+</script>
+{% endblock %}

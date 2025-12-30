@@ -1,0 +1,194 @@
+{% extends 'spot/base.html' %}
+
+{% block title %}Grille de diffusion{% endblock %}
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-red-50 to-white py-8">
+  <!-- Hero vibrant -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-600 to-red-700 text-white p-8 shadow-lg mb-8">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div>
+          <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight">Grille de diffusion</h1>
+          <p class="mt-1 text-red-100">Jour sélectionné: {{ selected_date|date:"d/m/Y" }}</p>
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <span class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-full bg-white/15 backdrop-blur">
+              <i class="fas fa-calendar-day mr-2"></i>{{ selected_date|date:"l"|capfirst }}
+            </span>
+            <span class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-full bg-white/15 backdrop-blur">
+              <i class="fas fa-broadcast-tower mr-2"></i>{{ total_schedules }} diffusions
+            </span>
+            <span class="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-full bg-white/15 backdrop-blur">
+              <i class="fas fa-bullhorn mr-2"></i>{{ campaigns_for_day_count }} campagnes actives
+            </span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="{% url 'broadcast_grid' %}?date={{ prev_date }}" class="inline-flex items-center px-3 py-2 rounded-lg bg-white text-gray-900 hover:bg-gray-100 font-medium shadow-sm" aria-label="Jour précédent">
+            <i class="fas fa-chevron-left mr-2 text-bf1-red"></i> Précédent
+          </a>
+          <a href="{% url 'broadcast_grid' %}?date={{ next_date }}" class="inline-flex items-center px-3 py-2 rounded-lg bg-white text-gray-900 hover:bg-gray-100 font-medium shadow-sm" aria-label="Jour suivant">
+            Suivant <i class="fas fa-chevron-right ml-2 text-bf1-red"></i>
+          </a>
+        </div>
+      </div>
+      <div class="absolute -bottom-6 -right-6 hidden md:block opacity-30">
+        <div class="w-40 h-40 rounded-full bg-white"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barre de navigation secondaire -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav class="mt-2 mb-6 flex flex-wrap gap-2 text-sm" aria-label="Mes activités">
+      <a href="{% url 'campaign_list' %}" class="px-3 py-2 rounded bg-white text-gray-900 shadow-sm hover:shadow">Historique</a>
+      <a href="{% url 'spot_list' %}" class="px-3 py-2 rounded bg-white text-gray-900 shadow-sm hover:shadow">Mes spots</a>
+      <a href="{% url 'broadcast_grid' %}" class="px-3 py-2 rounded bg-gray-900 text-white shadow-sm">Grille de diffusion</a>
+      <a href="{% url 'correspondence_list' %}" class="px-3 py-2 rounded bg-white text-gray-900 shadow-sm hover:shadow">Correspondance</a>
+      <a href="{% url 'report_overview' %}" class="px-3 py-2 rounded bg-white text-gray-900 shadow-sm hover:shadow">Rapports</a>
+    </nav>
+
+    <!-- Filtres -->
+    <form method="get" class="bg-white rounded-xl p-4 bf1-shadow mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">Date</span>
+          <input type="date" name="date" value="{{ selected_date|date:'Y-m-d' }}" class="mt-1 w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-bf1-red" />
+        </label>
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">Créneau</span>
+          <select name="slot_id" class="mt-1 w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-bf1-red">
+            <option value="">Tous les créneaux</option>
+            {% for ts in time_slots %}
+              <option value="{{ ts.id }}" {% if ts.id|stringformat:'s' == slot_id %}selected{% endif %}>
+                {{ ts.name }} — {{ ts.start_time }}–{{ ts.end_time }}{% if ts.is_prime %} · Prime{% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </label>
+        <div class="flex items-end gap-2">
+          <button type="submit" class="px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800">Appliquer</button>
+          <a href="{% url 'broadcast_grid' %}?date={{ selected_date|date:'Y-m-d' }}" class="px-4 py-2 rounded-lg bg-gray-100 text-gray-900 hover:bg-gray-200">Réinitialiser</a>
+        </div>
+      </div>
+    </form>
+
+    <!-- Grille par créneau (uniquement créneaux avec diffusions) -->
+    <div class="bg-white rounded-2xl bf1-shadow overflow-hidden">
+
+      {% for row in grid %}
+        {% if row.entries %}
+          <section class="border-b" aria-labelledby="slot-{{ row.slot.id }}-title">
+            <header class="px-4 py-3 flex items-center justify-between bg-gray-50">
+              <h2 id="slot-{{ row.slot.id }}-title" class="font-semibold text-gray-900">
+                {{ row.slot.name }}
+                <span class="ml-2 text-sm text-gray-600">{{ row.slot.start_time }}–{{ row.slot.end_time }}</span>
+                {% if row.slot.is_prime %}
+                  <span class="ml-2 inline-flex items-center px-2 py-1 text-xs font-semibold rounded bg-yellow-100 text-yellow-800">
+                    <i class="fas fa-star mr-1"></i> Prime
+                  </span>
+                {% endif %}
+              </h2>
+              <div class="text-sm text-gray-600">{{ row.count }} diffusion(s)</div>
+            </header>
+
+            <ul class="divide-y divide-gray-200">
+              {% for e in row.entries %}
+                <li class="px-4 py-3 flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded bg-gradient-to-r from-indigo-50 to-fuchsia-50 text-gray-700 ring-1 ring-inset ring-indigo-200/60">
+                      <i class="fas fa-clock mr-1 text-indigo-600"></i>{{ e.broadcast_time|time:'H:i' }}
+                    </span>
+                    <div>
+                      <div class="font-medium text-gray-900">{{ e.spot.title }}</div>
+                      <div class="text-xs text-gray-600 flex items-center gap-2">
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-gray-100">{{ e.spot.campaign.title }}</span>
+                        {% if e.spot.duration_seconds %}
+                          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-gray-100"><i class="fas fa-film"></i> {{ e.spot.duration_seconds }}s</span>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="text-sm">
+                    {% if e.is_broadcasted %}
+                      <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-800">
+                        <i class="fas fa-check-circle mr-1"></i> Diffusé
+                      </span>
+                    {% else %}
+                      <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded bg-gray-100 text-gray-800">
+                        <i class="fas fa-hourglass-half mr-1"></i> Prévu
+                      </span>
+                    {% endif %}
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          </section>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <!-- Campagnes de la journée -->
+    <div class="mt-8">
+      <h2 class="text-xl font-semibold text-gray-900 mb-3">
+        Campagnes de la journée
+        <span class="ml-2 text-sm text-gray-500">({{ campaigns_for_day_count }})</span>
+      </h2>
+
+      {% if campaigns_for_day %}
+        <div class="overflow-x-auto bg-white rounded-xl bf1-shadow">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Campagne</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Client</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Statut</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Période</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Spots</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Programmations (jour)</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              {% for item in campaigns_for_day %}
+                {% with c=item.campaign %}
+                <tr class="hover:bg-gray-50">
+                  <td class="px-6 py-4">
+                    <div class="text-sm font-medium text-gray-900">{{ c.title }}</div>
+                    {% if c.channel %}
+                      <div class="text-xs text-gray-500">{{ c.channel }}</div>
+                    {% endif %}
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="text-sm text-gray-900">
+                      {% if c.client.company %}{{ c.client.company }}{% else %}{{ c.client.username }}{% endif %}
+                    </div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span class="text-sm">{{ c.get_status_display }}</span>
+                  </td>
+                  <td class="px-6 py-4 text-sm text-gray-900">
+                    {{ c.start_date|date:"d/m/Y" }} – {{ c.end_date|date:"d/m/Y" }}
+                  </td>
+                  <td class="px-6 py-4 text-sm text-gray-900">{{ item.spots_count }}</td>
+                  <td class="px-6 py-4 text-sm text-gray-900">{{ item.schedules_count }}</td>
+                  <td class="px-6 py-4 text-sm font-medium space-x-3">
+                    <a href="{% url 'campaign_detail' c.id %}" class="text-bf1-red hover:text-bf1-red-dark">Voir</a>
+                    {% if not user_is_client %}
+                      {% if item.spots_count == 0 %}
+                        <a href="{% url 'spot_upload' c.id %}" class="text-blue-600 hover:text-blue-800">Uploader un spot</a>
+                      {% endif %}
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endwith %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-gray-500">Aucune campagne sur cette date.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,469 @@
+{% extends 'spot/base.html' %}
+
+{% block title %}{{ campaign.title }} - BF1{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-indigo-50 via-fuchsia-50 to-rose-50 py-8">
+    <!-- Hero vibrant -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 via-fuchsia-600 to-rose-500 text-white p-8 shadow-lg mb-8">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          <div>
+            <nav class="flex mb-3" aria-label="Breadcrumb">
+              <ol class="flex items-center space-x-4 text-indigo-100">
+                <li>
+                  <a href="{% url 'campaign_list' %}" class="hover:text-white">
+                    <i class="fas fa-bullhorn mr-1"></i>
+                    Mes campagnes
+                  </a>
+                </li>
+                <li>
+                  <i class="fas fa-chevron-right"></i>
+                </li>
+                <li>
+                  <span class="font-medium">{{ campaign.title }}</span>
+                </li>
+              </ol>
+            </nav>
+            <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight">{{ campaign.title }}</h1>
+            <div class="mt-2 flex items-center gap-3">
+              <span class="px-3 py-1 text-sm font-semibold rounded-full bg-white/15 backdrop-blur">
+                {{ campaign.get_status_display }}
+              </span>
+              {% if campaign.spots.count == 0 %}
+                <a href="{% url 'spot_upload' campaign.id %}" class="inline-flex items-center px-3 py-1.5 rounded-full bg-white text-gray-900 hover:bg-gray-100 text-sm font-medium shadow-sm">
+                  <i class="fas fa-upload mr-2 text-fuchsia-600"></i>Uploader un spot
+                </a>
+              {% endif %}
+            </div>
+          </div>
+          <div class="flex items-center gap-6">
+            <div class="text-right">
+              <p class="text-sm text-indigo-100">Budget</p>
+              <p class="text-2xl font-bold">{{ campaign.budget }} FCFA</p>
+            </div>
+            <div class="text-right">
+              <p class="text-sm text-indigo-100">Période</p>
+              <p class="text-2xl font-bold">{{ campaign.start_date }} → {{ campaign.end_date }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="absolute -bottom-6 -right-6 hidden md:block opacity-30">
+          <div class="w-40 h-40 rounded-full bg-white"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <nav class="flex mb-4" aria-label="Breadcrumb">
+                    <ol class="flex items-center space-x-4">
+                        <li>
+                            <a href="{% url 'campaign_list' %}" class="text-gray-500 hover:text-gray-700">
+                                <i class="fas fa-bullhorn mr-1"></i>
+                                Mes campagnes
+                            </a>
+                        </li>
+                        <li>
+                            <i class="fas fa-chevron-right text-gray-400"></i>
+                        </li>
+                        <li>
+                            <span class="text-gray-900 font-medium">{{ campaign.title }}</span>
+                        </li>
+                    </ol>
+                </nav>
+                
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                    {{ campaign.title }}
+                </h1>
+                <div class="flex items-center space-x-4">
+                    <span class="px-3 py-1 text-sm font-semibold rounded-full
+                        {% if campaign.status == 'active' %}bg-green-100 text-green-800
+                        {% elif campaign.status == 'pending' %}bg-yellow-100 text-yellow-800
+                        {% elif campaign.status == 'approved' %}bg-blue-100 text-blue-800
+                        {% elif campaign.status == 'rejected' %}bg-red-100 text-red-800
+                        {% elif campaign.status == 'completed' %}bg-gray-100 text-gray-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        {{ campaign.get_status_display }}
+                    </span>
+                    <span class="text-gray-600">
+                        Créée le {{ campaign.created_at|date:"d/m/Y à H:i" }}
+                    </span>
+                </div>
+
+                <!-- Tags concis: objectif & canal -->
+                <div class="flex flex-wrap gap-2 mt-3">
+                    {% if campaign.objective %}
+                        <span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-gradient-to-r from-fuchsia-50 to-indigo-50 text-gray-700 ring-1 ring-inset ring-fuchsia-200/60 shadow-sm hover:shadow-md transition-transform hover:-translate-y-0.5">
+                            <i class="fas fa-bullseye text-fuchsia-600"></i>
+                            {{ campaign.objective|title }}
+                        </span>
+                    {% endif %}
+                    {% if campaign.channel %}
+                        <span class="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-gradient-to-r from-indigo-50 to-rose-50 text-gray-700 ring-1 ring-inset ring-indigo-200/60 shadow-sm hover:shadow-md transition-transform hover:-translate-y-0.5">
+                            <i class="fas fa-broadcast-tower text-indigo-600"></i>
+                            {{ campaign.channel|title }}
+                        </span>
+                    {% endif %}
+                </div>
+
+                <!-- Bandeau métriques synthétiques -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+                    <div class="group relative overflow-hidden rounded-xl bg-white/80 backdrop-blur ring-1 ring-white/50 shadow-sm hover:shadow-md transition">
+                        <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-fuchsia-500 via-indigo-500 to-rose-500"></div>
+                        <div class="p-4">
+                            <p class="text-xs text-gray-500">Budget</p>
+                            <p class="mt-1 text-2xl font-bold text-bf1-red tracking-tight">{{ campaign.budget|floatformat:0 }} FCFA</p>
+                        </div>
+                    </div>
+                    <div class="group relative overflow-hidden rounded-xl bg-white/80 backdrop-blur ring-1 ring-white/50 shadow-sm hover:shadow-md transition">
+                        <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-rose-500"></div>
+                        <div class="p-4">
+                            <p class="text-xs text-gray-500">Durée</p>
+                            <p class="mt-1 text-2xl font-bold text-gray-900 tracking-tight">{{ campaign.duration_days }} jours</p>
+                        </div>
+                    </div>
+                    <div class="group relative overflow-hidden rounded-xl bg-white/80 backdrop-blur ring-1 ring-white/50 shadow-sm hover:shadow-md transition">
+                        <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-rose-500 via-fuchsia-500 to-indigo-500"></div>
+                        <div class="p-4">
+                            <p class="text-xs text-gray-500">Spots</p>
+                            <p class="mt-1 text-2xl font-bold text-gray-900 tracking-tight">{{ spots|length }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- En-tête: actions -->
+            <div class="mt-4 sm:mt-0 flex space-x-2">
+                {% with first_spot=spots|first %}
+                    {% if not spots and campaign.status != 'completed' and campaign.status != 'rejected' %}
+                        <a href="{% url 'spot_upload' campaign.id %}" class="bg-bf1-red text-white px-4 py-2 rounded-lg hover:bg-bf1-red-dark transition-colors">
+                            <i class="fas fa-upload mr-2"></i>
+                            Télécharger un spot
+                        </a>
+                    {% elif first_spot and first_spot.status == 'approved' %}
+                        <span class="inline-flex items-center bg-green-600 text-white px-4 py-2 rounded-lg">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            Prêt pour diffusion
+                        </span>
+                    {% endif %}
+                {% endwith %}
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Contenu principal -->
+        <div class="lg:col-span-2 space-y-6">
+
+            <!-- Spots publicitaires -->
+            <div class="bg-white p-6 rounded-lg bf1-shadow">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-semibold text-gray-900">
+                        <i class="fas fa-video text-bf1-red mr-2"></i>
+                        Spots publicitaires
+                    </h2>
+                    {% if not spots and campaign.status != 'completed' and campaign.status != 'rejected' %}
+                        <a href="{% url 'spot_upload' campaign.id %}" class="bg-bf1-red text-white px-4 py-2 rounded-lg hover:bg-bf1-red-dark transition-colors" aria-label="Ajouter un spot">
+                            <i class="fas fa-plus mr-2"></i>
+                            Ajouter un spot
+                        </a>
+                    {% endif %}
+                </div>
+
+                {% if spots %}
+                {% with first_spot=spots|first %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Aperçu TV interactif -->
+                    <section aria-labelledby="tv-preview-title">
+                        <h3 id="tv-preview-title" class="sr-only">Aperçu du spot sur maquette TV</h3>
+                        <div id="tvMockup" class="rounded-xl bg-gray-900 p-4 shadow-lg">
+                            <div class="relative aspect-video bg-black rounded-lg overflow-hidden ring-1 ring-gray-700">
+                                {% if first_spot.media_type == 'video' and first_spot.video_file %}
+                                    <video id="tvVideo" src="{{ first_spot.video_file.url }}" class="w-full h-full object-cover" playsinline></video>
+                                {% elif first_spot.media_type == 'image' and first_spot.image_file %}
+                                    <img src="{{ first_spot.image_file.url }}" alt="{{ first_spot.title }}" class="w-full h-full object-cover">
+                                {% else %}
+                                    <div class="flex items-center justify-center w-full h-full text-gray-400">Aucun média</div>
+                                {% endif %}
+                                <!-- Cadre TV décoratif -->
+                                <div class="pointer-events-none absolute inset-0 ring-1 ring-gray-700 rounded-lg"></div>
+                            </div>
+                            <!-- Contrôles accessibles -->
+                            <div class="mt-3 flex items-center gap-3">
+                                {% if first_spot.media_type == 'video' and first_spot.video_file %}
+                                <button id="tvPlay" type="button" class="inline-flex items-center px-3 py-2 rounded bg-white text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white" aria-label="Lecture / Pause">
+                                    <i class="fas fa-play mr-2" aria-hidden="true"></i>
+                                    <span>Lire</span>
+                                </button>
+                                <input id="tvSeek" type="range" min="0" max="100" value="0" class="flex-1 h-2 rounded-lg appearance-none bg-gray-700 focus:outline-none focus:ring-2 focus:ring-white" aria-label="Progression">
+                                <label class="text-white text-sm flex items-center gap-2" aria-label="Vitesse">
+                                    Vitesse
+                                    <select id="tvSpeed" class="rounded bg-white text-gray-900 px-2 py-1 focus:outline-none focus:ring-2 focus:ring-white" aria-label="Vitesse de lecture">
+                                        <option value="0.5">0.5×</option>
+                                        <option value="0.75">0.75×</option>
+                                        <option value="1" selected>1×</option>
+                                        <option value="1.25">1.25×</option>
+                                        <option value="1.5">1.5×</option>
+                                    </select>
+                                </label>
+                                <label class="text-white text-sm flex items-center gap-2" aria-label="Volume">
+                                    Volume
+                                    <input id="tvVolume" type="range" min="0" max="1" step="0.05" value="1" class="h-2 rounded-lg appearance-none bg-gray-700 focus:outline-none focus:ring-2 focus:ring-white" aria-label="Contrôle du volume">
+                                </label>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Détails du spot et actions -->
+                    <section aria-labelledby="spot-details-title">
+                        <h3 id="spot-details-title" class="text-lg font-semibold text-gray-900 mb-2">Détails du spot</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full
+                                    {% if first_spot.status == 'approved' %}bg-green-100 text-green-800
+                                    {% elif first_spot.status == 'pending_review' %}bg-yellow-100 text-yellow-800
+                                    {% elif first_spot.status == 'rejected' %}bg-red-100 text-red-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ first_spot.get_status_display }}
+                                </span>
+                                {% if first_spot.duration_seconds %}
+                                <span class="text-sm text-gray-700">• {{ first_spot.duration_seconds }}s</span>
+                                {% endif %}
+                            </div>
+                            {% if first_spot.description %}
+                            <p class="text-gray-700">{{ first_spot.description }}</p>
+                            {% endif %}
+                            <div class="flex gap-2 pt-2">
+                                <a href="{% url 'spot_detail' first_spot.id %}" class="px-3 py-2 rounded bg-gray-100 text-gray-900 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300" aria-label="Voir le spot">
+                                    <i class="fas fa-eye mr-2" aria-hidden="true"></i> Voir
+                                </a>
+                                {% if campaign.status == 'approved' %}
+                                <a href="{% url 'spot_upload' campaign.id %}" class="px-3 py-2 rounded bg-bf1-red text-white hover:bg-bf1-red-dark focus:outline-none focus:ring-2 focus:ring-bf1-red" aria-label="Uploader un autre spot">
+                                    <i class="fas fa-upload mr-2" aria-hidden="true"></i> Ajouter
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Autres spots (liste compacte) -->
+                {% if spots|length > 1 %}
+                <div class="mt-6">
+                    <h3 class="text-sm font-medium text-gray-900 mb-2">Autres spots</h3>
+                    <ul class="divide-y divide-gray-200">
+                        {% for s in spots %}
+                            {% if not forloop.first %}
+                            <li class="py-2 flex items-center justify-between">
+                                <div class="text-sm text-gray-900">{{ s.title }}{% if s.duration_seconds %} · {{ s.duration_seconds }}s{% endif %}</div>
+                                <a href="{% url 'spot_detail' s.id %}" class="text-bf1-red hover:text-bf1-red-dark">Voir</a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                {% endwith %}
+                {% else %}
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-video text-4xl mb-4"></i>
+                        <p>Aucun spot téléchargé</p>
+                        {% if campaign.status == 'approved' %}
+                            <a href="{% url 'spot_upload' campaign.id %}" class="text-bf1-red hover:text-bf1-red-dark font-medium">
+                                Télécharger le premier spot
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+
+         
+            <div class="bg-white p-6 rounded-lg bf1-shadow">
+                <!-- Paiements: afficher uniquement s'il y a des paiements -->
+                {% if payments %}
+                <div class="bg-white p-6 rounded-lg bf1-shadow">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl font-semibold text-gray-900">
+                            <i class="fas fa-credit-card text-bf1-red mr-2"></i>
+                            Paiements
+                        </h2>
+                    </div>
+                    <div class="space-y-4">
+                        {% for payment in payments %}
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="font-medium text-gray-900">
+                                        Paiement {{ payment.method|title }}
+                                    </h3>
+                                    <p class="text-sm text-gray-600">
+                                        {{ payment.amount|floatformat:0 }} FCFA
+                                    </p>
+                                    {% if payment.transaction_id %}
+                                        <p class="text-sm text-gray-500">
+                                            Transaction: {{ payment.transaction_id }}
+                                        </p>
+                                    {% endif %}
+                                </div>
+                                <div class="text-right">
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full
+                                        {% if payment.status == 'completed' %}bg-green-100 text-green-800
+                                        {% elif payment.status == 'processing' %}bg-yellow-100 text-yellow-800
+                                        {% elif payment.status == 'failed' %}bg-red-100 text-red-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ payment.get_status_display }}
+                                    </span>
+                                    <p class="text-sm text-gray-500 mt-1">
+                                        {{ payment.created_at|date:"d/m/Y H:i" }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+            <!-- Historique (timeline compacte et épurée) -->
+            {% if request.user.role == 'admin' %}
+            <div class="bg-white p-6 rounded-lg bf1-shadow">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-history text-bf1-red mr-2"></i>
+                    Historique
+                </h2>
+                {% if history %}
+                <ul class="relative">
+                    {% for h in history %}
+                    <li class="relative pl-8 py-3 {% if forloop.counter > history_display_limit %}hidden history-extra{% endif %}">
+                        <span class="absolute left-0 top-3 h-3 w-3 rounded-full
+                            {% if h.action == 'approved' %}bg-blue-500
+                            {% elif h.action == 'rejected' %}bg-red-500
+                            {% elif h.action == 'spot_uploaded' %}bg-purple-500
+                            {% elif h.action == 'spot_approved' %}bg-green-500
+                            {% elif h.action == 'broadcasted' %}bg-green-600
+                            {% else %}bg-gray-400{% endif %}"></span>
+                        <div class="flex items-center justify-between">
+                            <div class="text-sm">
+                                <span class="font-medium text-gray-900">
+                                    {{ h.get_action_display }}
+                                </span>
+                                {% if h.description %}
+                                    <span class="text-gray-600"> — {{ h.description }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                {{ h.created_at|date:"d/m/Y H:i" }}
+                                {% if h.user %} · {{ h.user.username }}{% endif %}
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% if history|length > history_display_limit %}
+                <div class="mt-4 text-center">
+                    <button id="historyToggle" class="text-bf1-red hover:text-bf1-red-dark font-medium">
+                        Afficher plus
+                    </button>
+                </div>
+                <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    var btn = document.getElementById('historyToggle');
+                    if (!btn) return;
+                    var expanded = false;
+                    btn.addEventListener('click', function() {
+                        var extras = document.querySelectorAll('.history-extra');
+                        extras.forEach(function(el) { el.classList.toggle('hidden'); });
+                        expanded = !expanded;
+                        btn.textContent = expanded ? 'Afficher moins' : 'Afficher plus';
+                    });
+                });
+                </script>
+                {% endif %}
+                {% else %}
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-history text-4xl mb-4"></i>
+                    <p>Aucun événement récent</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Statut et actions (conservé) -->
+            <div class="bg-white p-6 rounded-lg bf1-shadow">
+                {% if campaign.rejection_reason %}
+                <div>
+                    <h4 class="text-sm font-medium text-gray-500 mb-2">Raison du rejet</h4>
+                    <p class="text-sm text-red-600">{{ campaign.rejection_reason }}</p>
+                </div>
+                {% endif %}
+                <div class="mt-4 space-y-2">
+                    {% if campaign.status == 'approved' and not spots %}
+                        <a href="{% url 'spot_upload' campaign.id %}" class="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors text-center block">
+                            <i class="fas fa-upload mr-2"></i>
+                            Télécharger un spot
+                        </a>
+                    {% endif %}
+            <!-- Progression supprimée pour épurer l’interface -->
+        </div>
+    </div>
+</div>
+
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const video = document.getElementById('tvVideo');
+  const btn = document.getElementById('tvPlay');
+  const seek = document.getElementById('tvSeek');
+  const speed = document.getElementById('tvSpeed');
+  const volume = document.getElementById('tvVolume');
+  if (!video) return;
+
+  function updateSeek() {
+    const pct = (video.currentTime / (video.duration || 1)) * 100;
+    seek.value = isFinite(pct) ? pct : 0;
+  }
+
+  video.addEventListener('timeupdate', updateSeek);
+  video.addEventListener('loadedmetadata', updateSeek);
+  video.addEventListener('play', function(){
+    btn.querySelector('i').className = 'fas fa-pause mr-2';
+    btn.querySelector('span').textContent = 'Pause';
+  });
+  video.addEventListener('pause', function(){
+    btn.querySelector('i').className = 'fas fa-play mr-2';
+    btn.querySelector('span').textContent = 'Lire';
+  });
+
+  btn && btn.addEventListener('click', function(){
+    if (video.paused) video.play(); else video.pause();
+  });
+
+  seek && seek.addEventListener('input', function(){
+    const t = (seek.value / 100) * (video.duration || 0);
+    if (!isNaN(t)) video.currentTime = t;
+  });
+
+  speed && speed.addEventListener('change', function(){
+    video.playbackRate = parseFloat(speed.value) || 1;
+  });
+
+  volume && volume.addEventListener('input', function(){
+    video.volume = parseFloat(volume.value);
+  });
+
+  // Accessibilité clavier: barre espace pour lecture/pause
+  document.getElementById('tvMockup').addEventListener('keydown', function(e){
+    if (e.code === 'Space') { e.preventDefault(); if (video.paused) video.play(); else video.pause(); }
+  });
+});
+</script>
+{% endblock %}
+{% endblock %}

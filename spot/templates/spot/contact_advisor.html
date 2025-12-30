@@ -1,0 +1,124 @@
+{% extends 'spot/base.html' %}
+
+{% block content %}
+<section class="bg-gradient-to-b from-red-600 to-red-700">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 text-white">
+    <h1 class="text-3xl font-bold">Contact direct</h1>
+    <p class="mt-2 text-red-100">Action immédiate via Appel ou WhatsApp, sans formulaire.</p>
+  </div>
+</section>
+
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <div class="-mt-8 bg-white rounded-lg bf1-shadow p-6 md:p-8" data-animate="fade-up">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="md:col-span-2">
+        <h2 class="text-xl font-semibold text-gray-900">Options de contact direct</h2>
+        <p class="text-gray-600 mt-1">Toutes les interactions sont déclenchées immédiatement, avec alternatives automatiques si l'application n'est pas disponible.</p>
+
+        <div class="mt-6 flex flex-col sm:flex-row gap-3">
+          <button id="btnCall" class="inline-flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500" aria-label="Appeler maintenant">
+            <i class="fas fa-phone"></i>
+            Appeler maintenant
+          </button>
+
+          <button id="btnWhatsApp" class="inline-flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500" aria-label="WhatsApp">
+            <i class="fab fa-whatsapp"></i>
+            WhatsApp
+          </button>
+        </div>
+
+        <div class="mt-6 text-sm text-gray-600">
+          <p>Numéro cliquable (format international) :
+            <a id="clickPhone" href="tel:{{ contact_phone }}" class="text-bf1-red font-medium">{{ contact_phone }}</a>
+          </p>
+          <p class="mt-1">Message WhatsApp pré-rempli :
+            <code class="bg-gray-100 px-2 py-1 rounded">{{ whatsapp_message }}</code>
+          </p>
+        </div>
+      </div>
+
+      <aside class="bg-gray-50 border rounded-lg p-4">
+        <h3 class="font-semibold text-gray-900">Aide et alternatives</h3>
+        <ul class="mt-2 space-y-2 text-sm text-gray-700">
+          <li>Si WhatsApp n'est pas installé, ouverture automatique de WhatsApp Web.</li>
+          <li>Si l'appareil ne supporte pas les appels, affichage du numéro avec options pour copier.</li>
+          <li>Vous pouvez aussi copier le numéro : <button id="btnCopy" class="underline text-bf1-red">Copier</button></li>
+        </ul>
+        <div id="fallbackCall" class="hidden mt-3 text-sm">
+          <div class="p-3 bg-yellow-50 border border-yellow-200 rounded">
+            <p class="font-medium text-yellow-900">Appel non supporté sur cet appareil.</p>
+            <p class="text-yellow-800">Composez le numéro <span class="font-semibold">{{ contact_phone }}</span> depuis votre téléphone.</p>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Animation légère
+    const animated = document.querySelectorAll('[data-animate="fade-up"]');
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = 1;
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, { threshold: 0.1 });
+    animated.forEach(el => {
+      el.style.opacity = 0;
+      el.style.transform = 'translateY(10px)';
+      el.style.transition = 'opacity 400ms ease, transform 400ms ease';
+      io.observe(el);
+    });
+
+    const phone = '{{ contact_phone }}';
+    const waPhone = '{{ whatsapp_phone }}';
+    const waText = encodeURIComponent('{{ whatsapp_message }}');
+    const isMobile = /Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
+
+    // Appel immédiat avec fallback desktop
+    document.getElementById('btnCall').addEventListener('click', function() {
+      const telUrl = 'tel:' + phone;
+      if (isMobile) {
+        window.location.href = telUrl;
+      } else {
+        document.getElementById('fallbackCall').classList.remove('hidden');
+      }
+    });
+
+    // WhatsApp immédiat avec fallback Web
+    document.getElementById('btnWhatsApp').addEventListener('click', function() {
+      const appUrl = 'whatsapp://send?phone=' + waPhone + '&text=' + waText;
+      const webUrl = 'https://wa.me/' + waPhone + '?text=' + waText;
+      let opened = false;
+      try {
+        const start = Date.now();
+        window.location.href = appUrl;
+        setTimeout(function() {
+          if (!opened && (Date.now() - start) < 1200) {
+            window.open(webUrl, '_blank');
+          }
+        }, 600);
+      } catch (e) {
+        window.open(webUrl, '_blank');
+      }
+    });
+
+    // Copie rapide du numéro
+    document.getElementById('btnCopy').addEventListener('click', async function() {
+      try {
+        await navigator.clipboard.writeText(phone);
+        this.textContent = 'Copié !';
+        setTimeout(() => { this.textContent = 'Copier'; }, 1500);
+      } catch (e) {
+        alert('Copie impossible. Numéro : ' + phone);
+      }
+    });
+  });
+</script>
+{% endblock %}

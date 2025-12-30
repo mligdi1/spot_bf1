@@ -1,0 +1,132 @@
+{% extends 'editorial/base.html' %}
+{% block title %}Assignations & Missions{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <section class="relative overflow-hidden rounded-2xl ed-card text-white border border-black border-opacity-20 shadow-lg" style="background:linear-gradient(90deg,#FF0000 0%,#D00000 100%);">
+    <div class="absolute inset-0" style="background:radial-gradient(1200px 400px at 10% 0%, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.0) 60%)"></div>
+    <div class="absolute inset-0" style="background:radial-gradient(800px 300px at 90% 100%, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 60%)"></div>
+    <div class="relative z-10 p-8 flex items-start justify-between">
+      <div>
+        <div class="flex items-center gap-3" style="text-shadow:0 1px 2px rgba(0,0,0,0.25)">
+          <i class="fa-solid fa-clipboard-check text-white text-2xl"></i>
+          <div class="font-montserrat text-3xl md:text-4xl font-extrabold">Assignations & Missions</div>
+        </div>
+        <div class="mt-2 text-white text-opacity-90" style="text-shadow:0 1px 1px rgba(0,0,0,0.25)">Assignations en cours — BF1 TV</div>
+      </div>
+      <a href="{% url 'editorial_dashboard' %}" class="px-4 py-2 rounded-lg border border-white border-opacity-50 text-white hover:bg-white hover:bg-opacity-10 transition">Retour dashboard</a>
+    </div>
+  </section>
+  <div class="mt-4 flex items-center justify-end">
+    <div class="inline-flex rounded-lg border border-slate-200 bg-white overflow-hidden" role="tablist" aria-label="Mode d’affichage">
+      <a href="?mode=compact" role="tab" aria-selected="{% if mode == 'compact' %}true{% else %}false{% endif %}" class="px-3 py-1.5 text-sm {% if mode == 'compact' %}bg-slate-100 font-semibold{% endif %}">Vue simplifiée</a>
+      <a href="?mode=full" role="tab" aria-selected="{% if mode == 'full' %}true{% else %}false{% endif %}" class="px-3 py-1.5 text-sm {% if mode == 'full' %}bg-slate-100 font-semibold{% endif %}">Vue détaillée</a>
+    </div>
+  </div>
+
+  <form method="get" class="bg-white card p-4 grid grid-cols-12 gap-3 sticky top-4 z-10">
+    <div class="col-span-12 md:col-span-4 form__group">
+      <input type="text" name="q" value="{{ q }}" placeholder="Rechercher..." class="form__control"/>
+      <label class="form__label">Rechercher</label>
+    </div>
+    <div class="col-span-12 md:col-span-3 form__group form__group--static">
+      <select name="journalist" class="form__control">
+        <option value="">Tous journalistes</option>
+        {% for j in journalists %}
+          <option value="{{ j.id }}" {% if jid == j.id|stringformat:'s' %}selected{% endif %}>{{ j.name }}</option>
+        {% endfor %}
+      </select>
+      <label class="form__label">Journaliste</label>
+    </div>
+    <div class="col-span-12 md:col-span-3 form__group form__group--static">
+      <select name="driver" class="form__control">
+        <option value="">Tous chauffeurs</option>
+        {% for d in drivers %}
+          <option value="{{ d.id }}" {% if did == d.id|stringformat:'s' %}selected{% endif %}>{{ d.name }}</option>
+        {% endfor %}
+      </select>
+      <label class="form__label">Chauffeur</label>
+    </div>
+    <div class="col-span-12 md:col-span-2 form__group form__group--static">
+      <select name="status" class="form__control">
+        <option value="">Tous statuts</option>
+        <option value="assigned" {% if status == 'assigned' %}selected{% endif %}>Assigné</option>
+        <option value="in_field" {% if status == 'in_field' %}selected{% endif %}>Sur le terrain</option>
+        <option value="delivered" {% if status == 'delivered' %}selected{% endif %}>Contenu livré</option>
+        <option value="done" {% if status == 'done' %}selected{% endif %}>Terminé</option>
+      </select>
+      <label class="form__label">Statut</label>
+    </div>
+    <button class="col-span-12 md:col-span-2 btn btn--primary">Filtrer</button>
+  </form>
+
+  {% if mode == 'compact' %}
+  <div class="bg-white rounded-xl border divide-y" data-grid>
+    {% for a in items %}
+      <a href="{% url 'editorial_coverage_detail' a.coverage.id %}" class="flex items-center justify-between px-4 py-3 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400" aria-label="Voir la couverture {{ a.coverage.event_title }}">
+        <div class="font-medium truncate" title="{{ a.coverage.event_title }}">{{ a.coverage.event_title }}</div>
+        <div class="text-sm text-slate-600 ml-4 shrink-0">Assignée le {{ a.assigned_at|date:'d/m/Y' }}</div>
+      </a>
+    {% empty %}
+      <div class="text-slate-600 px-4 py-3">Aucune assignation.</div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" data-grid>
+    {% for a in items %}
+      <div class="border rounded-2xl p-5 bg-white card hover:shadow-lg transition-transform duration-200 transform hover:-translate-y-0.5">
+        <div class="flex items-start justify-between">
+          <div>
+            <div class="font-semibold">{{ a.coverage.event_title }}</div>
+            <div class="text-sm text-slate-600">{{ a.coverage.address }} • {{ a.coverage.event_date|date:'d/m/Y' }}</div>
+          </div>
+        </div>
+        <div class="mt-4 grid grid-cols-2 gap-3">
+          <div class="border rounded-xl p-3">
+            <div class="flex items-center gap-2">
+              {% if a.journalist and a.journalist.photo %}
+                <img src="{{ a.journalist.photo.url }}" alt="{{ a.journalist.name }}" class="w-8 h-8 rounded-full object-cover" />
+              {% else %}
+                <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-xs">{% if a.journalist %}{{ a.journalist.name|slice:':1'|upper }}{% else %}—{% endif %}</div>
+              {% endif %}
+              <div class="text-sm">
+                <div class="font-medium">{% if a.journalist %}{{ a.journalist.name }}{% else %}—{% endif %}</div>
+                <div class="text-xs text-slate-500">Journaliste{% if a.journalist and a.journalist.phone %} · {{ a.journalist.phone }}{% endif %}</div>
+              </div>
+            </div>
+          </div>
+          <div class="border rounded-xl p-3">
+            <div class="flex items-center gap-2">
+              {% if a.driver and a.driver.photo %}
+                <img src="{{ a.driver.photo.url }}" alt="{{ a.driver.name }}" class="w-8 h-8 rounded-full object-cover" />
+              {% else %}
+                <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-xs">{% if a.driver %}{{ a.driver.name|slice:':1'|upper }}{% else %}—{% endif %}</div>
+              {% endif %}
+              <div class="text-sm">
+                <div class="font-medium">{% if a.driver %}{{ a.driver.name }}{% else %}—{% endif %}</div>
+                <div class="text-xs text-slate-500">Chauffeur{% if a.driver and a.driver.phone %} · {{ a.driver.phone }}{% endif %}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="text-slate-600">Aucune assignation.</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  <script>
+    (function(){
+      var grids=document.querySelectorAll('[data-grid]');
+      grids.forEach(function(el){
+        el.style.opacity='0';
+        el.style.transform='translateY(6px)';
+        requestAnimationFrame(function(){
+          el.style.transition='opacity 200ms ease, transform 200ms ease';
+          el.style.opacity='1';
+          el.style.transform='translateY(0)';
+        });
+      });
+    })();
+  </script>
+</div>
+{% endblock %}

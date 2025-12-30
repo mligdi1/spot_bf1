@@ -1,0 +1,136 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Rédaction – BF1{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  {% block extra_head %}{% endblock %}
+  <style>
+    :root{--brand-red:#d4272e;--brand-red-700:#b31f25;--brand-dark:#0e0f12;--brand-muted:#6b7280;--card-bg:#111316;--glass-bg:rgba(255,255,255,.06);--glass-border:rgba(255,255,255,.2);--shadow-1:0 10px 30px rgba(0,0,0,.10);--shadow-2:0 16px 40px rgba(0,0,0,.18)}
+    body{font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
+    .font-montserrat{font-family:'Playfair Display',ui-serif,Georgia,serif;letter-spacing:-.01em}
+    .ed-card{border-radius:1rem;box-shadow:var(--shadow-1)}
+    .card{border-radius:.75rem;box-shadow:var(--shadow-1);background:#fff}
+    .hover-raise:hover{transform:translateY(-1px)}
+    .btn{display:inline-flex;align-items:center;justify-content:center;border-radius:.75rem;padding:.6rem 1rem;font-weight:600;transition:transform .15s ease, box-shadow .15s ease}
+    .btn--primary{background:linear-gradient(140deg, var(--brand-red) 0%, #7a1519 100%);color:#fff;box-shadow:0 10px 20px rgba(212,39,46,.25)}
+    .btn--primary:hover{transform:translateY(-2px)}
+    .btn--outline{border:1px solid #d1d5db;background:#fff;color:#111827}
+    .form__group{position:relative;margin-bottom:1rem}
+    .form__control{width:100%;padding:1rem .875rem;border:1px solid #d1d5db;border-radius:.75rem;background:#fff;transition:border-color .2s ease, box-shadow .2s ease}
+    .form__control::placeholder{color:transparent}
+    .form__label{position:absolute;left:.875rem;top:50%;transform:translateY(-50%);font-size:.95rem;color:var(--brand-muted);pointer-events:none;transition:all .18s ease;padding:0 .25rem}
+    .form__control:focus{outline:none;border-color:var(--brand-red);box-shadow:0 0 0 3px rgba(212,39,46,.15)}
+    .form__control:focus + .form__label, .form__control:not(:placeholder-shown) + .form__label{top:.5rem;transform:none;font-size:.75rem;color:var(--brand-red)}
+    html, body { max-width: 100%; overflow-x: hidden; }
+    img, video, canvas, svg { max-width: 100%; height: auto; }
+    .hamburger{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:24px;height:16px}
+    .hamburger span{position:absolute;left:0;right:0;height:2px;background:#1f2937;border-radius:2px;transition:transform .25s ease, opacity .25s ease}
+    .hamburger span:nth-child(1){top:0}
+    .hamburger span:nth-child(2){top:7px}
+    .hamburger span:nth-child(3){bottom:0}
+    #mobile_menu_toggle.is-open .hamburger span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+    #mobile_menu_toggle.is-open .hamburger span:nth-child(2){opacity:0}
+    #mobile_menu_toggle.is-open .hamburger span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+    [data-theme="dark"] .card{background:var(--card-bg);color:#e5e7eb}
+    [data-theme="dark"] .bg-white{background-color:#121417}
+    [data-theme="dark"] .border{border-color:#2b3036}
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+  <header id="site_header" class="bg-white bg-opacity-90 backdrop-blur border-b transition-all">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+      <a href="{% url 'editorial_dashboard' %}" class="flex items-center space-x-2">
+        <img src="{% static 'logo_bf1.jpg' %}" alt="BF1" class="h-8 w-auto">
+        <span class="font-semibold text-xl text-red-600">Rédaction</span>
+      </a>
+      <nav class="hidden md:flex space-x-6">
+        <a href="{% url 'editorial_dashboard' %}" class="font-medium {% if request.path|slice:':20' == '/editorial/dashboard' %}text-red-600{% else %}text-gray-800 hover:text-red-600{% endif %}">Dashboard</a>
+        <a href="{% url 'editorial_coverages' %}" class="font-medium {% if request.path|slice:':20' == '/editorial/coverages' %}text-red-600{% else %}text-gray-800 hover:text-red-600{% endif %}">Couvertures</a>
+        <a href="{% url 'editorial_assignments' %}" class="font-medium {% if request.path|slice:':21' == '/editorial/assignments' %}text-red-600{% else %}text-gray-800 hover:text-red-600{% endif %}">Assignations</a>
+        <a href="{% url 'editorial_planning' %}" class="font-medium {% if request.path|slice:':19' == '/editorial/planning' %}text-red-600{% else %}text-gray-800 hover:text-red-600{% endif %}">Planning</a>
+        <a href="{% url 'editorial_journalists' %}" class="font-medium {% if request.path|slice:':22' == '/editorial/journalists' %}text-red-600{% else %}text-gray-800 hover:text-red-600{% endif %}">Journalistes</a>
+        <a href="{% url 'editorial_drivers' %}" class="font-medium {% if request.path|slice:':19' == '/editorial/drivers' %}text-red-600{% else %}text-gray-800 hover:text-red-600{% endif %}">Chauffeurs</a>
+        <a href="{% url 'editorial_notifications' %}" class="font-medium {% if request.path|slice:':23' == '/editorial/notifications' %}text-red-600{% else %}text-gray-800 hover:text-red-600{% endif %}">Notifications</a>
+      </nav>
+      <div class="flex items-center gap-3">
+        <button id="theme_toggle" type="button" class="text-sm px-3 py-1 border rounded hover:bg-gray-50">🌗 Thème</button>
+        <a href="{% url 'logout' %}" class="text-sm text-gray-500 hover:text-red-600">Déconnexion</a>
+        <button id="mobile_menu_toggle" type="button" class="md:hidden text-gray-700 hover:text-red-600 relative w-8 h-8" aria-expanded="false" aria-controls="mobile_menu" aria-label="Ouvrir le menu">
+          <span class="hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <nav id="mobile_menu" class="md:hidden hidden border-t bg-white">
+    <div class="px-4 py-3 space-y-2">
+      <a href="{% url 'editorial_dashboard' %}" class="block py-2 font-medium text-gray-800 hover:text-red-600">Dashboard</a>
+      <a href="{% url 'editorial_coverages' %}" class="block py-2 font-medium text-gray-800 hover:text-red-600">Couvertures</a>
+      <a href="{% url 'editorial_assignments' %}" class="block py-2 font-medium text-gray-800 hover:text-red-600">Assignations</a>
+      <a href="{% url 'editorial_planning' %}" class="block py-2 font-medium text-gray-800 hover:text-red-600">Planning</a>
+      <a href="{% url 'editorial_journalists' %}" class="block py-2 font-medium text-gray-800 hover:text-red-600">Journalistes</a>
+      <a href="{% url 'editorial_drivers' %}" class="block py-2 font-medium text-gray-800 hover:text-red-600">Chauffeurs</a>
+      <a href="{% url 'editorial_notifications' %}" class="block py-2 font-medium text-gray-800 hover:text-red-600">Notifications</a>
+    </div>
+  </nav>
+  <main class="flex-1" id="page-root">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      {% if messages %}
+      <div class="mb-4 space-y-2" role="status" aria-live="polite">
+        {% for message in messages %}
+        <div class="px-4 py-3 rounded border {% if message.tags == 'error' %}border-red-300 bg-red-50 text-red-700{% elif message.tags == 'success' %}border-green-300 bg-green-50 text-green-700{% else %}border-gray-300 bg-gray-50 text-gray-700{% endif %}">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+  <footer class="bg-white bg-opacity-90 backdrop-blur border-t py-4 text-center text-sm text-gray-500">© {{ now|date:'Y' }} BF1 – Interface Rédaction</footer>
+  <script>
+    (function(){
+      try{ var saved = localStorage.getItem('theme'); if(saved === 'dark'){ document.documentElement.setAttribute('data-theme','dark'); } }catch(e){}
+      var tgl = document.getElementById('theme_toggle'); if(tgl){ tgl.addEventListener('click', function(){ var isDark = document.documentElement.getAttribute('data-theme') === 'dark'; if(isDark){ document.documentElement.removeAttribute('data-theme'); localStorage.setItem('theme','light'); this.setAttribute('aria-pressed','false'); } else { document.documentElement.setAttribute('data-theme','dark'); localStorage.setItem('theme','dark'); this.setAttribute('aria-pressed','true'); } }); }
+    })();
+  </script>
+  <script>
+    (function(){
+      var btn = document.getElementById('mobile_menu_toggle');
+      var menu = document.getElementById('mobile_menu');
+      if(!btn || !menu) return;
+      function closeMobile(){
+        menu.classList.add('hidden');
+        btn.setAttribute('aria-expanded','false');
+        btn.classList.remove('is-open');
+        document.body.classList.remove('overflow-hidden');
+      }
+      function openMobile(){
+        menu.classList.remove('hidden');
+        btn.setAttribute('aria-expanded','true');
+        btn.classList.add('is-open');
+        document.body.classList.add('overflow-hidden');
+      }
+      btn.addEventListener('click', function(){
+        var expanded = btn.getAttribute('aria-expanded') === 'true';
+        if(expanded) closeMobile(); else openMobile();
+      });
+      document.addEventListener('keydown', function(e){ if(e.key === 'Escape'){ closeMobile(); } });
+      menu.addEventListener('click', function(e){
+        var t = e.target;
+        if(t && t.tagName === 'A'){ closeMobile(); }
+      });
+      document.addEventListener('click', function(e){
+        if(menu.classList.contains('hidden')) return;
+        if(menu.contains(e.target) || btn.contains(e.target)) return;
+        closeMobile();
+      });
+    })();
+  </script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

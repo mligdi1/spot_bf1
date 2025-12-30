@@ -1,0 +1,370 @@
+{% extends 'spot/base.html' %}
+{% load static %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-indigo-50 via-slate-50 to-pink-100 py-8">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-10">
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">Demande de couverture médiatique</h1>
+      <p class="text-lg text-gray-600">Décrivez votre événement et vos besoins rédactionnels</p>
+    </div>
+
+
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+      <form method="post" enctype="multipart/form-data" id="coverage-form">
+        {% csrf_token %}
+
+        <!-- Barre de progression -->
+        <div class="px-8 py-6 bg-gradient-to-r from-white via-gray-50 to-white border-b">
+          <div class="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-gray-600">
+            <div class="px-2 py-1 rounded-full bg-gray-100">Étape 1: Événement</div>
+            <div class="px-2 py-1 rounded-full bg-gray-100">Étape 2: Coordonnées</div>
+            <div class="px-2 py-1 rounded-full bg-gray-100">Étape 3: Couverture</div>
+            <div class="px-2 py-1 rounded-full bg-gray-100">Étape 4: Pièces jointes</div>
+          </div>
+          <div class="mt-4 h-3 bg-gray-200/70 rounded-full overflow-hidden">
+            <div id="wizard-progress-bar" class="h-3 bg-gradient-to-r from-bf1-red via-pink-500 to-indigo-600 shadow-lg rounded-full transition-all duration-500 ease-out" style="width:25%"></div>
+          </div>
+        </div>
+
+        <!-- Viewport/Track -->
+        <div class="wizard-viewport relative overflow-hidden min-h-[60vh] flex items-center justify-center">
+          <div id="wizard-track" class="wizard-track flex w-full transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]">
+
+            <!-- Étape 1: Événement -->
+            <section class="wizard-step min-w-full p-8 bg-gradient-to-br from-white to-gray-50 transition-opacity duration-300 ease-out opacity-100" data-step="0">
+              <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                <span class="inline-flex items-center justify-center w-9 h-9 mr-3 rounded-lg bg-blue-600 text-white shadow-md"><i class="fas fa-calendar-alt"></i></span>
+                Informations sur l’événement
+              </h2>
+              <div class="grid grid-cols-12 gap-6">
+                <div class="col-span-12 md:col-span-7">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.event_title.label }} <span class="text-red-600" aria-hidden="true">*</span></label>
+                  {{ form.event_title }}
+                  {% for error in form.event_title.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="col-span-12 md:col-span-5">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.event_type.label }} <span class="text-red-600" aria-hidden="true">*</span></label>
+                  {{ form.event_type }}
+                  <div id="event-type-other-wrap" class="mt-2 hidden">
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Précisez</label>
+                    {{ form.event_type_other }}
+                    {% for error in form.event_type_other.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}
+                  </div>
+                </div>
+                <div class="col-span-12">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.description.label }}</label>
+                  {{ form.description }}
+                  {% for error in form.description.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="col-span-12 md:col-span-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.event_date.label }} <span class="text-red-600" aria-hidden="true">*</span></label>
+                  {{ form.event_date }}
+                  {% for error in form.event_date.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="col-span-12 md:col-span-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.start_time.label }} <span class="text-red-600" aria-hidden="true">*</span></label>
+                  {{ form.start_time }}
+                  {% for error in form.start_time.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="col-span-12 md:col-span-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.end_time.label }}</label>
+                  {{ form.end_time }}
+                  {% for error in form.end_time.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="col-span-12 md:col-span-8">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.address.label }} <span class="text-red-600" aria-hidden="true">*</span></label>
+                  {{ form.address }}
+                  {% for error in form.address.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="col-span-12 md:col-span-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.meeting_point.label }}</label>
+                  {{ form.meeting_point }}
+                  {% for error in form.meeting_point.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+              </div>
+            </section>
+
+            <!-- Étape 2: Coordonnées -->
+            <section class="wizard-step min-w-full p-8 bg-gradient-to-br from-white to-gray-50" data-step="1">
+              <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                <span class="inline-flex items-center justify-center w-9 h-9 mr-3 rounded-lg bg-emerald-600 text-white shadow-md"><i class="fas fa-id-badge"></i></span>
+                Coordonnées & contact presse
+              </h2>
+              <div class="grid grid-cols-12 gap-6">
+                <div class="col-span-12 md:col-span-6">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.contact_name.label }} <span class="text-red-600" aria-hidden="true">*</span></label>
+                  {{ form.contact_name }}
+                  {% for error in form.contact_name.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="col-span-12 md:col-span-6">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.contact_phone.label }} <span class="text-red-600" aria-hidden="true">*</span></label>
+                  {{ form.contact_phone }}
+                  {% for error in form.contact_phone.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="col-span-12 md:col-span-6">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.contact_email.label }}</label>
+                  {{ form.contact_email }}
+                  {% for error in form.contact_email.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="col-span-12 md:col-span-6">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.other_contacts.label }}</label>
+                  {{ form.other_contacts }}
+                  {% for error in form.other_contacts.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+              </div>
+            </section>
+
+            <!-- Étape 3: Couverture -->
+            <section class="wizard-step min-w-full p-8 bg-gradient-to-br from-white to-gray-50 transition-opacity duration-300 ease-out" data-step="2">
+              <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                <span class="inline-flex items-center justify-center w-9 h-9 mr-3 rounded-lg bg-purple-600 text-white shadow-md"><i class="fas fa-newspaper"></i></span>
+                Type de couverture & objectifs
+              </h2>
+              <div class="grid grid-cols-12 gap-6">
+                <div class="col-span-12 md:col-span-5">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.coverage_type.label }} <span class="text-red-600" aria-hidden="true">*</span></label>
+                  {{ form.coverage_type }}
+                  {% for error in form.coverage_type.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="col-span-12 md:col-span-7">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.coverage_objective.label }}</label>
+                  {{ form.coverage_objective }}
+                  {% for error in form.coverage_objective.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="col-span-12 md:col-span-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.urgency_level.label }} <span class="text-red-600" aria-hidden="true">*</span></label>
+                  {{ form.urgency_level }}
+                  {% for error in form.urgency_level.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="col-span-12 md:col-span-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">{{ form.response_deadline.label }}</label>
+                  {{ form.response_deadline }}
+                  {% for error in form.response_deadline.errors %}<p class="mt-1 text-sm text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="col-span-12 md:col-span-4 flex items-center">
+                  {{ form.confirm_info }}
+                  <label for="id_confirm_info" class="ml-2 text-sm text-gray-900">Je confirme l’exactitude des informations fournies</label>
+                  {% for error in form.confirm_info.errors %}<p class="ml-3 text-sm text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+              </div>
+            </section>
+
+            <!-- Étape 4: Pièces jointes -->
+            <section class="wizard-step min-w-full p-8 bg-gradient-to-br from-white to-gray-50" data-step="3">
+              <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                <span class="inline-flex items-center justify-center w-9 h-9 mr-3 rounded-lg bg-rose-600 text-white shadow-md"><i class="fas fa-paperclip"></i></span>
+                Pièces jointes (optionnel)
+              </h2>
+              <p class="text-sm text-gray-600 mb-4">Ajoutez un programme, un flyer, un briefing ou tout document utile. Formats acceptés: PDF, DOCX, images, vidéos.</p>
+              <div class="col-span-12 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <input type="file" id="id_attachments" name="attachments" multiple accept=".pdf,.doc,.docx,image/*,video/*" class="w-full text-sm text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                <p class="mt-2 text-xs text-gray-500">Vous pouvez sélectionner plusieurs fichiers à la fois.</p>
+                <!-- Prévisualisation des fichiers sélectionnés -->
+                <div id="attachments-preview" class="mt-3">
+                  <ul id="attachments-preview-list" class="space-y-2"></ul>
+                  <!-- Aperçu média (images/vidéos) -->
+                  <div id="attachments-media-preview" class="mt-4 grid grid-cols-2 md:grid-cols-3 gap-3"></div>
+                </div>
+              </div>
+            </section>
+
+          </div>
+        </div>
+
+        <!-- Navigation wizard -->
+        <div class="px-8 py-6 bg-gray-50 border-t flex items-center justify-between">
+          <button type="button" id="wizard-prev" class="px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 shadow-sm">Précédent</button>
+          <div class="flex items-center gap-3">
+            <button type="button" id="wizard-next" class="px-5 py-2.5 rounded-lg bg-bf1-red text-white font-semibold hover:bg-bf1-red-dark focus:outline-none focus:ring-2 focus:ring-bf1-red shadow">Suivant</button>
+            <button type="submit" id="wizard-submit" class="hidden px-5 py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 shadow">Envoyer la demande</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Wizard
+  const steps = Array.from(document.querySelectorAll('.wizard-step'));
+  const track = document.getElementById('wizard-track');
+  const progressBar = document.getElementById('wizard-progress-bar');
+  const prevBtn = document.getElementById('wizard-prev');
+  const nextBtn = document.getElementById('wizard-next');
+  const submitBtn = document.getElementById('wizard-submit');
+  let currentStep = 0;
+
+  function updateProgress() {
+    const pct = Math.round(((currentStep + 1) / steps.length) * 100);
+    if (progressBar) progressBar.style.width = pct + '%';
+  }
+  function updateNav() {
+    const isFirst = currentStep === 0;
+    const isLast = currentStep === steps.length - 1;
+    prevBtn.classList.toggle('opacity-50', isFirst);
+    prevBtn.disabled = isFirst;
+    nextBtn.classList.toggle('hidden', isLast);
+    submitBtn.classList.toggle('hidden', !isLast);
+  }
+  function showStep(index) {
+    const newStep = Math.max(0, Math.min(index, steps.length - 1));
+    const last = currentStep;
+    currentStep = newStep;
+    if (steps[last]) {
+      steps[last].classList.remove('opacity-100');
+      steps[last].classList.add('opacity-0');
+    }
+    const offsetPercent = -(currentStep * 100);
+    if (track) track.style.transform = `translateX(${offsetPercent}%)`;
+    requestAnimationFrame(() => {
+      steps[currentStep].classList.remove('opacity-0');
+      steps[currentStep].classList.add('opacity-100');
+    });
+    updateProgress();
+    updateNav();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  showStep(0);
+  prevBtn.addEventListener('click', () => showStep(currentStep - 1));
+  nextBtn.addEventListener('click', () => showStep(currentStep + 1));
+
+  // Event type: afficher le champ "Autre"
+  const eventTypeSelect = document.getElementById('id_event_type');
+  const otherWrap = document.getElementById('event-type-other-wrap');
+  function toggleOther() {
+    if (!eventTypeSelect || !otherWrap) return;
+    const isOther = eventTypeSelect.value === 'other';
+    otherWrap.classList.toggle('hidden', !isOther);
+  }
+  if (eventTypeSelect) {
+    eventTypeSelect.addEventListener('change', toggleOther);
+    toggleOther();
+  }
+
+  // Prévisualisation des pièces jointes sélectionnées
+  const attachmentsInput = document.getElementById('id_attachments');
+  const previewList = document.getElementById('attachments-preview-list');
+  const mediaPreview = document.getElementById('attachments-media-preview');
+  let mediaObjectURLs = [];
+  function formatSize(bytes){
+    if (bytes < 1024) return bytes + ' o';
+    const kb = bytes / 1024; if (kb < 1024) return Math.round(kb) + ' Ko';
+    const mb = kb / 1024; if (mb < 1024) return (Math.round(mb * 10) / 10) + ' Mo';
+    const gb = mb / 1024; return (Math.round(gb * 10) / 10) + ' Go';
+  }
+  function renderAttachmentsMedia(files){
+    if (!mediaPreview) return;
+    // Révoquer les anciens URLs pour éviter les fuites mémoire
+    try { mediaObjectURLs.forEach(url => URL.revokeObjectURL(url)); } catch(e) {}
+    mediaObjectURLs = [];
+    mediaPreview.innerHTML = '';
+    if (!files || files.length === 0) return;
+    Array.from(files).forEach(function(file, idx){
+      const type = (file.type || '').toLowerCase();
+      if (!type.startsWith('image/') && !type.startsWith('video/')) return;
+      const card = document.createElement('div');
+      card.className = 'relative rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm';
+      const header = document.createElement('div');
+      header.className = 'absolute top-2 left-2 right-2 flex items-center justify-between';
+      const badge = document.createElement('span');
+      badge.className = 'text-xs px-2 py-0.5 rounded bg-gray-900/70 text-white';
+      badge.textContent = type.startsWith('image/') ? 'Image' : 'Vidéo';
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'text-xs px-2 py-1 rounded bg-red-600/80 text-white hover:bg-red-700/90';
+      removeBtn.setAttribute('aria-label', 'Supprimer '+ file.name);
+      removeBtn.textContent = 'Supprimer';
+      removeBtn.addEventListener('click', function(){ removeAttachmentByIndex(idx); });
+      header.appendChild(badge);
+      header.appendChild(removeBtn);
+
+      const url = URL.createObjectURL(file);
+      mediaObjectURLs.push(url);
+
+      if (type.startsWith('image/')) {
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = 'Prévisualisation: ' + file.name;
+        img.className = 'w-full h-40 md:h-48 object-cover';
+        card.appendChild(img);
+      } else if (type.startsWith('video/')) {
+        const video = document.createElement('video');
+        video.src = url;
+        video.controls = true;
+        video.preload = 'metadata';
+        video.className = 'w-full h-40 md:h-48 object-cover bg-black';
+        card.appendChild(video);
+      }
+      card.appendChild(header);
+      mediaPreview.appendChild(card);
+    });
+  }
+  function renderAttachmentsPreview(files){
+    if (!previewList) return;
+    previewList.innerHTML = '';
+    // Mettre à jour l’aperçu média même si la liste est vide,
+    // afin d’effacer les vignettes lorsqu’on supprime le dernier fichier
+    renderAttachmentsMedia(files);
+    if (!files || files.length === 0) return;
+    Array.from(files).forEach(function(file, idx){
+      const li = document.createElement('li');
+      li.className = 'flex items-center gap-3 p-2 rounded border border-gray-200 bg-white';
+      li.setAttribute('data-index', String(idx));
+      const icon = document.createElement('span');
+      icon.className = 'inline-flex items-center justify-center w-6 h-6 rounded bg-gray-100 text-gray-600';
+      icon.textContent = '📎';
+      const info = document.createElement('div');
+      info.className = 'flex-1 text-sm text-gray-800';
+      info.textContent = file.name + ' • ' + formatSize(file.size);
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'text-xs px-2 py-1 rounded bg-red-50 text-red-700 hover:bg-red-100 border border-red-200';
+      removeBtn.setAttribute('aria-label', 'Supprimer '+ file.name);
+      removeBtn.textContent = 'Supprimer';
+      removeBtn.addEventListener('click', function(){ removeAttachmentByIndex(idx); });
+      li.appendChild(icon);
+      li.appendChild(info);
+      li.appendChild(removeBtn);
+      previewList.appendChild(li);
+    });
+    // L’aperçu média est déjà synchronisé plus haut
+  }
+  function removeAttachmentByIndex(removeIdx){
+    if (!attachmentsInput) return;
+    // Reconstruire la FileList sans l’élément supprimé
+    try {
+      const dt = new DataTransfer();
+      Array.from(attachmentsInput.files).forEach(function(file, idx){
+        if (idx !== removeIdx) dt.items.add(file);
+      });
+      attachmentsInput.files = dt.files;
+    } catch(err) {
+      // Fallback: si DataTransfer indisponible, vider l’input
+      attachmentsInput.value = '';
+    }
+    renderAttachmentsPreview(attachmentsInput.files);
+  }
+  if (attachmentsInput) {
+    attachmentsInput.addEventListener('change', function(){ renderAttachmentsPreview(attachmentsInput.files); });
+    // Si le navigateur conserve la sélection (retour arrière), afficher
+    renderAttachmentsPreview(attachmentsInput.files);
+  }
+
+  // Réglages de validation douce pour quelques champs clés
+  const formEl = document.getElementById('coverage-form');
+  if (formEl && submitBtn) {
+    submitBtn.addEventListener('click', function() {
+      if (typeof formEl.requestSubmit === 'function') {
+        formEl.requestSubmit();
+      } else {
+        formEl.submit();
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

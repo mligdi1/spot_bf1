@@ -1,0 +1,1 @@
+This file is added to verify patching in project-level package.

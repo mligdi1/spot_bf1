@@ -1,0 +1,434 @@
+{% extends 'spot/base.html' %}
+{% load humanize %}
+{% block content %}
+<section class="max-w-7xl mx-auto px-4 py-10">
+  <div class="relative overflow-hidden rounded-xl bg-gradient-to-br from-bf1-red/10 to-gray-900/5 p-6 bf1-shadow">
+    <h1 class="text-3xl font-bold">Tarification des prestations 2025</h1>
+    <p class="text-gray-700 mt-2">Aperçu dynamique des offres, avec comparaison par plage et durée.</p>
+    <!-- Nouveau: Légende & action -->
+    <div class="mt-3 flex items-center gap-3 text-sm">
+      <span class="inline-flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-bf1-red inline-block"></span> Prime time</span>
+      <button id="highlightPrime" class="px-3 py-1 rounded-full border hover:bg-gray-100">Mettre en évidence le Prime time</button>
+      <!-- Nouveau: Sélecteur de mode -->
+      <div class="ml-auto flex items-center gap-3">
+        <span>Mode:</span>
+        <label class="inline-flex items-center gap-1 text-gray-800">
+          <input type="radio" name="creationMode" value="easy" checked> Campagne/Spot
+        </label>
+        <label class="inline-flex items-center gap-1 text-gray-800">
+          <input type="radio" name="creationMode" value="detailed"> Demande de couverture
+        </label>
+      </div>
+    </div>
+
+    <!-- Nouveau: Barre de recherche -->
+    <div class="mt-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center" role="search" aria-label="Recherche tarifs">
+      <input id="pricingSearchInput" type="text" class="flex-1 px-4 py-2 rounded border focus:outline-none focus:ring-2 focus:ring-bf1-red"
+             placeholder="Rechercher dans les tarifs..." aria-label="Rechercher dans les tarifs" />
+      <button id="pricingSearchButton" class="px-4 py-2 rounded bg-gray-900 text-white hover:bg-gray-800 inline-flex items-center justify-center">
+        <i class="fas fa-search"></i>
+        <span class="ml-2">Rechercher</span>
+      </button>
+    </div>
+    <div id="searchStats" class="mt-2 text-sm text-gray-600 hidden"></div>
+  </div>
+
+  <!-- Prestations (cards) -->
+  <div class="mt-8 space-y-6">
+    {% for p in tariff_sheet.prestations %}
+      <div class="bg-white shadow rounded p-5 transform transition hover:scale-[1.01]" data-prestation-card="1">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-semibold">{{ p.no }}. {{ p.label }}</h2>
+        </div>
+        <div class="mt-3 overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead>
+              <tr class="text-left border-b">
+                <th class="py-2 pr-3">Sous-libellé</th>
+                <th class="py-2 pr-3">Unité</th>
+                <th class="py-2 pr-3">Nombre</th>
+                <th class="py-2 pr-3">Prix unitaire TTC</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for line in p.lines %}
+                <tr class="border-b">
+                  <td class="py-2 pr-3">{{ line.sub|default:"—" }}</td>
+                  <td class="py-2 pr-3">{{ line.unit }}</td>
+                  <td class="py-2 pr-3">{{ line.number|default:"—" }}</td>
+                  <td class="py-2 pr-3">
+                    {% if line.price_ttc %}
+                      <div class="flex items-center gap-3">
+                        <span>{{ line.price_ttc|intcomma }} F CFA</span>
+                        <!-- Nouveau: bouton Sélectionner -->
+                        <button class="select-price px-3 py-1 rounded border text-gray-900 hover:bg-gray-100"
+                                data-type="service"
+                                data-label="{{ p.label }}"
+                                data-sub="{{ line.sub|default:'' }}"
+                                data-unit="{{ line.unit }}"
+                                data-number="{{ line.number|default:'' }}"
+                                data-price="{{ line.price_ttc }}">
+                          Sélectionner
+                        </button>
+                      </div>
+                    {% else %}
+                      <span class="text-gray-600 italic">Sur devis</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Diffusion de spot publicitaire (grille interactive) -->
+  <div class="mt-10 bg-white shadow rounded p-5">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-xl font-semibold">Diffusion de spot publicitaire</h2>
+        <p class="text-gray-600 mt-1">Tarifs par plage horaire et durée (TTC). Supplément par seconde en HT.</p>
+      </div>
+      <div class="flex items-center gap-2" aria-label="Choix de durée">
+        <button class="duration-chip px-3 py-1 rounded-full border text-sm bg-bf1-red text-white" data-index="0">{{ tariff_sheet.spots.durations.0 }}</button>
+        <button class="duration-chip px-3 py-1 rounded-full border text-sm" data-index="1">{{ tariff_sheet.spots.durations.1 }}</button>
+      </div>
+    </div>
+    <div class="mt-4 overflow-x-auto">
+      <table class="min-w-full text-sm" id="spotGrid">
+        <thead>
+          <tr class="text-left border-b">
+            <th class="py-2 pr-3">Plage</th>
+            <th class="py-2 pr-3">Prix (TTC)</th>
+            <th class="py-2 pr-3">Supplément/seconde (HT)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in tariff_sheet.spots.rows %}
+            <tr class="border-b">
+              <td class="py-2 pr-3">{% if r.prime %}<span class="font-semibold text-bf1-red">Prime time</span> {% endif %}{{ r.slot }}</td>
+              <td class="py-2 pr-3">
+                <div class="flex items-center gap-3">
+                  <span class="price-col" data-prices="{{ r.prices.0 }},{{ r.prices.1 }}">{{ r.prices.0|intcomma }} F CFA</span>
+                  <!-- Nouveau: bouton Sélectionner -->
+                  <button class="select-price px-3 py-1 rounded border text-gray-900 hover:bg-gray-100"
+                          data-type="spot"
+                          data-slot="{{ r.slot }}"
+                          {% if r.prime %}data-prime="1"{% endif %}
+                          data-prices="{{ r.prices.0 }},{{ r.prices.1 }}">
+                    Sélectionner
+                  </button>
+                </div>
+              </td>
+              <td class="py-2 pr-3">{{ r.extra_per_second_ht|intcomma }} F CFA</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="text-gray-600 mt-2">Option “activité culturelle” disponible (ex. {{ tariff_sheet.spots.rows.0.cultural_price|intcomma }} F CFA).</p>
+  </div>
+
+  <!-- Comparaison interactive -->
+  <div class="mt-10 bg-white shadow rounded p-5">
+    <h2 class="text-xl font-semibold">Comparer des plages</h2>
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label class="text-sm text-gray-700">Plage A</label>
+        <select id="slotA" class="w-full mt-1 px-3 py-2 border rounded">
+          {% for r in tariff_sheet.spots.rows %}
+            <option value="{{ forloop.counter0 }}">{{ r.slot }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="text-sm text-gray-700">Plage B</label>
+        <select id="slotB" class="w-full mt-1 px-3 py-2 border rounded">
+          {% for r in tariff_sheet.spots.rows %}
+            <option value="{{ forloop.counter0 }}">{{ r.slot }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="mt-4">
+      <div class="flex items-center gap-2" aria-label="Choix de durée pour comparaison">
+        <button class="compare-duration px-3 py-1 rounded-full border text-sm bg-bf1-red text-white" data-index="0">{{ tariff_sheet.spots.durations.0 }}</button>
+        <button class="compare-duration px-3 py-1 rounded-full border text-sm" data-index="1">{{ tariff_sheet.spots.durations.1 }}</button>
+      </div>
+      <div id="compareResult" class="mt-4 text-gray-900 font-medium">Sélectionnez deux plages pour comparer.</div>
+    </div>
+  </div>
+
+  <div class="mt-10 text-sm text-gray-600">
+    <p>Note: Les éléments marqués “Sur devis” nécessitent un chiffrage selon les besoins.</p>
+  </div>
+</section>
+
+<!-- Export JSON des spots pour JS -->
+<script type="application/json" id="spots-data">
+  {{ tariff_sheet.spots.rows|json_script:"spots-data-dummy" }}
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Recherche en temps réel
+    const input = document.getElementById('pricingSearchInput');
+    const button = document.getElementById('pricingSearchButton');
+    const stats = document.getElementById('searchStats');
+    const cards = Array.from(document.querySelectorAll('[data-prestation-card]'));
+    const spotRows = Array.from(document.querySelectorAll('#spotGrid tbody tr'));
+
+    const normalize = s => (s || '').toString().toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    const indexCard = card => {
+      const title = card.querySelector('h2')?.innerText || '';
+      const rows = Array.from(card.querySelectorAll('tbody tr')).map(tr => tr.innerText).join(' ');
+      return normalize(title + ' ' + rows);
+    };
+    const cardIndex = new Map();
+    cards.forEach(card => cardIndex.set(card, indexCard(card)));
+
+    const indexRow = tr => normalize(tr.innerText);
+    const rowIndex = new Map();
+    spotRows.forEach(tr => rowIndex.set(tr, indexRow(tr)));
+
+    const updateStats = (q, shownCards, shownRows) => {
+      if (!q) { stats.classList.add('hidden'); stats.textContent = ''; return; }
+      stats.classList.remove('hidden');
+      stats.textContent = `Résultats: ${shownCards} prestation(s), ${shownRows} plage(s)`;
+    };
+
+    const applySearch = () => {
+      const q = normalize(input.value.trim());
+      let shownCards = 0, shownRows = 0;
+      if (!q) {
+        cards.forEach(c => c.classList.remove('hidden'));
+        spotRows.forEach(r => r.classList.remove('hidden'));
+        updateStats('', 0, 0);
+        return;
+      }
+      cards.forEach(card => {
+        const match = cardIndex.get(card).includes(q);
+        card.classList.toggle('hidden', !match);
+        if (match) shownCards++;
+      });
+      spotRows.forEach(tr => {
+        const match = rowIndex.get(tr).includes(q);
+        tr.classList.toggle('hidden', !match);
+        if (match) shownRows++;
+      });
+      updateStats(q, shownCards, shownRows);
+    };
+
+    input?.addEventListener('input', applySearch);
+    button?.addEventListener('click', applySearch);
+  });
+  document.addEventListener('DOMContentLoaded', () => {
+    // Bascule de durée (table spotGrid)
+    const durationChips = document.querySelectorAll('.duration-chip');
+    const priceCols = document.querySelectorAll('.price-col');
+    let activeIndex = 0;
+
+    const renderPrices = () => {
+      priceCols.forEach(el => {
+        const [p0, p1] = (el.dataset.prices || '').split(',');
+        const val = activeIndex === 0 ? p0 : p1;
+        el.textContent = Number(val).toLocaleString('fr-FR') + ' F CFA';
+      });
+    };
+
+    durationChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        durationChips.forEach(c => c.classList.remove('bg-bf1-red', 'text-white'));
+        chip.classList.add('bg-bf1-red', 'text-white');
+        activeIndex = Number(chip.dataset.index);
+        renderPrices();
+      });
+    });
+    renderPrices();
+
+    // Comparaison interactive
+    const parseJSON = () => {
+      try {
+        const script = document.getElementById('spots-data');
+        // json_script a déjà rendu le JSON; récupérons via context en fallback
+        // Si indisponible, on reconstruit depuis DOM
+        const rows = [];
+        document.querySelectorAll('#spotGrid tbody tr').forEach(tr => {
+          const slot = tr.children[0].innerText.trim();
+          const prices = tr.querySelector('.price-col').dataset.prices.split(',').map(Number);
+          const extra = tr.children[2].innerText.replace(/\D/g, '') || '0';
+          rows.push({ slot, prices, extra_per_second_ht: Number(extra) });
+        });
+        return rows.length ? rows : [];
+      } catch(e) { return []; }
+    };
+
+    const rows = parseJSON();
+    const slotA = document.getElementById('slotA');
+    const slotB = document.getElementById('slotB');
+    const compareDurations = document.querySelectorAll('.compare-duration');
+    const result = document.getElementById('compareResult');
+    let compareIndex = 0;
+
+    compareDurations.forEach(btn => {
+      btn.addEventListener('click', () => {
+        compareDurations.forEach(b => b.classList.remove('bg-bf1-red', 'text-white'));
+        btn.classList.add('bg-bf1-red', 'text-white');
+        compareIndex = Number(btn.dataset.index);
+        updateCompare();
+      });
+    });
+
+    const updateCompare = () => {
+      const a = rows[Number(slotA.value)] || null;
+      const b = rows[Number(slotB.value)] || null;
+      if (!a || !b) { result.textContent = 'Sélectionnez deux plages pour comparer.'; return; }
+      const pa = a.prices[compareIndex];
+      const pb = b.prices[compareIndex];
+      const diff = (pb - pa);
+      const arrow = diff > 0 ? '↑' : (diff < 0 ? '↓' : '→');
+      result.textContent = `${a.slot}: ${pa.toLocaleString('fr-FR')} F • ${b.slot}: ${pb.toLocaleString('fr-FR')} F (${arrow} ${Math.abs(diff).toLocaleString('fr-FR')} F)`;
+    };
+
+    slotA.addEventListener('change', updateCompare);
+    slotB.addEventListener('change', updateCompare);
+    updateCompare();
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('highlightPrime');
+    const rows = Array.from(document.querySelectorAll('#spotGrid tbody tr'));
+    let on = false;
+    const isPrime = tr => tr.children[0].innerText.includes('Prime time');
+    const toggle = () => {
+      on = !on;
+      rows.forEach(tr => {
+        if (isPrime(tr)) {
+          tr.classList.toggle('ring-2', on);
+          tr.classList.toggle('ring-bf1-red', on);
+          tr.classList.toggle('bg-bf1-red/5', on);
+        }
+      });
+      btn.classList.toggle('bg-gray-800', on);
+      btn.classList.toggle('text-white', on);
+    };
+    btn && btn.addEventListener('click', toggle);
+  });
+
+  // Nouveau: gestion du bouton Sélectionner
+  document.addEventListener('DOMContentLoaded', () => {
+    const getMode = () => {
+      const el = document.querySelector('input[name="creationMode"]:checked');
+      return el ? el.value : 'easy';
+    };
+    const urlEasy = "{% url 'campaign_spot_create' %}";
+    const urlDetailed = "{% url 'coverage_request_create' %}";
+    const durationChips = document.querySelectorAll('.duration-chip');
+    const priceCols = document.querySelectorAll('.price-col');
+    let activeIndex = 0;
+    durationChips.forEach(c => c.addEventListener('click', () => activeIndex = Number(c.dataset.index)));
+    const parsePrice = (str) => Number(String(str || '0').replace(/\D/g, ''));
+
+    const mapService = (label, sub) => {
+      const lower = (label || '').toLowerCase() + ' ' + (sub || '').toLowerCase();
+      const channel = (lower.includes('facebook') || lower.includes('youtube')) ? 'online' : 'tv';
+      const creationKeywords = ['confection', 'réalisation', 'publireportage'];
+      const campaign_type = creationKeywords.some(k => lower.includes(k)) ? 'spot_creation' : 'spot_upload';
+      return { channel, campaign_type };
+    };
+
+    const mapCoverageType = (label, sub) => {
+      const lower = (label || '').toLowerCase() + ' ' + (sub || '').toLowerCase();
+      if (lower.includes('interview')) return 'interview';
+      if (lower.includes('publireportage') || lower.includes('reportage')) return 'video_report';
+      if (lower.includes('photo')) return 'photo_report';
+      if (lower.includes('direct') || lower.includes('live')) return 'live';
+      if (lower.includes('article') || lower.includes('web')) return 'web_article';
+      if (lower.includes('micro') || lower.includes('voix')) return 'voiceover_micro';
+      return 'editorial_defined';
+    };
+
+    document.querySelectorAll('.select-price').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = getMode();
+        const isSpot = btn.dataset.type === 'spot';
+        if (mode === 'easy') {
+          let params = new URLSearchParams();
+          params.set('from_pricing', '1');
+          params.set('objective', 'promotion');
+          if (isSpot) {
+            const slotLabel = btn.dataset.slot || '';
+            const prime = btn.dataset.prime ? '1' : '0';
+            const [p0, p1] = (btn.dataset.prices || '').split(',').map(parsePrice);
+            const selectedPrice = activeIndex === 0 ? p0 : p1;
+            const durationSeconds = activeIndex === 0 ? '30' : '60';
+            params.set('channel', 'tv');
+            params.set('campaign_type', 'spot_upload');
+            params.set('media_type', 'video');
+            params.set('duration_seconds', durationSeconds);
+            params.set('budget', String(selectedPrice));
+            params.set('title', `Campagne — Spot TV • ${slotLabel}`);
+            params.set('spot_title', `Spot ${durationSeconds}s`);
+            params.set('slot_label', slotLabel);
+            params.set('is_prime', prime);
+            params.set('lock', 'channel,campaign_type,media_type,duration_seconds,budget,title,spot_title');
+            params.set('selection_note', `Diffusion spot • ${slotLabel} • ${activeIndex === 0 ? '0–30 s' : '31–60 s'} • ${selectedPrice.toLocaleString('fr-FR')} F CFA`);
+            window.location.href = `${urlEasy}?${params.toString()}`;
+          } else {
+            const label = btn.dataset.label || '';
+            const sub = btn.dataset.sub || '';
+            const unit = btn.dataset.unit || '';
+            const number = btn.dataset.number || '';
+            const price = parsePrice(btn.dataset.price);
+            const mapped = mapService(label, sub);
+            params.set('channel', mapped.channel);
+            params.set('campaign_type', mapped.campaign_type);
+            params.set('budget', String(price));
+            params.set('title', `Prestation — ${label}${sub ? ' — ' + sub : ''}`);
+            params.set('lock', 'channel,campaign_type,budget,title');
+            params.set('selection_note', `${label}${sub ? ' — ' + sub : ''} • ${unit}${number ? ' × ' + number : ''} • ${price.toLocaleString('fr-FR')} F CFA`);
+            window.location.href = `${urlEasy}?${params.toString()}`;
+          }
+        } else {
+          // Mode détaillé: rediriger vers la demande de couverture pré-remplie
+          let params = new URLSearchParams();
+          params.set('from_pricing', '1');
+          params.set('urgency_level', 'normal');
+          params.set('event_type', 'other');
+          if (isSpot) {
+            const slotLabel = btn.dataset.slot || '';
+            const [p0, p1] = (btn.dataset.prices || '').split(',').map(parsePrice);
+            const selectedPrice = activeIndex === 0 ? p0 : p1;
+            const durationSeconds = activeIndex === 0 ? '30' : '60';
+            params.set('coverage_type', 'video_report');
+            params.set('coverage_objective', `Reportage sur diffusion de spot ${durationSeconds}s`);
+            params.set('event_title', `Couverture — Spot TV • ${slotLabel}`);
+            params.set('description', `Diffusion spot • ${slotLabel} • ${activeIndex === 0 ? '0–30 s' : '31–60 s'} • ${selectedPrice.toLocaleString('fr-FR')} F CFA`);
+            params.set('selection_note', params.get('description'));
+          } else {
+            const label = btn.dataset.label || '';
+            const sub = btn.dataset.sub || '';
+            const unit = btn.dataset.unit || '';
+            const number = btn.dataset.number || '';
+            const price = parsePrice(btn.dataset.price);
+            const covType = mapCoverageType(label, sub);
+            params.set('coverage_type', covType);
+            params.set('coverage_objective', `${label}${sub ? ' — ' + sub : ''}`);
+            params.set('event_title', `Couverture — ${label}${sub ? ' — ' + sub : ''}`);
+            const note = `${label}${sub ? ' — ' + sub : ''} • ${unit}${number ? ' × ' + number : ''} • ${price.toLocaleString('fr-FR')} F CFA`;
+            params.set('description', note);
+            params.set('selection_note', note);
+          }
+          window.location.href = `${urlDetailed}?${params.toString()}`;
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}

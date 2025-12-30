@@ -1,0 +1,274 @@
+{% extends 'spot/diffusion/base_diffusion.html' %}
+{% load static %}
+{% block title %}Profil – Diffusion{% endblock %}
+{% block content %}
+<section aria-labelledby="profile-hero" class="mb-8">
+  <div class="relative overflow-hidden rounded-xl premium-gradient">
+    <img src="{% static 'bf1_spots.jpg' %}" alt="Fond BF1 TV" class="absolute inset-0 w-full h-full object-cover opacity-30" loading="lazy">
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 text-white">
+      <div class="flex items-center">
+        <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=D4272E&color=fff&size=96" alt="Avatar de {{ user.username }}" class="w-16 h-16 rounded-full ring-2 ring-white/40 shadow mr-4">
+        <div>
+          <h1 id="profile-hero" class="heading text-3xl sm:text-4xl font-semibold">{{ user.first_name }} {{ user.last_name }}</h1>
+          <p class="mt-1 text-white/90 flex items-center">
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-white/10 ring-1 ring-white/30 mr-2">
+              {{ user.get_role_display }}
+            </span>
+            <span class="hidden sm:inline">·</span>
+            <span class="ml-2">{{ user.email }}{% if user.phone %} · {{ user.phone }}{% endif %}{% if user.company %} · {{ user.company }}{% endif %}</span>
+          </p>
+        </div>
+      </div>
+      <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4" aria-label="Indicateurs clés">
+        <div class="card-dark hover-raise p-5 rounded-lg" role="status" aria-live="polite">
+          <p class="text-sm text-white/70">À diffuser aujourd’hui</p>
+          <p class="mt-1 text-2xl font-bold">{{ kpi_spots_today|default:"0" }}</p>
+        </div>
+        <div class="card-dark hover-raise p-5 rounded-lg" role="status" aria-live="polite">
+          <p class="text-sm text-white/70">En retard</p>
+          <p class="mt-1 text-2xl font-bold">{{ kpi_late_spots|default:"0" }}</p>
+        </div>
+        <div class="card-dark hover-raise p-5 rounded-lg" role="status" aria-live="polite">
+          <p class="text-sm text-white/70">Semaine (total)</p>
+          <p class="mt-1 text-2xl font-bold">
+            {% if kpi_week_counts %}
+              {{ kpi_week_counts|length }} jour(s)
+            {% else %}
+              —
+            {% endif %}
+          </p>
+        </div>
+      </div>
+      <div class="mt-6 flex flex-wrap gap-3">
+        <a href="{% url 'diffusion_spots' %}" class="inline-flex items-center px-4 py-2 rounded-md bg-white text-gray-900 hover:bg-gray-100 transition-colors">
+          <i class="fas fa-video mr-2"></i> Voir les spots
+        </a>
+        <a href="{% url 'diffusion_planning' %}" class="inline-flex items-center px-4 py-2 rounded-md bg-white/10 text-white hover:bg-white/20 transition-colors ring-1 ring-white/30">
+          <i class="fas fa-calendar-alt mr-2"></i> Ouvrir le planning
+        </a>
+      </div>
+    </div>
+  </div>
+  <p class="sr-only">Accédez aux spots et au planning.</p>
+  {% if messages %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4" aria-live="polite">
+      {% for message in messages %}
+        <div class="card p-3 text-sm {% if message.tags == 'error' %}text-red-700 bg-red-50{% elif message.tags == 'success' %}text-green-700 bg-green-50{% else %}text-gray-800 bg-white{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</section>
+
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="lg:col-span-2 space-y-8">
+      <div class="card p-6">
+        <div class="flex items-start justify-between mb-4">
+          <h2 class="text-xl font-semibold text-gray-900">
+            <i class="fas fa-user text-red-600 mr-2"></i> Informations personnelles
+          </h2>
+          <button id="toggle-diffusion-personal-form" type="button" class="px-4 py-2 rounded-md bg-gray-900 text-white hover:bg-black"
+                  aria-controls="diffusion-personal-form-container" aria-expanded="false">
+            <i class="fas fa-edit mr-2"></i> Modifier ses informations personnelles
+          </button>
+        </div>
+
+        <!-- Résumé compact -->
+        <div class="bg-gray-50 rounded-lg p-4 mb-6">
+          <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <dt class="text-gray-600">Email</dt>
+              <dd class="font-medium text-gray-900">{{ user.email }}</dd>
+            </div>
+            <div>
+              <dt class="text-gray-600">Téléphone</dt>
+              <dd class="font-medium text-gray-900">{{ user.phone|default:"—" }}</dd>
+            </div>
+            <div>
+              <dt class="text-gray-600">Entreprise</dt>
+              <dd class="font-medium text-gray-900">{{ user.company|default:"—" }}</dd>
+            </div>
+            <div class="md:col-span-2">
+              <dt class="text-gray-600">Adresse</dt>
+              <dd class="font-medium text-gray-900">{{ user.address|default:"—" }}</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div id="diffusion-personal-form-container" class="hidden">
+        <form method="post" action="{% url 'diffusion_profile' %}" class="space-y-6" aria-describedby="diffusion-profile-help">
+          {% csrf_token %}
+          <!-- Identité -->
+          <div>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Identité</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="form__group">
+                <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}" data-validate="required|min:2" placeholder=" " class="form__control">
+                <label class="form__label" for="first_name">Prénom</label>
+                <span class="form__icon" aria-hidden="true"></span>
+                <p class="form__error" data-error-for="first_name" aria-live="polite"></p>
+              </div>
+              <div class="form__group">
+                <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}" data-validate="required|min:2" placeholder=" " class="form__control">
+                <label class="form__label" for="last_name">Nom</label>
+                <span class="form__icon" aria-hidden="true"></span>
+                <p class="form__error" data-error-for="last_name" aria-live="polite"></p>
+              </div>
+              <div class="form__group">
+                <input type="text" id="username" value="{{ user.username }}" placeholder=" " class="form__control" disabled aria-describedby="username-help">
+                <label class="form__label" for="username">Nom d'utilisateur</label>
+                <span class="form__icon" aria-hidden="true"></span>
+                <p id="username-help" class="text-xs text-gray-500 mt-2">Non modifiable</p>
+              </div>
+              <div class="form__group">
+                <input type="text" id="company" name="company" value="{{ user.company }}" placeholder=" " class="form__control">
+                <label class="form__label" for="company">Entreprise</label>
+                <span class="form__icon" aria-hidden="true"></span>
+                <p class="form__error" data-error-for="company" aria-live="polite"></p>
+              </div>
+            </div>
+          </div>
+          <!-- Contact -->
+          <div>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Contact</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="form__group">
+                <input type="email" id="email" name="email" value="{{ user.email }}" data-validate="required|email" placeholder=" " class="form__control">
+                <label class="form__label" for="email">Email</label>
+                <span class="form__icon" aria-hidden="true"></span>
+                <p class="form__error" data-error-for="email" aria-live="polite"></p>
+              </div>
+              <div class="form__group">
+                <input type="tel" id="phone" name="phone" value="{{ user.phone }}" placeholder=" " class="form__control">
+                <label class="form__label" for="phone">Téléphone</label>
+                <span class="form__icon" aria-hidden="true"></span>
+                <p class="form__error" data-error-for="phone" aria-live="polite"></p>
+              </div>
+            </div>
+          </div>
+          <!-- Adresse -->
+          <div>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Adresse</h3>
+            <div class="form__group">
+              <textarea id="address" name="address" rows="3" placeholder=" " class="form__control">{{ user.address }}</textarea>
+              <label class="form__label" for="address">Adresse</label>
+              <span class="form__icon" aria-hidden="true"></span>
+              <p class="form__error" data-error-for="address" aria-live="polite"></p>
+            </div>
+          </div>
+          <!-- Sécurité -->
+          <div>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Sécurité</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="form__group">
+                <input type="password" id="password" name="password" data-validate="min:8" placeholder=" " class="form__control" autocomplete="new-password">
+                <label class="form__label" for="password">Nouveau mot de passe (optionnel)</label>
+                <span class="form__icon" aria-hidden="true"></span>
+                <p class="form__error" data-error-for="password" aria-live="polite"></p>
+                <p class="text-xs text-gray-500 mt-2">Laisser vide pour ne pas changer le mot de passe.</p>
+              </div>
+            </div>
+          </div>
+          <!-- Actions -->
+          <div class="flex flex-wrap gap-3">
+            <button type="submit" class="btn btn--primary inline-flex items-center" data-sparkles="true">
+              <i class="fas fa-save mr-2"></i> Enregistrer
+            </button>
+            <a href="{% url 'notifications' %}" class="btn btn--outline inline-flex items-center" data-ripple="true">
+              <i class="fas fa-bell mr-2"></i> Notifications
+            </a>
+          </div>
+          <p id="diffusion-profile-help" class="sr-only">Modifiez votre identité, vos coordonnées, votre adresse et votre mot de passe.</p>
+        </form>
+        </div>
+      </div>
+
+      <div class="card p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+          <i class="fas fa-history text-red-600 mr-2"></i> Activités récentes
+        </h2>
+        {% if activities %}
+          <ul class="divide-y divide-gray-200">
+            {% for s in activities %}
+              <li class="py-3 text-sm flex items-center justify-between">
+                <div class="flex items-center">
+                  <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-700 mr-3">
+                    <i class="fas fa-film"></i>
+                  </span>
+                  <div>
+                    <p class="font-medium">{{ s.title|default:s.id }}</p>
+                    <p class="text-gray-500">Créé le {{ s.created_at|date:"d/m/Y H:i" }}</p>
+                  </div>
+                </div>
+                <a href="{% url 'diffusion_spots' %}" class="text-red-600 hover:text-red-700">Détails</a>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-gray-600">Aucune activité récente.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <aside class="space-y-6">
+      <div class="card p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+          <i class="fas fa-info-circle text-red-600 mr-2"></i> Informations du compte
+        </h3>
+        <ul class="space-y-3 text-sm">
+          <li class="flex justify-between">
+            <span class="text-gray-600">Rôle:</span>
+            <span class="font-medium">{{ user.get_role_display }}</span>
+          </li>
+          <li class="flex justify-between">
+            <span class="text-gray-600">Membre depuis:</span>
+            <span class="font-medium">{{ user.date_joined|date:"d/m/Y" }}</span>
+          </li>
+          <li class="flex justify-between">
+            <span class="text-gray-600">Dernière connexion:</span>
+            <span class="font-medium">{{ user.last_login|date:"d/m/Y H:i" }}</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+          <i class="fas fa-bolt text-red-600 mr-2"></i> Actions rapides
+        </h3>
+        <div class="grid grid-cols-1 gap-3">
+          <a href="{% url 'diffusion_spots' %}" class="inline-flex items-center justify-between px-4 py-3 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors">
+            <span><i class="fas fa-check mr-2 text-green-600"></i> Confirmer des diffusions</span>
+            <i class="fas fa-chevron-right text-gray-400"></i>
+          </a>
+          <a href="{% url 'diffusion_planning' %}" class="inline-flex items-center justify-between px-4 py-3 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors">
+            <span><i class="fas fa-calendar-day mr-2 text-blue-600"></i> Voir la journée</span>
+            <i class="fas fa-chevron-right text-gray-400"></i>
+          </a>
+          <a href="{% url 'diffusion_export_spots_csv' %}" class="inline-flex items-center justify-between px-4 py-3 rounded-md bg-gray-50 hover:bg-gray-100 transition-colors">
+            <span><i class="fas fa-file-csv mr-2 text-green-700"></i> Export CSV</span>
+            <i class="fas fa-chevron-right text-gray-400"></i>
+          </a>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<script>
+  // Bascule du formulaire d'informations personnelles (diffusion)
+  (function() {
+    const btn = document.getElementById('toggle-diffusion-personal-form');
+    const panel = document.getElementById('diffusion-personal-form-container');
+    if (!btn || !panel) return;
+    btn.addEventListener('click', function() {
+      const isOpen = !panel.classList.contains('hidden');
+      panel.classList.toggle('hidden', isOpen);
+      btn.setAttribute('aria-expanded', (!isOpen).toString());
+      btn.classList.toggle('bg-gray-900', isOpen);
+      btn.classList.toggle('bg-red-600', !isOpen);
+    });
+  })();
+</script>
+{% endblock %}

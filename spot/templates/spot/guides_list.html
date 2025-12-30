@@ -1,0 +1,141 @@
+{% extends 'spot/base.html' %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-10">
+  <header class="mb-8">
+    <div class="relative overflow-hidden rounded-xl bg-gradient-to-br from-bf1-red/10 to-gray-900/5 p-6 bf1-shadow">
+<h1 class="text-3xl font-bold text-gray-900">Guides BF1</h1>
+      <p class="text-gray-600 mt-2">Des explications simples pour choisir le bon format, la bonne durée, la plage horaire et le budget.</p>
+    </div>
+  </header>
+
+  <div class="bg-white rounded-xl p-5 bf1-shadow mb-8" aria-label="Filtres et recherche">
+    <div class="flex flex-col md:flex-row items-start md:items-center gap-4">
+      <div class="relative w-full md:w-1/2">
+        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+        <input id="guideSearch" type="search" class="w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-bf1-red"
+               placeholder="Rechercher (titre ou résumé)…" aria-label="Rechercher un guide" aria-describedby="searchHelp">
+      </div>
+      <div class="flex flex-wrap gap-2" aria-label="Filtres thématiques">
+        <button class="filter-chip px-3 py-1 rounded-full border text-sm" data-filter="tv" aria-pressed="false">TV</button>
+        <button class="filter-chip px-3 py-1 rounded-full border text-sm" data-filter="digital" aria-pressed="false">Digital</button>
+        <button class="filter-chip px-3 py-1 rounded-full border text-sm" data-filter="duree" aria-pressed="false">Durée</button>
+        <button class="filter-chip px-3 py-1 rounded-full border text-sm" data-filter="format" aria-pressed="false">Format</button>
+        <button class="filter-chip px-3 py-1 rounded-full border text-sm" data-filter="budget" aria-pressed="false">Budget</button>
+      </div>
+    </div>
+    <p id="searchHelp" class="mt-2 text-xs text-gray-500">Tapez un mot (ex. prime, JT, spot) ou utilisez un filtre.</p>
+    <p id="noResults" class="hidden mt-3 text-sm text-gray-600">Aucun guide trouvé. Essayez un autre mot ou retirez le filtre.</p>
+  </div>
+
+  {% if articles %}
+    <div id="guideGrid" class="grid md:grid-cols-3 gap-6">
+      {% for article in articles %}
+        <article class="guide-card bg-white p-5 rounded-lg bf1-shadow transform transition hover:scale-[1.02]"
+                 data-slug="{{ article.slug }}"
+                 data-title="{{ article.title|lower }}"
+                 data-summary="{{ article.summary|default:''|lower }}">
+          <h2 class="text-xl font-semibold text-gray-900">{{ article.title }}</h2>
+          <p class="text-gray-600 mt-2">{{ article.summary|default:"" }}</p>
+          {% if article.published_at %}
+            <p class="text-xs text-gray-400 mt-2">Publié le {{ article.published_at|date:"d/m/Y" }}</p>
+          {% endif %}
+          <div class="mt-4 flex gap-2">
+            <a href="{% url 'guide_detail' article.slug %}" class="px-4 py-2 bg-bf1-red text-white rounded">Lire le guide</a>
+            <a href="{% url 'pricing_overview' %}" class="px-4 py-2 bg-gray-800 text-white rounded">Voir les tarifs</a>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div id="guideGrid" class="grid md:grid-cols-3 gap-6">
+      {% for item in curated_articles %}
+        <article class="guide-card bg-white p-5 rounded-lg bf1-shadow transform transition hover:scale-[1.02]"
+                 data-slug="{{ item.slug }}"
+                 data-title="{{ item.title|lower }}"
+                 data-summary="{{ item.summary|lower }}"
+                 data-tags="{{ item.tags|join:',' }}">
+          <h2 class="text-xl font-semibold text-gray-900">{{ item.title }}</h2>
+          <p class="text-gray-600 mt-2">{{ item.summary }}</p>
+          <div class="mt-4 flex gap-2">
+            <a href="{% url 'guide_detail' item.slug %}" class="px-4 py-2 bg-bf1-red text-white rounded">Lire le guide</a>
+            <a href="{% url 'pricing_overview' %}" class="px-4 py-2 bg-gray-800 text-white rounded">Voir les tarifs</a>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+
+    <!-- Bloc d’info complémentaire existant -->
+    <section class="space-y-8">
+      <div class="bg-white p-6 rounded-lg bf1-shadow">
+        <h2 class="text-2xl font-semibold text-gray-900">Diffusion de spot publicitaire</h2>
+        <p class="text-gray-700 mt-2">Découvrez la grille par plage horaire et les options Premium pour maximiser l’impact.</p>
+        <a href="{% url 'pricing_overview' %}" class="inline-block mt-3 px-4 py-2 bg-bf1-red text-white rounded">Voir les tarifs</a>
+      </div>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const search = document.getElementById('guideSearch');
+    const chips = document.querySelectorAll('.filter-chip');
+    const cards = document.querySelectorAll('.guide-card');
+    const noResults = document.getElementById('noResults');
+
+    const normalize = s => (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+    const derivedTags = {
+      'choisir-plage-horaire': ['tv', 'jt'],
+      'formats-et-durees': ['tv', 'duree', 'format'],
+      'mix-tv-digital': ['digital', 'tv'],
+      'gerer-le-budget': ['budget', 'tv', 'digital'],
+    };
+    const getTags = card => {
+      const raw = (card.dataset.tags || '').split(',').map(t => normalize(t.trim())).filter(Boolean);
+      if (raw.length) return raw;
+      const slug = normalize(card.dataset.slug || '');
+      return derivedTags[slug] || [];
+    };
+
+    let activeFilter = '';
+
+    const applyFilter = () => {
+      const q = normalize(search.value || '');
+      let visibleCount = 0;
+
+      cards.forEach(card => {
+        const title = normalize(card.dataset.title);
+        const summary = normalize(card.dataset.summary);
+        const matchesSearch = q === '' || title.includes(q) || summary.includes(q);
+        const matchesChip = activeFilter === '' || getTags(card).includes(activeFilter);
+        const show = matchesSearch && matchesChip;
+        card.style.display = show ? '' : 'none';
+        if (show) visibleCount++;
+      });
+
+      noResults.classList.toggle('hidden', visibleCount !== 0);
+    };
+
+    search.addEventListener('input', applyFilter);
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        if (activeFilter === chip.dataset.filter) {
+          activeFilter = '';
+          chip.classList.remove('bg-bf1-red', 'text-white', 'border-bf1-red');
+          chip.setAttribute('aria-pressed', 'false');
+        } else {
+          chips.forEach(c => { c.classList.remove('bg-bf1-red', 'text-white', 'border-bf1-red'); c.setAttribute('aria-pressed', 'false'); });
+          activeFilter = chip.dataset.filter;
+          chip.classList.add('bg-bf1-red', 'text-white', 'border-bf1-red');
+          chip.setAttribute('aria-pressed', 'true');
+        }
+        applyFilter();
+      });
+    });
+
+    applyFilter();
+  });
+</script>
+{% endblock %}

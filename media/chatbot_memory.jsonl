@@ -1,0 +1,88 @@
+{"q": "Cr\u00e9er une campagne", "a": "Pour cr\u00e9er une campagne, ouvrez la page d\u00e9di\u00e9e. Besoin d\u2019une aide pas-\u00e0-pas ?"}
+{"q": "Cr\u00e9er une campagne", "a": "Pour cr\u00e9er une campagne, ouvrez la page d\u00e9di\u00e9e. Besoin d\u2019une aide pas-\u00e0-pas ?"}
+{"q": "Planifier une diffusion", "a": "La planification de diffusion se fait via le calendrier. Souhaitez-vous l\u2019ouvrir ?"}
+{"q": "Voir le calendrier", "a": "La planification de diffusion se fait via le calendrier. Souhaitez-vous l\u2019ouvrir ?"}
+{"q": "Contacter le support", "a": "Je peux vous rediriger vers la page Contact pour parler \u00e0 un humain."}
+{"q": "Suivre mes \u00e9changes", "a": "Je r\u00e9fl\u00e9chis \u00e0 votre demande et je vous propose des options contextuelles."}
+{"q": "Planifier une diffusion", "a": "La planification de diffusion se fait via le calendrier. Souhaitez-vous l\u2019ouvrir ?"}
+{"q": "T\u00e9l\u00e9verser un spot", "a": "Vous pouvez t\u00e9l\u00e9verser votre spot depuis l\u2019interface d\u2019upload. Voulez-vous y aller ?"}
+{"q": "T\u00e9l\u00e9verser un spot", "a": "Vous pouvez t\u00e9l\u00e9verser votre spot depuis l\u2019interface d\u2019upload. Voulez-vous y aller ?"}
+{"q": "Suivre mes \u00e9changes", "a": "Je r\u00e9fl\u00e9chis \u00e0 votre demande et je vous propose des options contextuelles."}
+{"q": "Contacter le support", "a": "Je vous guide: choisissez une option pour contacter le support, suivre vos \u00e9changes, ou ouvrir une nouvelle discussion."}
+{"q": "Contacter le support", "a": "Je vous guide: choisissez une option pour contacter le support, suivre vos \u00e9changes, ou ouvrir une nouvelle discussion."}
+{"q": "Planifier une diffusion", "a": "La planification de diffusion se fait via le calendrier. Souhaitez-vous l\u2019ouvrir ?"}
+{"q": "Suivre mes \u00e9changes", "a": "Je r\u00e9fl\u00e9chis \u00e0 votre demande et je vous propose des options contextuelles."}
+{"q": "Contacter le support", "a": "Je vous guide: choisissez une option pour contacter le support, suivre vos \u00e9changes, ou ouvrir une nouvelle discussion."}
+{"q": "Contacter le support", "a": "Je vous guide: choisissez une option pour contacter le support, suivre vos \u00e9changes, ou ouvrir une nouvelle discussion."}
+{"q": "Contacter le support", "a": "Je vous guide: choisissez une option pour contacter le support, suivre vos \u00e9changes, ou ouvrir une nouvelle discussion."}
+{"q": "Cr\u00e9er une campagne", "a": "Pour cr\u00e9er une campagne, ouvrez la page d\u00e9di\u00e9e. Besoin d\u2019une aide pas-\u00e0-pas ?"}
+{"q": "Cr\u00e9er une campagne", "a": "Pour cr\u00e9er une campagne, ouvrez la page d\u00e9di\u00e9e. Besoin d\u2019une aide pas-\u00e0-pas ?"}
+{"q": "Planifier une diffusion", "a": "La planification de diffusion se fait via le calendrier. Souhaitez-vous l\u2019ouvrir ?"}
+{"q": "Cr\u00e9er une campagne", "a": "Pour cr\u00e9er une campagne, ouvrez la page d\u00e9di\u00e9e. Besoin d\u2019une aide pas-\u00e0-pas ?\n\nInfo utile:\n# Vue d\u2019ensemble du site BF1 TV\n\nCe document recense les principales fonctionnalit\u00e9s et pages du site pour guider l\u2019IA.\n\n## Campagnes\n- `campaigns/` : liste des campagnes, filtres et recherche.\n- `campaigns/create/` : cr\u00e9ation d\u2019une campagne (type, objectif, budget, dates, etc.).\n- `campaigns/<id>/` : d\u00e9tail d\u2019une campagne (spots, historique, m\u00e9triques).\n- `campaigns/<id>/upload/` : t\u00e9l\u00e9versement du spot pour une campagne donn\u00e9e.\n\n## Spots\n- `spots/` : liste des spots.\n- `spots/<id>/` : d\u00e9tail d\u2019un spot.\n\n## Diffusions\n- `broadcasts/` : grille/calendrier des diffusions planifi\u00e9es et r\u00e9alis\u00e9es."}
+{"q": "Suivre mes \u00e9changes", "a": "Je r\u00e9fl\u00e9chis \u00e0 votre demande et je vous propose des options contextuelles."}
+{"q": "Contacter le support", "a": "Je vous guide: choisissez une option pour contacter le support, suivre vos \u00e9changes, ou ouvrir une nouvelle discussion."}
+{"q": "Planifier une diffusion", "a": "La planification de diffusion se fait via le calendrier. Souhaitez-vous l\u2019ouvrir ?\n\nInfo utile:\n# Vue d\u2019ensemble du site BF1 TV\n\nCe document recense les principales fonctionnalit\u00e9s et pages du site pour guider l\u2019IA.\n\n## Campagnes\n- `campaigns/` : liste des campagnes, filtres et recherche.\n- `campaigns/create/` : cr\u00e9ation d\u2019une campagne (type, objectif, budget, dates, etc.).\n- `campaigns/<id>/` : d\u00e9tail d\u2019une campagne (spots, historique, m\u00e9triques).\n- `campaigns/<id>/upload/` : t\u00e9l\u00e9versement du spot pour une campagne donn\u00e9e.\n\n## Spots\n- `spots/` : liste des spots.\n- `spots/<id>/` : d\u00e9tail d\u2019un spot.\n\n## Diffusions\n- `broadcasts/` : grille/calendrier des diffusions planifi\u00e9es et r\u00e9alis\u00e9es."}
+{"q": "T\u00e9l\u00e9verser un spot", "a": "Vous pouvez t\u00e9l\u00e9verser votre spot depuis l\u2019interface d\u2019upload. Voulez-vous y aller ?\n\nInfo utile:\n# Vue d\u2019ensemble du site BF1 TV\n\nCe document recense les principales fonctionnalit\u00e9s et pages du site pour guider l\u2019IA.\n\n## Campagnes\n- `campaigns/` : liste des campagnes, filtres et recherche.\n- `campaigns/create/` : cr\u00e9ation d\u2019une campagne (type, objectif, budget, dates, etc.).\n- `campaigns/<id>/` : d\u00e9tail d\u2019une campagne (spots, historique, m\u00e9triques).\n- `campaigns/<id>/upload/` : t\u00e9l\u00e9versement du spot pour une campagne donn\u00e9e.\n\n## Spots\n- `spots/` : liste des spots.\n- `spots/<id>/` : d\u00e9tail d\u2019un spot.\n\n## Diffusions\n- `broadcasts/` : grille/calendrier des diffusions planifi\u00e9es et r\u00e9alis\u00e9es."}
+{"q": "Cr\u00e9er une campagne", "a": "Pour cr\u00e9er une campagne, ouvrez la page d\u00e9di\u00e9e. Besoin d\u2019une aide pas-\u00e0-pas ?"}
+{"q": "T\u00e9l\u00e9verser un spot", "a": "Vous pouvez t\u00e9l\u00e9verser votre spot depuis l\u2019interface d\u2019upload. Voulez-vous y aller ?"}
+{"q": "Voir le calendrier", "a": "La planification de diffusion se fait via le calendrier. Souhaitez-vous l\u2019ouvrir ?"}
+{"q": "T\u00e9l\u00e9verser un spot", "a": "Vous pouvez t\u00e9l\u00e9verser votre spot depuis l\u2019interface d\u2019upload. Voulez-vous y aller ?"}
+{"q": "Cr\u00e9er une campagne", "a": "Pour cr\u00e9er une campagne: 1) renseignez le formulaire (objectif, budget, dates), 2) validez, 3) t\u00e9l\u00e9versez votre spot si n\u00e9cessaire."}
+{"q": "T\u00e9l\u00e9verser un spot", "a": "Pour t\u00e9l\u00e9verser un spot: choisissez d\u2019abord la campagne, puis utilisez l\u2019interface d\u2019upload."}
+{"q": "Voir le calendrier", "a": "Consultez vos diffusions dans la grille: filtrez par date et statut, et planifiez vos cr\u00e9neaux."}
+{"q": "Planifier une diffusion", "a": "Consultez vos diffusions dans la grille: filtrez par date et statut, et planifiez vos cr\u00e9neaux."}
+{"q": "Suivre mes \u00e9changes", "a": "Vos \u00e9changes: acc\u00e9dez \u00e0 la page Correspondence pour consulter vos discussions et leur statut."}
+{"q": "Cr\u00e9er une campagne", "a": "Pour cr\u00e9er une campagne: 1) renseignez le formulaire (objectif, budget, dates), 2) validez, 3) t\u00e9l\u00e9versez votre spot si n\u00e9cessaire."}
+{"q": "T\u00e9l\u00e9verser un spot", "a": "Pour t\u00e9l\u00e9verser un spot: choisissez d\u2019abord la campagne, puis utilisez l\u2019interface d\u2019upload."}
+{"q": "Planifier une diffusion", "a": "Consultez vos diffusions dans la grille: filtrez par date et statut, et planifiez vos cr\u00e9neaux."}
+{"q": "Voir le calendrier", "a": "Consultez vos diffusions dans la grille: filtrez par date et statut, et planifiez vos cr\u00e9neaux."}
+{"q": "Suivre mes \u00e9changes", "a": "Vos \u00e9changes: acc\u00e9dez \u00e0 la page Correspondence pour consulter vos discussions et leur statut."}
+{"q": "Contacter le support", "a": "Support: choisissez parler \u00e0 un humain, suivre vos \u00e9changes, ou ouvrir une nouvelle discussion."}
+{"q": "Cr\u00e9er une campagne", "a": "Pour cr\u00e9er une campagne: 1) renseignez le formulaire (objectif, budget, dates), 2) validez, 3) t\u00e9l\u00e9versez votre spot si n\u00e9cessaire."}
+{"q": "Planifier une diffusion", "a": "Consultez vos diffusions dans la grille: filtrez par date et statut, et planifiez vos cr\u00e9neaux."}
+{"q": "Planifier une diffusion", "a": "Consultez vos diffusions dans la grille: filtrez par date et statut, et planifiez vos cr\u00e9neaux."}
+{"q": "Voir le calendrier", "a": "Consultez vos diffusions dans la grille: filtrez par date et statut, et planifiez vos cr\u00e9neaux."}
+{"q": "T\u00e9l\u00e9verser un spot", "a": "Pour t\u00e9l\u00e9verser un spot: choisissez d\u2019abord la campagne, puis utilisez l\u2019interface d\u2019upload."}
+{"q": "Contacter le support", "a": "Support: choisissez parler \u00e0 un humain, suivre vos \u00e9changes, ou ouvrir une nouvelle discussion."}
+{"q": "tarifs", "a": "Tarifs: comparez les options et utilisez le simulateur pour estimer le co\u00fbt total."}
+{"q": "guide", "a": "Je peux vous guider sur les actions cl\u00e9s: cr\u00e9er une campagne, t\u00e9l\u00e9verser un spot, voir vos diffusions."}
+{"q": "rapport", "a": "Je peux vous guider sur les actions cl\u00e9s: cr\u00e9er une campagne, t\u00e9l\u00e9verser un spot, voir vos diffusions."}
+{"q": "rapports", "a": "Je peux vous guider sur les actions cl\u00e9s: cr\u00e9er une campagne, t\u00e9l\u00e9verser un spot, voir vos diffusions."}
+{"q": "Suivre mes \u00e9changes", "a": "Vos \u00e9changes: acc\u00e9dez \u00e0 la page Correspondence pour consulter vos discussions et leur statut."}
+{"q": "Cr\u00e9er une campagne", "a": "Pour cr\u00e9er une campagne: 1) renseignez le formulaire (objectif, budget, dates), 2) validez, 3) t\u00e9l\u00e9versez votre spot si n\u00e9cessaire."}
+{"q": "contact", "a": "Support: choisissez parler \u00e0 un humain, suivre vos \u00e9changes, ou ouvrir une nouvelle discussion."}
+{"q": "Cr\u00e9er une campagne", "a": "Pour cr\u00e9er une campagne: 1) renseignez le formulaire (objectif, budget, dates), 2) validez, 3) t\u00e9l\u00e9versez votre spot si n\u00e9cessaire."}
+{"q": "campagne", "a": "Pour cr\u00e9er une campagne: 1) renseignez le formulaire (objectif, budget, dates), 2) validez, 3) t\u00e9l\u00e9versez votre spot si n\u00e9cessaire."}
+{"q": "spot", "a": "Pour t\u00e9l\u00e9verser un spot: choisissez d\u2019abord la campagne, puis utilisez l\u2019interface d\u2019upload."}
+{"q": "prix", "a": "Tarifs: comparez les options et utilisez le simulateur pour estimer le co\u00fbt total."}
+{"q": "couverture", "a": "Je peux vous guider sur les actions cl\u00e9s: cr\u00e9er une campagne, t\u00e9l\u00e9verser un spot, voir vos diffusions."}
+{"q": "discussion", "a": "Support: choisissez parler \u00e0 un humain, suivre vos \u00e9changes, ou ouvrir une nouvelle discussion."}
+{"q": "Planifier une diffusion", "a": "Consultez vos diffusions dans la grille: filtrez par date et statut, et planifiez vos cr\u00e9neaux."}
+{"q": "diffusion spots en retard", "a": "Diffusion: ouvrez le planning, filtrez par date/statut, et g\u00e9rez les spots en retard."}
+{"q": "journalistes et planning r\u00e9daction", "a": "R\u00e9daction: consultez les demandes valid\u00e9es, assignez une \u00e9quipe et suivez le planning."}
+{"q": "demandes de couverture", "a": "Console admin: je peux vous orienter vers les \u00e9crans de gestion."}
+{"q": "Orientation", "a": "Orientation: je peux vous guider avec l\u2019assistant, les guides, et l\u2019inspiration."}
+{"q": "Bilan / rapports", "a": "Bilan: ouvrez l\u2019aper\u00e7u et utilisez les exports Excel/PDF si besoin."}
+{"q": "Demande de couverture", "a": "Demande de couverture: remplissez le formulaire (\u00e9v\u00e9nement, date, contacts) puis validez."}
+{"q": "Voir le calendrier", "a": "Consultez vos diffusions dans la grille: filtrez par date et statut, et planifiez vos cr\u00e9neaux."}
+{"q": "profil", "a": "Profil: mettez \u00e0 jour vos informations et votre mot de passe."}
+{"q": "mot de passe", "a": "Profil: mettez \u00e0 jour vos informations et votre mot de passe."}
+{"q": "nom", "a": "Je r\u00e9fl\u00e9chis \u00e0 votre demande et je vous propose des options contextuelles."}
+{"q": "Mes notifications", "a": "Notifications: consultez les derni\u00e8res alertes et marquez-les comme lues."}
+{"q": "Contacter le support", "a": "Support: choisissez parler \u00e0 un humain, suivre vos \u00e9changes, ou ouvrir une nouvelle discussion."}
+{"q": "Demande de couverture", "a": "Console admin: consultez les demandes de couverture et mettez leur statut \u00e0 jour."}
+{"q": "Planifier une diffusion", "a": "Console admin: je peux vous orienter vers les \u00e9crans de gestion."}
+{"q": "Orientation", "a": "Console admin: je peux vous orienter vers les \u00e9crans de gestion."}
+{"q": "T\u00e9l\u00e9verser un spot", "a": "Console admin: vous pouvez approuver/rejeter les campagnes et les spots."}
+{"q": "Orientation", "a": "Orientation: je peux vous guider avec l\u2019assistant, les guides, et l\u2019inspiration."}
+{"q": "Cr\u00e9er une campagne", "a": "Pour cr\u00e9er une campagne: 1) renseignez le formulaire (objectif, budget, dates), 2) validez, 3) t\u00e9l\u00e9versez votre spot si n\u00e9cessaire."}
+{"q": "simulateur", "a": "Tarifs: comparez les options et utilisez le simulateur pour estimer le co\u00fbt total."}
+{"q": "Cr\u00e9er une campagne", "a": "Pour cr\u00e9er une campagne: 1) renseignez le formulaire (objectif, budget, dates), 2) validez, 3) t\u00e9l\u00e9versez votre spot si n\u00e9cessaire."}
+{"q": "Cr\u00e9er une campagne", "a": "Pour cr\u00e9er une campagne: 1) renseignez le formulaire (objectif, budget, dates), 2) validez, 3) t\u00e9l\u00e9versez votre spot si n\u00e9cessaire."}
+{"q": "Demande de couverture", "a": "Demande de couverture: remplissez le formulaire (\u00e9v\u00e9nement, date, contacts) puis validez."}
+{"q": "Demande de couverture", "a": "Demande de couverture: remplissez le formulaire (\u00e9v\u00e9nement, date, contacts) puis validez."}
+{"q": "Creer une campagne", "a": "Pour cr\u00e9er une campagne: 1) renseignez le formulaire (objectif, budget, dates), 2) validez, 3) t\u00e9l\u00e9versez votre spot si n\u00e9cessaire."}
+{"q": "SIMULATEUR", "a": "Tarifs: comparez les options et utilisez le simulateur pour estimer le co\u00fbt total."}
+{"q": "SIMULER", "a": "Je r\u00e9fl\u00e9chis \u00e0 votre demande et je vous propose des options contextuelles."}
+{"q": "SIMULATEUR", "a": "Tarifs: comparez les options et utilisez le simulateur pour estimer le co\u00fbt total."}
+{"q": "Cr\u00e9er une campagne", "a": "Pour cr\u00e9er une campagne: 1) renseignez le formulaire (objectif, budget, dates), 2) validez, 3) t\u00e9l\u00e9versez votre spot si n\u00e9cessaire."}

@@ -1,0 +1,235 @@
+@startuml
+title BF1 TV – Diagramme de classes
+
+hide circle
+skinparam classAttributeIconSize 0
+
+class Utilisateur <<entity>> {
+  - id: int
+  - username: string
+  - email: string
+  - mot_de_passe: string
+  - role: string  "client|admin"
+  - phone: string
+  - company: string
+  - address: text
+  - created_at: datetime
+  - updated_at: datetime
+  + is_client(): bool
+  + is_admin(): bool
+}
+
+class Campagne <<entity>> {
+  - id: UUID
+  - client: Utilisateur
+  - title: string
+  - description: text
+  - start_date: date
+  - end_date: date
+  - budget: decimal
+  - campaign_type: string  "spot_upload|spot_creation"
+  - requested_creation: bool
+  - target_audience: string
+  - key_message: text
+  - objective: string  "notoriete|promotion|sensibilisation"
+  - channel: string "tv|urban|online"
+  - languages: string
+  - status: string
+  - approved_by: Utilisateur
+  - approved_at: datetime
+  - rejection_reason: text
+  - created_at: datetime
+  - updated_at: datetime
+  + duration_days(): int
+}
+
+class Spot <<entity>> {
+  - id: UUID
+  - campaign: Campagne
+  - title: string
+  - description: text
+  - media_type: string "image|video"
+  - image_file: Image
+  - video_file: Fichier
+  - duration_seconds: int
+  - status: string
+  - approved_by: Utilisateur
+  - approved_at: datetime
+  - rejection_reason: text
+  - created_at: datetime
+  - updated_at: datetime
+}
+
+class CreneauHoraire <<entity>> {
+  - id: int
+  - name: string
+  - start_time: time
+  - end_time: time
+  - price_multiplier: decimal
+  - description: text
+  - is_active: bool
+  - is_prime: bool
+}
+
+class ProgrammationSpot <<entity>> {
+  - id: int
+  - spot: Spot
+  - time_slot: CreneauHoraire
+  - broadcast_date: date
+  - broadcast_time: time
+  - price: decimal
+  - is_broadcasted: bool
+  - broadcasted_at: datetime
+  - created_at: datetime
+}
+
+class RegleTarification <<entity>> {
+  - id: int
+  - name: string
+  - base_price: decimal
+  - duration_min: int
+  - duration_max: int
+  - time_slot_multiplier: decimal
+  - is_active: bool
+  - created_at: datetime
+}
+
+class HistoriqueCampagne <<entity>> {
+  - id: int
+  - campaign: Campagne
+  - action: string
+  - description: text
+  - user: Utilisateur
+  - created_at: datetime
+}
+
+class Notification <<entity>> {
+  - id: int
+  - user: Utilisateur
+  - title: string
+  - message: text
+  - type: string "info|success|warning|error"
+  - is_read: bool
+  - created_at: datetime
+  - related_campaign: Campagne
+  - related_spot: Spot
+  - related_thread: FilCorrespondance
+  - related_contact: DemandeContact
+}
+
+class FilCorrespondance <<entity>> {
+  - id: UUID
+  - client: Utilisateur
+  - subject: string
+  - status: string "open|pending|closed"
+  - related_campaign: Campagne
+  - assigned_to: Utilisateur
+  - priority: string "normal|urgent"
+  - last_message_at: datetime
+  - created_at: datetime
+  - updated_at: datetime
+}
+
+class MessageCorrespondance <<entity>> {
+  - id: UUID
+  - thread: FilCorrespondance
+  - author: Utilisateur
+  - content: text
+  - attachment: Fichier
+  - created_at: datetime
+}
+
+class SessionConseil <<entity>> {
+  - id: UUID
+  - user: Utilisateur
+  - channel: string
+  - has_spot_ready: bool
+  - objective: string
+  - budget_estimate: decimal
+  - recommended_medium: string
+  - recommended_duration_seconds: int
+  - recommended_budget: decimal
+  - created_at: datetime
+}
+
+class DemandeContact <<entity>> {
+  - id: UUID
+  - user: Utilisateur
+  - name: string
+  - email: string
+  - phone: string
+  - subject: string
+  - message: text
+  - preferred_contact_time: string
+  - status: string "new|contacted|closed"
+  - assigned_to: Utilisateur
+  - created_at: datetime
+  - updated_at: datetime
+}
+
+class ArticleConseil <<entity>> {
+  - id: UUID
+  - title: string
+  - slug: string
+  - summary: text
+  - content: text
+  - is_published: bool
+  - published_at: datetime
+  - created_at: datetime
+}
+
+class EtudeDeCas <<entity>> {
+  - id: UUID
+  - title: string
+  - slug: string
+  - summary: text
+  - content: text
+  - video_url: url
+  - is_published: bool
+  - published_at: datetime
+  - created_at: datetime
+}
+
+class CategorieService <<entity>> {
+  - id: int
+  - name: string
+  - slug: string
+  - description: text
+  - order: int
+  - is_active: bool
+}
+
+class Service <<entity>> {
+  - id: int
+  - category: CategorieService
+  - name: string
+  - code: string
+  - unit: string
+  - unit_quantity: int
+  - min_duration_minutes: int
+  - max_duration_minutes: int
+  - requires_timeslot: bool
+  - timeslot_notes: string
+  - base_price: decimal
+  - is_quote_only: bool
+  - description: text
+  - is_active: bool
+}
+
+' Relations et multiplicités
+Utilisateur "1" -- "*" Campagne : client
+Campagne "1" -- "*" Spot : spots
+Spot "1" -- "*" ProgrammationSpot : schedules
+Campagne "*" -- "*" CreneauHoraire : preferred_time_slots
+Campagne "1" o-- "*" HistoriqueCampagne : history
+Utilisateur "1" -- "*" Notification : notifications
+Notification "0..1" --> Campagne
+Notification "0..1" --> Spot
+Notification "0..1" --> FilCorrespondance
+Notification "0..1" --> DemandeContact
+FilCorrespondance "1" -- "*" MessageCorrespondance : messages
+Utilisateur "1" -- "*" FilCorrespondance : correspondence_threads
+Utilisateur "1" -- "*" DemandeContact : contact_requests_assigned
+CategorieService "1" -- "*" Service : items
+
+@enduml

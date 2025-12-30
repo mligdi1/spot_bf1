@@ -1,0 +1,160 @@
+{% extends 'spot/base.html' %}
+{% load humanize %}
+{% block content %}
+<section class="relative max-w-6xl mx-auto px-4 py-10">
+  <div class="relative overflow-hidden rounded-xl bg-gradient-to-br from-bf1-red/10 to-gray-900/5 p-8 bf1-shadow" data-animate="fade-up">
+    <div class="flex items-start md:items-center justify-between">
+      <div>
+        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900">Conseils médias BF1</h1>
+        <p class="text-gray-700 mt-3 max-w-2xl">Des recommandations simples pour choisir le bon format, la bonne plage et un budget clair.</p>
+      </div>
+      <div class="hidden md:block">
+        <div class="w-24 h-24 rounded-full bg-bf1-red/10 flex items-center justify-center transform transition hover:rotate-6">
+          <i class="fas fa-lightbulb text-bf1-red text-3xl"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-8 grid md:grid-cols-3 gap-6">
+    <div class="bg-white rounded-xl p-6 bf1-shadow" data-animate="fade-up">
+      <h2 class="font-semibold text-gray-900">Notoriété rapide</h2>
+      <ul class="list-disc pl-5 text-sm mt-3 text-gray-700 space-y-1">
+        <li>Priorisez la <span class="font-medium">plage 19h25–20h55</span> (impact élevé).</li>
+        <li>Ajoutez un <span class="font-medium">publireportage au JT 19h30</span>.</li>
+        <li>Renforcez par <span class="font-medium">petite annonce</span> (1 semaine).</li>
+      </ul>
+    </div>
+
+    <div class="bg-white rounded-xl p-6 bf1-shadow" data-animate="fade-up">
+      <h2 class="font-semibold text-gray-900">Conversion / trafic</h2>
+      <ul class="list-disc pl-5 text-sm mt-3 text-gray-700 space-y-1">
+        <li>2–3 diffusions/jour sur <span class="font-medium">11h25–14h25</span> ou <span class="font-medium">17h55–19h</span>.</li>
+        <li>Complétez par <span class="font-medium">message défilant</span> (1 semaine).</li>
+        <li>Diffusez 1 <span class="font-medium">spot</span> sur Facebook/YouTube.</li>
+      </ul>
+    </div>
+
+    <div class="bg-white rounded-xl p-6 bf1-shadow" data-animate="fade-up">
+      <h2 class="font-semibold text-gray-900">Sensibilisation</h2>
+      <ul class="list-disc pl-5 text-sm mt-3 text-gray-700 space-y-1">
+        <li>Rythme régulier et <span class="font-medium">durée adaptée</span>.</li>
+        <li>JT 13h ou 19h30 selon audience.</li>
+        <li>Associez des <span class="font-medium">supports digitaux</span> pour continuité.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Chiffres clés (TTC) -->
+  <div class="mt-10 bg-white rounded-xl p-6 bf1-shadow" data-animate="fade-up">
+    <h3 class="text-lg font-semibold text-gray-900">Chiffres clés (TTC)</h3>
+    <div class="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+      <div class="border rounded p-4"><div class="font-medium">JT de 13h</div><div class="text-gray-800 mt-1">{{ 250000|intcomma }} F CFA</div></div>
+      <div class="border rounded p-4"><div class="font-medium">JT de 19h30</div><div class="text-gray-800 mt-1">{{ 350000|intcomma }} F CFA</div></div>
+      <div class="border rounded p-4"><div class="font-medium">Spot 0–30 s (hors prime)</div><div class="text-gray-800 mt-1">{{ 51773|intcomma }} F CFA</div></div>
+      <div class="border rounded p-4"><div class="font-medium">Spot 0–30 s (prime time)</div><div class="text-gray-800 mt-1">{{ 103545|intcomma }} F CFA</div></div>
+      <div class="border rounded p-4"><div class="font-medium">Message défilant (semaine)</div><div class="text-gray-800 mt-1">{{ 150000|intcomma }} F CFA</div></div>
+      <div class="border rounded p-4"><div class="font-medium">Petite annonce (semaine)</div><div class="text-gray-800 mt-1">{{ 200000|intcomma }} F CFA</div></div>
+    </div>
+    <p class="text-gray-600 mt-3">Les éléments marqués “Sur devis” dépendent de la durée, du lieu et du dispositif.</p>
+  </div>
+
+  <!-- Nouveaux contenus -->
+  <div class="mt-10 grid md:grid-cols-2 gap-6">
+    <div class="bg-white rounded-xl p-6 bf1-shadow" data-animate="fade-up">
+      <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-2"><i class="fas fa-film text-bf1-red"></i> Formats et cas d’usage</h2>
+      <ul class="mt-3 text-gray-700 text-sm space-y-2 list-disc ml-5">
+        <li><span class="font-medium">Spot 0–30 s</span> — idéal pour promotion courte et claire; privilégier un message unique + CTA.</li>
+        <li><span class="font-medium">Spot 31–60 s</span> — narration plus complète; utile pour lancement produit ou service premium.</li>
+        <li><span class="font-medium">Publireportage</span> — segment au JT; crédibilise l’information, parfait pour annonces institutionnelles. <span class="text-gray-500">Sur devis</span>.</li>
+        <li><span class="font-medium">PAD</span> — fichier prêt à diffuser; vérifier format vidéo, audio, titrage et durée exacte.</li>
+        <li><span class="font-medium">Petite annonce</span> — présence constante à faible coût; utile pour rendez‑vous, stocks, promo hebdo.</li>
+        <li><span class="font-medium">Message défilant</span> — rappel discret à forte répétition; excellent en complément d’un spot.</li>
+      </ul>
+      <div class="mt-4 text-sm text-gray-600">Astuce: associer TV + Digital (Facebook/YouTube) pour multiplier les contacts. <span class="text-gray-500">Digital sur devis.</span></div>
+    </div>
+
+    <div class="bg-white rounded-xl p-6 bf1-shadow" data-animate="fade-up">
+      <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-2"><i class="fas fa-stopwatch text-bf1-red"></i> Durée et script efficace</h2>
+      <ul class="mt-3 text-gray-700 text-sm space-y-2 list-disc ml-5">
+        <li>10–15 s: annonce courte (promo flash, événement imminent).</li>
+        <li>20–30 s: standard polyvalent (1 message principal, 2 preuves, 1 CTA).</li>
+        <li>31–60 s: storytelling (problème → solution → bénéfice → preuve sociale → CTA).</li>
+        <li>Règles d’or: logo à l’ouverture/fermeture, slogan répété, voix claire, sous-titres si nécessaire.</li>
+      </ul>
+      <details class="mt-3 text-sm">
+        <summary class="cursor-pointer text-gray-900 font-medium">Exemple de trame 30 s</summary>
+        <div class="mt-2 text-gray-700">Accroche 3 s → Bénéfice clé 6 s → Preuves 10 s → Offre/condition 6 s → CTA 5 s.</div>
+      </details>
+    </div>
+  </div>
+
+  <div class="mt-10 grid md:grid-cols-2 gap-6">
+    <div class="bg-white rounded-xl p-6 bf1-shadow" data-animate="fade-up">
+      <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-2"><i class="fas fa-clock text-bf1-red"></i> Plages horaires et répétition</h2>
+      <ul class="mt-3 text-gray-700 text-sm space-y-2 list-disc ml-5">
+        <li><span class="font-medium">11h25–14h25</span>: audience active en journée; idéal pour conversion et trafic.</li>
+        <li><span class="font-medium">17h55–19h</span>: préparation du prime; bon ratio coût/portée.</li>
+        <li><span class="font-medium">19h25–20h55 (prime)</span>: impact maximum; parfait pour notoriété et grands messages.</li>
+      </ul>
+      <div class="mt-3 text-sm text-gray-700">Fréquences types: 2–3 diffusions/jour sur 4–7 jours pour une campagne courte; 1–2/jour sur 2–4 semaines pour la mémorisation.</div>
+      <details class="mt-3 text-sm">
+        <summary class="cursor-pointer text-gray-900 font-medium">Exemple de plan sur 7 jours</summary>
+        <div class="mt-2 text-gray-700">J1–J3: 2 off‑prime/jour • J4–J6: 1 off‑prime + 1 prime/jour • J7: 2 prime.</div>
+      </details>
+    </div>
+
+    <div class="bg-white rounded-xl p-6 bf1-shadow" data-animate="fade-up">
+      <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-2"><i class="fas fa-tags text-bf1-red"></i> Repères budget (exemples)</h2>
+      <ul class="mt-3 text-gray-700 text-sm space-y-2 list-disc ml-5">
+        <li><span class="font-medium">Starter visibilité</span>: 6 spots hors prime (~6 × {{ 51773|intcomma }} F) + Petite annonce ({{ 200000|intcomma }} F).</li>
+        <li><span class="font-medium">Boost trafic</span>: 12 spots hors prime (~12 × {{ 51773|intcomma }} F) + Message défilant ({{ 150000|intcomma }} F).</li>
+        <li><span class="font-medium">Impact prime</span>: 6 spots prime (~6 × {{ 103545|intcomma }} F) + JT 19h30 ({{ 350000|intcomma }} F).</li>
+        <li><span class="font-medium">Institutionnel</span>: Publireportage au JT + 4 spots prime. <span class="text-gray-500">Sur devis.</span></li>
+      </ul>
+      <div class="mt-3">
+        <a href="{% url 'pricing_overview' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded bf1-hover"><i class="fas fa-tags"></i> Voir les tarifs détaillés</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-10 bg-white rounded-xl p-6 bf1-shadow" data-animate="fade-up">
+    <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-2"><i class="fas fa-clipboard-check text-bf1-red"></i> Checklist avant de nous contacter</h2>
+    <ul class="mt-3 text-gray-700 text-sm space-y-2 list-disc ml-5">
+      <li>Objectif (notoriété, trafic, sensibilisation).</li>
+      <li>Format souhaité (spot, petite annonce, publireportage, PAD).</li>
+      <li>Durée du spot et éléments disponibles (script, visuels, musique, voix off).</li>
+      <li>Plages horaires visées et période de diffusion.</li>
+      <li>Coordonnées et disponibilités pour l’échange.</li>
+    </ul>
+    <div class="mt-4 flex flex-wrap gap-3">
+      <a href="{% url 'guides_list' %}" class="px-4 py-2 bg-gray-100 text-gray-800 rounded bf1-hover"><i class="fas fa-book mr-2"></i> Guides</a>
+      <a href="{% url 'inspiration' %}" class="px-4 py-2 bg-gray-100 text-gray-800 rounded bf1-hover"><i class="fas fa-fire mr-2"></i> Inspiration</a>
+      <a href="{% url 'contact_advisor' %}" class="px-4 py-2 bg-bf1-red text-white rounded bf1-hover"><i class="fas fa-envelope mr-2"></i> Parler à un conseiller</a>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const animated = document.querySelectorAll('[data-animate="fade-up"]');
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = 1;
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, { threshold: 0.1 });
+
+    animated.forEach(el => {
+      el.style.opacity = 0;
+      el.style.transform = 'translateY(10px)';
+      el.style.transition = 'opacity 400ms ease, transform 400ms ease';
+      io.observe(el);
+    });
+  });
+</script>
+{% endblock %}

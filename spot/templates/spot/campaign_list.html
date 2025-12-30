@@ -1,0 +1,184 @@
+{% extends 'spot/base.html' %}
+
+{% block title %}Historique des campagnes - BF1{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-red-50 to-white py-8">
+  <!-- Hero vibrant -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-600 to-red-700 text-white p-8 shadow-lg mb-8">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div>
+          <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight">Historique des campagnes</h1>
+          <p class="mt-2 text-red-100">Retrouvez, filtrez et gérez vos campagnes dans une interface élégante.</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <a href="{% url 'campaign_create' %}" class="inline-flex items-center px-5 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur text-white font-medium transition">
+            <i class="fas fa-plus mr-2"></i>
+            Nouvelle campagne
+          </a>
+          <a href="{% url 'campaign_spot_create' %}" class="inline-flex items-center px-5 py-2.5 rounded-xl bg-white text-gray-900 hover:bg-gray-100 font-medium shadow-sm">
+            <i class="fas fa-magic mr-2 text-bf1-red"></i>
+            Campagne/Spot
+          </a>
+        </div>
+      </div>
+      <div class="absolute -bottom-6 -right-6 hidden md:block opacity-30">
+        <div class="w-40 h-40 rounded-full bg-white"></div>
+      </div>
+    </div>
+
+  <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-4 mb-6 flex flex-wrap gap-2 text-sm" aria-label="Mes activités">
+    <a href="{% url 'campaign_list' %}" class="px-3 py-2 rounded bg-gray-900 text-white shadow-sm">Historique</a>
+    <a href="{% url 'spot_list' %}" class="px-3 py-2 rounded bg-white text-gray-900 shadow-sm">Mes spots</a>
+    <a href="{% url 'broadcast_grid' %}" class="px-3 py-2 rounded bg-white text-gray-900 shadow-sm">Grille de diffusion</a>
+    <a href="{% url 'correspondence_list' %}" class="px-3 py-2 rounded bg-white text-gray-900 shadow-sm">Correspondance</a>
+    <a href="{% url 'report_overview' %}" class="px-3 py-2 rounded bg-white text-gray-900 shadow-sm">Rapports</a>
+  </nav>
+
+  <form method="get" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="bg-white/80 backdrop-blur p-4 rounded-xl shadow-sm mb-6 flex flex-wrap items-center gap-4">
+      <label class="text-sm font-medium text-gray-700">Statut</label>
+      <select name="status" class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-bf1-red">
+        <option value="">Tous</option>
+        <option value="draft" {% if status == 'draft' %}selected{% endif %}>Brouillon</option>
+        <option value="pending" {% if status == 'pending' %}selected{% endif %}>En attente</option>
+        <option value="approved" {% if status == 'approved' %}selected{% endif %}>Approuvée</option>
+        <option value="active" {% if status == 'active' %}selected{% endif %}>Active</option>
+        <option value="completed" {% if status == 'completed' %}selected{% endif %}>Terminée</option>
+      </select>
+
+      <label class="text-sm font-medium text-gray-700">Recherche</label>
+      <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Titre ou mot‑clé…" 
+             class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-bf1-red">
+      <button class="px-4 py-2 bg-gray-900 text-white rounded-md">Filtrer</button>
+    </div>
+  </form>
+
+    <!-- Liste des campagnes -->
+        <div class="space-y-4">
+            {% for campaign in campaigns %}
+            <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                <div class="p-6">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center mb-2">
+                                <h3 class="text-xl font-semibold text-gray-900 mr-3">{{ campaign.title }}</h3>
+                                <span class="px-3 py-1 rounded-full text-xs font-medium
+                                    {% if campaign.status == 'active' %}bg-green-100 text-green-800
+                                    {% elif campaign.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                    {% elif campaign.status == 'approved' %}bg-blue-100 text-blue-800
+                                    {% elif campaign.status == 'rejected' %}bg-red-100 text-red-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ campaign.get_status_display }}
+                                </span>
+                            </div>
+                            
+                            <p class="text-gray-600 mb-4">{{ campaign.description|truncatewords:20 }}</p>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                <div class="flex items-center">
+                                    <i class="fas fa-calendar text-bf1-red mr-2"></i>
+                                    <span class="text-gray-600">Du {{ campaign.start_date|date:"d/m/Y" }} au {{ campaign.end_date|date:"d/m/Y" }}</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-money-bill text-bf1-red mr-2"></i>
+                                    <span class="text-gray-600">{{ campaign.budget|floatformat:0 }} FCFA</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-tag text-bf1-red mr-2"></i>
+                                    <span class="text-gray-600">{{ campaign.get_campaign_type_display }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-2 ml-4">
+                            <a href="{% url 'campaign_detail' campaign.id %}" 
+                               class="bg-gray-100 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-200 transition-colors text-sm">
+                                <i class="fas fa-eye mr-1"></i>
+                                Voir
+                            </a>
+                            
+                            {% if campaign.status == 'pending' %}
+                                <a href="#" class="bg-yellow-100 text-yellow-700 px-3 py-2 rounded-md hover:bg-yellow-200 transition-colors text-sm">
+                                    <i class="fas fa-edit mr-1"></i>
+                                    Modifier
+                                </a>
+                            {% elif campaign.status == 'approved' and not campaign.spots.exists %}
+                                <a href="{% url 'spot_upload' campaign.id %}" 
+                                   class="bg-blue-100 text-blue-700 px-3 py-2 rounded-md hover:bg-blue-200 transition-colors text-sm">
+                                    <i class="fas fa-upload mr-1"></i>
+                                    Spot
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Progression -->
+                    {% if campaign.status == 'active' %}
+                    <div class="mt-4">
+                        <div class="flex items-center justify-between text-sm text-gray-600 mb-1">
+                            <span>Progression</span>
+                            <span>75%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-bf1-red h-2 rounded-full" style="width: 75%"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="mt-8 flex items-center justify-between">
+            <div class="text-sm text-gray-700">
+                Affichage de {{ page_obj.start_index }} à {{ page_obj.end_index }} sur {{ page_obj.paginator.count }} campagnes
+            </div>
+            <div class="flex space-x-2">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}" 
+                       class="px-3 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50">
+                        Précédent
+                    </a>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <span class="px-3 py-2 bg-bf1-red text-white rounded-md text-sm">{{ num }}</span>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <a href="?page={{ num }}" 
+                           class="px-3 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50">
+                            {{ num }}
+                        </a>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" 
+                       class="px-3 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50">
+                        Suivant
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+    {% else %}
+        <!-- État vide -->
+        <div class="text-center py-12">
+            <div class="bg-gray-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-bullhorn text-gray-400 text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">Aucune campagne</h3>
+            <p class="text-gray-600 mb-6">Vous n'avez pas encore créé de campagne publicitaire.</p>
+            <a href="{% url 'campaign_create' %}" 
+               class="bg-bf1-red text-white px-6 py-3 rounded-lg hover:bg-bf1-red-dark transition-colors inline-flex items-center">
+                <i class="fas fa-plus mr-2"></i>
+                Créer ma première campagne
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

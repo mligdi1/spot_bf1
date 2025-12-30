@@ -1,0 +1,410 @@
+{% extends 'spot/diffusion/base_diffusion.html' %}
+{% block title %}Spots à diffuser{% endblock %}
+{% block content %}
+<h1 class="heading text-3xl font-semibold text-gray-900 mb-6 flex items-center"><i class="fa-solid fa-film text-red-600 mr-3"></i>Spots à diffuser</h1>
+
+<div class="border-b mb-4 flex items-center gap-6">
+  <a href="{% url 'diffusion_spots' %}"
+     class="px-3 py-2 -mb-px border-b-2 border-blue-600 text-blue-700 font-semibold inline-flex items-center gap-2">
+    <i class="fa-solid fa-list"></i> À diffuser
+  </a>
+  <a href="{% url 'diffusion_spots_broadcasted' %}"
+     class="px-3 py-2 -mb-px border-b-2 border-transparent text-gray-600 hover:text-blue-700 inline-flex items-center gap-2">
+    <i class="fa-solid fa-signal"></i> Diffusés
+  </a>
+  <span class="flex-1"></span>
+</div>
+
+<form method="get" action="{% url 'diffusion_spots' %}" class="card p-4 mb-4 grid grid-cols-1 md:grid-cols-6 gap-3 hover-raise">
+  <div class="form__group">
+    <label for="filter-client" class="form__label">Client</label>
+    <input id="filter-client" name="client" value="{{ request.GET.client }}" class="form__control" data-validate="min:2" aria-describedby="client-help" />
+    <i class="form__icon fa-solid fa-user"></i>
+    <p id="client-help" class="text-xs text-gray-500 mt-1">Saisissez un nom de client. Suggestions automatiques.</p>
+    <span class="form__error" data-for="client"></span>
+  </div>
+
+  <div class="form__group">
+    <label for="filter-type" class="form__label">Type</label>
+    <select id="filter-type" name="type" class="form__control">
+      <option value="">Type</option>
+      <option value="image" {% if request.GET.type == 'image' %}selected{% endif %}>Image</option>
+      <option value="video" {% if request.GET.type == 'video' %}selected{% endif %}>Vidéo</option>
+    </select>
+    <i class="form__icon fa-solid fa-chevron-down"></i>
+  </div>
+
+  <div class="form__group">
+    <label for="filter-duration" class="form__label">Durée</label>
+    <select id="filter-duration" name="duration" class="form__control">
+      <option value="">Durée</option>
+      <option value="15" {% if request.GET.duration == '15' %}selected{% endif %}>15s</option>
+      <option value="30" {% if request.GET.duration == '30' %}selected{% endif %}>30s</option>
+      <option value="60" {% if request.GET.duration == '60' %}selected{% endif %}>60s</option>
+    </select>
+    <i class="form__icon fa-solid fa-chevron-down"></i>
+  </div>
+
+  <div class="form__group">
+    <label for="filter-status" class="form__label">Statut</label>
+    <select id="filter-status" name="status" class="form__control">
+      <option value="">Statut</option>
+      {% for val,label in status_choices %}
+        <option value="{{ val }}" {% if request.GET.status == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <i class="form__icon fa-solid fa-chevron-down"></i>
+  </div>
+
+  <div class="grid grid-cols-2 gap-2">
+    <div class="form__group">
+      <label for="filter-date" class="form__label">Date</label>
+      <select id="filter-date" name="date" class="form__control">
+        <option value="">Date</option>
+        <option value="today" {% if request.GET.date == 'today' %}selected{% endif %}>Aujourd'hui</option>
+        <option value="tomorrow" {% if request.GET.date == 'tomorrow' %}selected{% endif %}>Demain</option>
+        <option value="week" {% if request.GET.date == 'week' %}selected{% endif %}>Semaine</option>
+        <option value="month" {% if request.GET.date == 'month' %}selected{% endif %}>Mois</option>
+        <option value="custom" {% if request.GET.date == 'custom' %}selected{% endif %}>Personnalisé</option>
+      </select>
+      <i class="form__icon fa-solid fa-chevron-down"></i>
+    </div>
+    <div class="grid grid-cols-2 gap-2">
+      <div class="form__group">
+        <label for="filter-date-from" class="form__label">Du</label>
+        <input id="filter-date-from" type="date" name="date_from" value="{{ request.GET.date_from }}" class="form__control" />
+      </div>
+      <div class="form__group">
+        <label for="filter-date-to" class="form__label">Au</label>
+        <input id="filter-date-to" type="date" name="date_to" value="{{ request.GET.date_to }}" class="form__control" />
+      </div>
+    </div>
+  </div>
+
+  <div class="form__group">
+    <label for="filter-sort" class="form__label">Trier par</label>
+    <select id="filter-sort" name="sort" class="form__control">
+      <option value="">Par défaut (début de campagne)</option>
+      <option value="campaign_start_asc" {% if request.GET.sort == 'campaign_start_asc' %}selected{% endif %}>Début de campagne (ancien → récent)</option>
+      <option value="campaign_start_desc" {% if request.GET.sort == 'campaign_start_desc' %}selected{% endif %}>Début de campagne (récent → ancien)</option>
+      <option value="next_broadcast_asc" {% if request.GET.sort == 'next_broadcast_asc' %}selected{% endif %}>Prochaine diffusion (proche → lointain)</option>
+      <option value="next_broadcast_desc" {% if request.GET.sort == 'next_broadcast_desc' %}selected{% endif %}>Prochaine diffusion (lointain → proche)</option>
+    </select>
+    <i class="form__icon fa-solid fa-chevron-down"></i>
+  </div>
+
+  <button type="submit" class="btn btn--primary" data-ripple="true"><i class="fa-solid fa-filter mr-2"></i>Filtrer</button>
+</form>
+
+<div class="bg-white shadow rounded-lg overflow-x-auto">
+  <table class="min-w-full table-auto">
+    <thead class="bg-gray-50">
+      <tr>
+        <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dates validées</th>
+        <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Spot</th>
+        <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
+        <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durée</th>
+        <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fichier</th>
+        <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Diffusion prévue</th>
+        <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Validation</th>
+        <th class="px-3 sm:px-6 py-3"></th>
+        <th class="px-3 sm:px-6 py-3"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-200 text-sm">
+      {% for spot in page_obj %}
+        {% with sched=spot.schedules.all|first %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-3 sm:px-6 py-4">
+            {% if spot.campaign.start_date and spot.campaign.end_date %}
+              <span class="inline-flex items-center gap-2"><i class="fa-regular fa-calendar-check text-green-600"></i> {{ spot.campaign.start_date }} → {{ spot.campaign.end_date }}</span>
+            {% else %}-{% endif %}
+          </td>
+          <td class="px-3 sm:px-6 py-4">
+            <a href="{% url 'diffusion_spot_detail' spot.id %}" class="text-blue-700 hover:underline">{{ spot.title }}</a>
+            <div class="text-xs text-gray-500">Campagne: {{ spot.campaign.title }}</div>
+          </td>
+          <td class="px-3 sm:px-6 py-4">{{ spot.campaign.client.username }}</td>
+          <td class="px-3 sm:px-6 py-4">{% if spot.duration_seconds %}{{ spot.duration_seconds }}s{% else %}-{% endif %}</td>
+          <td class="px-3 sm:px-6 py-4">
+            {% if spot.video_file %}
+              <span class="inline-flex items-center"><i class="fa-solid fa-film mr-2 text-red-600"></i> MP4</span>
+            {% elif spot.image_file %}
+              <span class="inline-flex items-center"><i class="fa-regular fa-image mr-2 text-red-600"></i> Image</span>
+            {% else %}-{% endif %}
+          </td>
+          <td class="px-3 sm:px-6 py-4 whitespace-nowrap">{% if sched %}{{ sched.broadcast_date }} {{ sched.broadcast_time }}{% else %}-{% endif %}</td>
+          <td class="px-3 sm:px-6 py-4">
+            {% if spot.video_file %}<a class="btn btn--ghost text-red-600" data-ripple="true" href="{{ spot.video_file.url }}" download><i class="fa-solid fa-download mr-1"></i> Télécharger</a>{% elif spot.image_file %}<a class="btn btn--ghost text-red-600" data-ripple="true" href="{{ spot.image_file.url }}" download><i class="fa-solid fa-download mr-1"></i> Télécharger</a>{% else %}-{% endif %}
+          </td>
+          <td class="px-3 sm:px-6 py-4">
+            {% if spot.status == 'approved' %}
+              <span class="inline-flex items-center rounded-full bg-green-100 text-green-700 px-2 py-1 text-xs"><i class="fa-solid fa-check mr-1"></i> Validé admin</span>
+            {% elif spot.status == 'broadcasted' %}
+              <span class="inline-flex items-center rounded-full bg-blue-100 text-blue-700 px-2 py-1 text-xs"><i class="fa-solid fa-signal mr-1"></i> Diffusé</span>
+            {% elif spot.status == 'scheduled' %}
+              <span class="inline-flex items-center rounded-full bg-amber-100 text-amber-700 px-2 py-1 text-xs"><i class="fa-regular fa-clock mr-1"></i> Programmé</span>
+            {% else %}
+              <span class="inline-flex items-center rounded-full bg-gray-100 text-gray-700 px-2 py-1 text-xs">{{ spot.get_status_display }}</span>
+            {% endif %}
+          </td>
+          <td class="px-3 sm:px-6 py-4">
+            <form method="post" action="{% url 'diffusion_notify_broadcast_time' spot.id %}" class="js-notify-form">{% csrf_token %}
+              <button type="button" class="btn btn--primary js-notify-broadcast" data-sparkles="true" data-url="{% url 'diffusion_notify_broadcast_time' spot.id %}">
+                <i class="fa-regular fa-clock mr-1"></i> Informer du moment de diffusion
+              </button>
+              <input type="hidden" name="notify_admin" value="true" />
+              <input type="hidden" name="notify_client" value="true" />
+            </form>
+          </td>
+          <td class="px-3 sm:px-6 py-4">
+            <a class="btn btn--outline" data-ripple="true" href="{% url 'diffusion_report_problem' spot.id %}"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Signaler un problème</a>
+          </td>
+        </tr>
+        {% endwith %}
+      {% empty %}
+        <tr><td colspan="9" class="px-6 py-4 text-center text-gray-500">Aucun spot trouvé.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="mt-4 flex justify-between items-center">
+  <div>
+    {% if page_obj.has_previous %}<a class="btn btn--outline" data-ripple="true" href="?page={{ page_obj.previous_page_number }}">← Précédent</a>{% endif %}
+  </div>
+  <div>Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</div>
+  <div>
+    {% if page_obj.has_next %}<a class="btn btn--outline" data-ripple="true" href="?page={{ page_obj.next_page_number }}">Suivant →</a>{% endif %}
+  </div>
+</div>
+
+ 
+<script>
+  // Suggestions client (prédictif léger) - compat ES5
+  (function(){
+    var el = document.getElementById('filter-client');
+    if (!el) return;
+    var popup = document.createElement('div');
+    popup.className = 'absolute bg-white border rounded shadow mt-1 w-64 hidden';
+    el.parentNode.style.position = 'relative';
+    el.parentNode.appendChild(popup);
+    var lastQ = '';
+    el.addEventListener('input', function(){
+      var q = (el.value || '').trim();
+      if (q.length < 2 || q === lastQ) { popup.classList.add('hidden'); return; }
+      lastQ = q;
+      try{
+        var url = '/diffusion/api/clients-search/?q=' + encodeURIComponent(q);
+        (window.fetch ? fetch(url) : Promise.reject('no_fetch')).then(function(r){
+          if(!r || !r.ok) return Promise.resolve({results: []});
+          return r.json();
+        }).then(function(d){
+          d = d || {results: []};
+          popup.innerHTML = '';
+          (d.results || []).forEach(function(it){
+            var row = document.createElement('div');
+            row.className = 'px-3 py-2 hover:bg-gray-100 cursor-pointer';
+            row.textContent = it.username;
+            row.addEventListener('click', function(){ el.value = it.username; popup.classList.add('hidden'); });
+            popup.appendChild(row);
+          });
+          popup.classList.toggle('hidden', (d.results || []).length === 0);
+        }).catch(function(){ popup.classList.add('hidden'); });
+      }catch(e){ popup.classList.add('hidden'); }
+    });
+    document.addEventListener('click', function(ev){
+      if (!popup.contains(ev.target) && ev.target !== el) popup.classList.add('hidden');
+    });
+  })();
+</script>
+<script>
+  (function() {
+    // Fallback "closest" pour compat navigateurs anciens
+    function closest(el, selector){
+      if (!el) return null;
+      if (el.closest) return el.closest(selector);
+      while (el) {
+        try { if (el.matches && el.matches(selector)) return el; } catch(e){}
+        el = el.parentElement;
+      }
+      return null;
+    }
+
+    function getCsrfToken(form) {
+      const input = form.querySelector('input[name="csrfmiddlewaretoken"]');
+      return input ? input.value : '';
+    }
+
+    function showModal(message, details) {
+      let modal = document.getElementById('broadcast-time-modal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'broadcast-time-modal';
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.right = '0';
+        modal.style.bottom = '0';
+        modal.style.background = 'rgba(0,0,0,0.4)';
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.style.zIndex = '1000';
+
+        const card = document.createElement('div');
+        card.style.background = '#fff';
+        card.style.borderRadius = '8px';
+        card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.2)';
+        card.style.maxWidth = '420px';
+        card.style.width = '90%';
+        card.style.padding = '16px 20px';
+
+        const title = document.createElement('h3');
+        title.textContent = 'Moment de diffusion';
+        title.style.margin = '0 0 8px';
+
+        const body = document.createElement('div');
+        body.id = 'broadcast-time-modal-content';
+        body.style.margin = '0 0 16px';
+
+        // Formulaire de confirmation/modification
+        const formWrap = document.createElement('div');
+        formWrap.className = 'grid grid-cols-1 md:grid-cols-3 gap-4 mb-3';
+        formWrap.innerHTML = `
+          <label class="flex flex-col">
+            <span class="text-sm text-gray-600 mb-1">Date de diffusion</span>
+            <input type="date" id="inp-date" class="input" />
+          </label>
+          <label class="flex flex-col">
+            <span class="text-sm text-gray-600 mb-1">Heure précise</span>
+            <input type="time" id="inp-time" class="input" />
+          </label>
+          <label class="flex flex-col">
+            <span class="text-sm text-gray-600 mb-1">Durée prévue (secondes)</span>
+            <input type="number" id="inp-duration" class="input" min="5" max="300" />
+          </label>
+        `;
+
+        // Options d'envoi
+        const actions = document.createElement('div');
+        actions.className = 'flex items-center gap-3 mt-2';
+        const adminOpt = document.createElement('label'); adminOpt.className='inline-flex items-center gap-2';
+        adminOpt.innerHTML = '<input type="checkbox" id="opt-admin" checked> <span>Informer l\'administrateur</span>';
+        const clientOpt = document.createElement('label'); clientOpt.className='inline-flex items-center gap-2';
+        clientOpt.innerHTML = '<input type="checkbox" id="opt-client" checked> <span>Informer le client concerné</span>';
+        const sendBtn = document.createElement('button'); sendBtn.className='btn btn--primary'; sendBtn.textContent='Envoyer';
+        actions.appendChild(adminOpt); actions.appendChild(clientOpt); actions.appendChild(sendBtn);
+
+        const close = document.createElement('button');
+        close.className = 'btn btn--secondary';
+        close.textContent = 'Fermer';
+        close.addEventListener('click', function(){ modal.remove(); });
+
+        card.appendChild(title);
+        card.appendChild(body);
+        card.appendChild(formWrap);
+        card.appendChild(actions);
+        card.appendChild(close);
+        modal.appendChild(card);
+        document.body.appendChild(modal);
+      }
+      const content = modal.querySelector('#broadcast-time-modal-content');
+      if (details && details.ok) {
+        const lines = [
+          message,
+          details.time_slot ? ('Créneau: ' + details.time_slot) : null,
+          details.channel ? ('Canal: ' + details.channel) : null,
+          (details.broadcast_date && details.broadcast_time) ? ('Date/heure: ' + details.broadcast_date + ' ' + details.broadcast_time) : null
+        ].filter(Boolean);
+        content.innerHTML = '<p>' + lines.join('<br>') + '</p>';
+        // Pré-remplir les inputs
+        const inpDate = modal.querySelector('#inp-date');
+        const inpTime = modal.querySelector('#inp-time');
+        const inpDur = modal.querySelector('#inp-duration');
+        if (inpDate && details.broadcast_date) inpDate.value = details.broadcast_date;
+        if (inpTime && details.broadcast_time) inpTime.value = details.broadcast_time.length === 8 ? details.broadcast_time.slice(0,5) : details.broadcast_time;
+        if (inpDur && typeof details.duration_seconds !== 'undefined' && details.duration_seconds !== null) inpDur.value = String(details.duration_seconds);
+      } else {
+        content.textContent = message;
+      }
+      return modal;
+    }
+
+    document.addEventListener('click', async function(e) {
+      const btn = closest(e.target, '.js-notify-broadcast');
+      if (!btn) return;
+      if (btn.disabled || btn.getAttribute('aria-disabled') === 'true') { e.preventDefault(); return; }
+      e.preventDefault();
+      const form = btn.closest('.js-notify-form');
+      const url = btn.dataset ? btn.dataset.url : btn.getAttribute('data-url');
+      if (!url) { console.error('NotifyBroadcast: URL manquante'); showModal('Configuration invalide du bouton.'); return; }
+      const token = getCsrfToken(form);
+      try {
+        // Etape 1: récupérer détails (GET)
+        const resGet = await (window.fetch ? fetch(url, {
+          method: 'GET',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }) : Promise.reject('no_fetch'));
+        const details = await resGet.json();
+        if (!details || !details.ok) {
+          showModal("Aucune programmation disponible pour ce spot.");
+          return;
+        }
+        const modal = showModal('Moment de diffusion', details);
+        const sendBtn = modal.querySelector('.btn.btn--primary');
+        const optAdmin = modal.querySelector('#opt-admin');
+        const optClient = modal.querySelector('#opt-client');
+        sendBtn.addEventListener('click', async function(){
+          try {
+            const fd = new FormData();
+            fd.append('notify_admin', String(optAdmin.checked));
+            fd.append('notify_client', String(optClient.checked));
+            // champs de confirmation/modification
+            const inpDate = modal.querySelector('#inp-date');
+            const inpTime = modal.querySelector('#inp-time');
+            const inpDur = modal.querySelector('#inp-duration');
+            if (inpDate && inpDate.value) fd.append('broadcast_date', inpDate.value);
+            if (inpTime && inpTime.value) fd.append('broadcast_time', inpTime.value);
+            if (inpDur && inpDur.value) fd.append('duration_seconds', inpDur.value);
+            const resPost = await (window.fetch ? fetch(url, {
+              method: 'POST',
+              headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': token
+              },
+              body: fd
+            }) : Promise.reject('no_fetch'));
+            const status = resPost.status;
+            let sent = null;
+            try { sent = await resPost.json(); } catch(parseErr) {
+              console.error('NotifyBroadcast POST parse error:', parseErr);
+            }
+            if (resPost.ok && sent && sent.ok) {
+              const finalWhen = sent.when || ((sent.broadcast_date || details.broadcast_date) + ' ' + (sent.broadcast_time || details.broadcast_time));
+              showModal('Programmation sauvegardée et notifications envoyées. Ce spot est programmé le ' + finalWhen + '.');
+            } else {
+              const errCode = sent && sent.error ? String(sent.error) : '';
+              console.error('NotifyBroadcast POST failed:', { status: status, response: sent });
+              let msg = "Échec de l'envoi des notifications.";
+              if (errCode === 'schedule_conflict') msg = "Conflit: un créneau existe déjà pour cette date et cette heure.";
+              else if (errCode === 'missing_datetime') msg = "Renseignez la date et l'heure.";
+              else if (errCode === 'missing_fields') msg = "Informations manquantes. Veuillez compléter.";
+              else if (errCode === 'invalid_datetime') msg = "Date/heure invalides. Corrigez et réessayez.";
+              else if (errCode === 'invalid_duration') msg = "Durée invalide. Saisissez un nombre en secondes.";
+              else if (!sent && status >= 400) msg = "Erreur serveur (" + status + "). Vérifiez la console et réessayez.";
+              showModal(msg);
+            }
+          } catch(err) {
+            console.error('NotifyBroadcast POST error:', err);
+            showModal("Une erreur est survenue lors de l\'envoi.");
+          }
+        });
+      } catch(err) {
+        console.error('NotifyBroadcast GET error:', err);
+        showModal("Une erreur est survenue. Merci de réessayer.");
+      }
+    });
+  })();
+</script>
+{% endblock %}

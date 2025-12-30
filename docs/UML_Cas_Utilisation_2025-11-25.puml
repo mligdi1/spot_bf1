@@ -1,0 +1,84 @@
+@startuml
+left to right direction
+title BF1 TV – Diagramme de cas d’utilisation
+
+actor "Visiteur" as Visiteur
+actor "Client" as Client
+actor "Administrateur" as Admin
+actor "Support" as Support
+
+rectangle "BF1 TV – Système" {
+  usecase "S’inscrire" as UC_Register
+  usecase "Se connecter" as UC_Login
+  usecase "Se déconnecter" as UC_Logout
+  usecase "Consulter tableau de bord" as UC_Dashboard
+  usecase "Créer une campagne" as UC_CampaignCreate
+  usecase "Consulter campagne" as UC_CampaignView
+  usecase "Téléverser un spot" as UC_SpotUpload
+  usecase "Consulter spot" as UC_SpotView
+  usecase "Planifier une diffusion" as UC_Schedule
+  usecase "Consulter notifications" as UC_Notifications
+  usecase "Marquer comme lue" as UC_NotificationMarkRead
+  usecase "Marquer toutes comme lues" as UC_NotificationMarkAll
+  usecase "Gérer les échanges (threads)" as UC_Threads
+  usecase "Envoyer un message" as UC_ThreadMessage
+  usecase "Joindre un fichier" as UC_ThreadAttachment
+  usecase "Contacter le support (demande)" as UC_ContactRequest
+  usecase "Contacter via WhatsApp" as UC_WhatsApp
+  usecase "Exporter les activités (Excel/PDF)" as UC_Export
+
+  usecase "Approuver une campagne" as UC_CampaignApprove
+  usecase "Rejeter une campagne" as UC_CampaignReject
+  usecase "Approuver un spot" as UC_SpotApprove
+  usecase "Gérer les programmations" as UC_AdminScheduleManage
+}
+
+' Associations principaux
+Visiteur --> UC_Register
+Visiteur --> UC_Login
+Visiteur --> UC_ContactRequest
+Client --> UC_Login
+Client --> UC_Logout
+Client --> UC_Dashboard
+Client --> UC_CampaignCreate
+Client --> UC_CampaignView
+Client --> UC_SpotUpload
+Client --> UC_SpotView
+Client --> UC_Schedule
+Client --> UC_Notifications
+Client --> UC_Threads
+Client --> UC_Export
+Client --> UC_WhatsApp
+Admin --> UC_Login
+Admin --> UC_Dashboard
+Admin --> UC_CampaignApprove
+Admin --> UC_CampaignReject
+Admin --> UC_SpotApprove
+Admin --> UC_AdminScheduleManage
+Support --> UC_ContactRequest
+
+' Inclusions et extensions
+UC_CampaignCreate --> UC_CampaignView : <<include>>
+UC_CampaignCreate --> (Remplir formulaire) : <<include>>
+UC_CampaignCreate --> (Choisir créneaux préférés) : <<include>>
+UC_SpotUpload --> (Valider format du média) : <<include>>
+UC_Schedule --> (Sélectionner créneau horaire) : <<include>>
+UC_Notifications --> UC_NotificationMarkRead : <<extend>>
+UC_Notifications --> UC_NotificationMarkAll : <<extend>>
+UC_Threads --> UC_ThreadMessage : <<include>>
+UC_ThreadMessage --> UC_ThreadAttachment : <<extend>>
+UC_Login --> (Afficher toast de connexion) : <<extend>>
+UC_CampaignApprove --> (Programmer automatiquement des diffusions) : <<extend>>
+
+note right of UC_CampaignApprove
+  Une fois la campagne approuvée,
+  des programmations automatiques peuvent
+  être créées selon les créneaux préférés.
+end note
+
+note bottom of UC_Notifications
+  Les notifications redirigent dynamiquement
+  vers la campagne, le spot ou le fil d’échanges.
+end note
+
+@enduml

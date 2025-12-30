@@ -1,0 +1,28 @@
+{% extends 'admin/base_site.html' %}
+
+{% block content %}
+<div class="container">
+    <h1>{{ title }}</h1>
+    
+    <p>Vous êtes sur le point de rejeter les {{ item_type }}s suivant(e)s :</p>
+    
+    <ul>
+        {% for item in items %}
+        <li>{{ item.title }}</li>
+        {% endfor %}
+    </ul>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="rejection_reason">Raison du rejet :</label>
+            <textarea name="rejection_reason" id="rejection_reason" class="form-control" rows="4" required></textarea>
+        </div>
+        
+        <div class="form-group mt-3">
+            <button type="submit" class="btn btn-danger">Confirmer le rejet</button>
+            <a href="{% if item_type == 'campagne' %}{% url 'admin:spot_campaign_changelist' %}{% else %}{% url 'admin:spot_spot_changelist' %}{% endif %}" class="btn btn-secondary">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

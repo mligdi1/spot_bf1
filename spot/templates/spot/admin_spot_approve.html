@@ -1,0 +1,356 @@
+{% extends 'spot/admin_base.html' %}
+
+{% block title %}Approbation spot - BF1{% endblock %}
+
+{% block admin_header %}Approbation spot{% endblock %}
+
+{% block admin_content %}
+<div class="max-w-6xl mx-auto space-y-8">
+    <!-- En-tête -->
+    <div class="mb-8">
+        <nav class="flex mb-4" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-4">
+                <li>
+                    <a href="{% url 'admin_dashboard' %}" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-cogs mr-1"></i>
+                        Administration
+                    </a>
+                </li>
+                <li>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                </li>
+                <li>
+                    <span class="text-gray-900 font-medium">Approbation spot</span>
+                </li>
+            </ol>
+        </nav>
+        
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">
+            <i class="fas fa-video text-bf1-red mr-2"></i>
+            Approbation de spot publicitaire
+        </h1>
+        <p class="text-gray-600">
+            Examinez et approuvez ou rejetez le spot "{{ spot.title }}"
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Informations du spot -->
+        <div class="lg:col-span-2">
+            <div class="bg-white p-6 rounded-lg bf1-shadow">
+                <h2 class="text-xl font-semibold text-gray-900 mb-6">
+                    <i class="fas fa-info-circle text-bf1-red mr-2"></i>
+                    Détails du spot
+                </h2>
+                
+                <div class="space-y-6">
+                    <!-- Informations générales -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500 mb-2">Titre</h3>
+                            <p class="text-gray-900">{{ spot.title }}</p>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500 mb-2">Statut actuel</h3>
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                {{ spot.get_status_display }}
+                            </span>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500 mb-2">Campagne</h3>
+                            <p class="text-gray-900">{{ spot.campaign.title }}</p>
+                            <p class="text-sm text-gray-600">{{ spot.campaign.client.username }}</p>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500 mb-2">Date de téléchargement</h3>
+                            <p class="text-gray-900">{{ spot.created_at|date:"d/m/Y à H:i" }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    {% if spot.description %}
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500 mb-2">Description</h3>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-gray-900">{{ spot.description }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Informations techniques -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500 mb-2">Durée</h3>
+                            <p class="text-gray-900">{{ spot.duration_seconds }} secondes</p>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500 mb-2">Fichier</h3>
+                            {% if spot.video_file %}
+                                <a href="{{ spot.video_file.url }}" 
+                                   target="_blank"
+                                   class="text-bf1-red hover:text-bf1-red-dark font-medium">
+                                    <i class="fas fa-download mr-1"></i>
+                                    Télécharger le fichier
+                                </a>
+                            {% else %}
+                                <p class="text-gray-500">Aucun fichier</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Lecteur vidéo -->
+                    {% if spot.video_file %}
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500 mb-2">Aperçu vidéo</h3>
+                        <div class="bg-gray-900 rounded-lg overflow-hidden">
+                            <video controls class="w-full h-64">
+                                <source src="{{ spot.video_file.url }}" type="video/mp4">
+                                <source src="{{ spot.video_file.url }}" type="video/avi">
+                                <source src="{{ spot.video_file.url }}" type="video/quicktime">
+                                <source src="{{ spot.video_file.url }}" type="video/x-ms-wmv">
+                                Votre navigateur ne supporte pas la lecture vidéo.
+                            </video>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Informations de la campagne -->
+                    <div class="bg-bf1-red-light p-4 rounded-lg">
+                        <h3 class="text-sm font-medium text-bf1-red mb-3">Informations de la campagne</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="font-medium">Titre:</span>
+                                <span class="ml-2">{{ spot.campaign.title }}</span>
+                            </div>
+                            <div>
+                                <span class="font-medium">Client:</span>
+                                <span class="ml-2">{{ spot.campaign.client.username }}</span>
+                            </div>
+                            <div>
+                                <span class="font-medium">Période:</span>
+                                <span class="ml-2">{{ spot.campaign.start_date|date:"d/m/Y" }} - {{ spot.campaign.end_date|date:"d/m/Y" }}</span>
+                            </div>
+                            <div>
+                                <span class="font-medium">Budget:</span>
+                                <span class="ml-2">{{ spot.campaign.budget|floatformat:0 }} FCFA</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions d'approbation -->
+        <div class="space-y-6">
+            <!-- Actions -->
+            <div class="bg-white p-6 rounded-lg bf1-shadow">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-gavel text-bf1-red mr-2"></i>
+                    Actions d'approbation
+                </h3>
+                
+                <form method="post" id="approvalForm">
+                    {% csrf_token %}
+                    <div class="space-y-4">
+                        <!-- Approbation -->
+                        <div>
+                            <button type="submit" 
+                                    name="action" 
+                                    value="approve"
+                                    class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors">
+                                <i class="fas fa-check mr-2"></i>
+                                Approuver le spot
+                            </button>
+                        </div>
+
+                        <!-- Rejet -->
+                        <div>
+                            <button type="button" 
+                                    onclick="toggleRejectForm()"
+                                    class="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors">
+                                <i class="fas fa-times mr-2"></i>
+                                Rejeter le spot
+                            </button>
+                        </div>
+
+                        <!-- Formulaire de rejet -->
+                        <div id="rejectForm" class="hidden">
+                            <div class="border border-red-200 rounded-lg p-4 bg-red-50">
+                                <h4 class="text-sm font-medium text-red-800 mb-2">Raison du rejet</h4>
+                                <textarea name="rejection_reason" 
+                                          rows="3"
+                                          class="w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-red-500 focus:border-red-500"
+                                          placeholder="Expliquez la raison du rejet..."></textarea>
+                                <div class="mt-3 flex space-x-2">
+                                    <button type="submit" 
+                                            name="action" 
+                                            value="reject"
+                                            class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors">
+                                        Confirmer le rejet
+                                    </button>
+                                    <button type="button" 
+                                            onclick="toggleRejectForm()"
+                                            class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors">
+                                        Annuler
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Critères d'évaluation -->
+            <div class="bg-white p-6 rounded-lg bf1-shadow">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-clipboard-check text-bf1-red mr-2"></i>
+                    Critères d'évaluation
+                </h3>
+                
+                <div class="space-y-3">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="quality" class="h-4 w-4 text-bf1-red focus:ring-bf1-red border-gray-300 rounded">
+                        <label for="quality" class="ml-2 text-sm text-gray-700">Qualité vidéo acceptable</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="duration" class="h-4 w-4 text-bf1-red focus:ring-bf1-red border-gray-300 rounded">
+                        <label for="duration" class="ml-2 text-sm text-gray-700">Durée conforme (5-300s)</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="content" class="h-4 w-4 text-bf1-red focus:ring-bf1-red border-gray-300 rounded">
+                        <label for="content" class="ml-2 text-sm text-gray-700">Contenu approprié</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="brand" class="h-4 w-4 text-bf1-red focus:ring-bf1-red border-gray-300 rounded">
+                        <label for="brand" class="ml-2 text-sm text-gray-700">Respect des codes de marque</label>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="legal" class="h-4 w-4 text-bf1-red focus:ring-bf1-red border-gray-300 rounded">
+                        <label for="legal" class="ml-2 text-sm text-gray-700">Conformité légale</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistiques -->
+            <div class="bg-white p-6 rounded-lg bf1-shadow">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-chart-bar text-bf1-red mr-2"></i>
+                    Statistiques
+                </h3>
+                
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Durée:</span>
+                        <span class="text-sm font-medium">{{ spot.duration_seconds }}s</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Taille du fichier:</span>
+                        <span class="text-sm font-medium">
+                            {% if spot.video_file %}
+                                {{ spot.video_file.size|filesizeformat }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Format:</span>
+                        <span class="text-sm font-medium">
+                            {% if spot.video_file %}
+                                {{ spot.video_file.name|slice:"-4:"|upper }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historique -->
+            <div class="bg-white p-6 rounded-lg bf1-shadow">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-history text-bf1-red mr-2"></i>
+                    Historique
+                </h3>
+                
+                <div class="space-y-3">
+                    <div class="flex items-start space-x-3">
+                        <div class="flex-shrink-0">
+                            <div class="w-6 h-6 bg-bf1-red-light rounded-full flex items-center justify-center">
+                                <i class="fas fa-upload text-bf1-red text-xs"></i>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm text-gray-900">Spot téléchargé</p>
+                            <p class="text-xs text-gray-500">{{ spot.created_at|date:"d/m/Y H:i" }}</p>
+                        </div>
+                    </div>
+                    
+                    {% if spot.approved_at %}
+                    <div class="flex items-start space-x-3">
+                        <div class="flex-shrink-0">
+                            <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-check text-green-600 text-xs"></i>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm text-gray-900">Spot approuvé</p>
+                            <p class="text-xs text-gray-500">{{ spot.approved_at|date:"d/m/Y H:i" }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleRejectForm() {
+    const rejectForm = document.getElementById('rejectForm');
+    rejectForm.classList.toggle('hidden');
+}
+
+// Confirmation avant approbation
+document.getElementById('approvalForm').addEventListener('submit', function(e) {
+    const action = e.submitter.value;
+    
+    if (action === 'approve') {
+        if (!confirm('Êtes-vous sûr de vouloir approuver ce spot ?')) {
+            e.preventDefault();
+        }
+    } else if (action === 'reject') {
+        const reason = document.querySelector('textarea[name="rejection_reason"]').value;
+        if (!reason.trim()) {
+            e.preventDefault();
+            alert('Veuillez indiquer la raison du rejet.');
+        } else if (!confirm('Êtes-vous sûr de vouloir rejeter ce spot ?')) {
+            e.preventDefault();
+        }
+    }
+});
+
+// Vérification des critères
+function checkCriteria() {
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    
+    const approveButton = document.querySelector('button[value="approve"]');
+    if (allChecked) {
+        approveButton.classList.remove('opacity-50');
+        approveButton.disabled = false;
+    } else {
+        approveButton.classList.add('opacity-50');
+        approveButton.disabled = true;
+    }
+}
+
+// Écouter les changements des checkboxes
+document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+    checkbox.addEventListener('change', checkCriteria);
+});
+
+// Vérification initiale
+checkCriteria();
+</script>
+{% endblock %}

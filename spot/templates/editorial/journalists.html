@@ -1,0 +1,119 @@
+{% extends 'editorial/base.html' %}
+{% load static %}
+{% block title %}Journalistes{% endblock %}
+{% block content %}
+<div id="people_root" data-people-kind="journalists" data-api-base="/editorial/api/journalists/" class="space-y-6">
+  <section class="relative overflow-hidden rounded-2xl ed-card text-white border border-black border-opacity-20 shadow-lg" style="background:linear-gradient(90deg,#FF0000 0%,#D00000 100%);">
+    <div class="absolute inset-0" style="background:radial-gradient(1200px 400px at 10% 0%, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.0) 60%)"></div>
+    <div class="absolute inset-0" style="background:radial-gradient(800px 300px at 90% 100%, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 60%)"></div>
+    <div class="relative z-10 p-8 flex items-start justify-between gap-4">
+      <div>
+        <div class="font-montserrat text-3xl md:text-4xl font-extrabold" style="text-shadow:0 1px 2px rgba(0,0,0,0.25)">
+          <i class="fa-solid fa-user-pen mr-2"></i>Journalistes
+        </div>
+        <div class="mt-2 text-white text-opacity-90" style="text-shadow:0 1px 1px rgba(0,0,0,0.25)">Annuaire, disponibilité et missions</div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" data-action="create" class="btn btn--primary px-4 py-2 text-sm">Ajouter</button>
+        <a href="{% url 'editorial_dashboard' %}" class="px-4 py-2 rounded-lg bg-white bg-opacity-20 hover:bg-opacity-30 transition">Dashboard</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="bg-white card p-4 sticky top-4 z-10">
+    <form data-role="filters" class="grid grid-cols-12 gap-3">
+      <div class="col-span-12 md:col-span-5 form__group">
+        <input data-role="q" type="text" placeholder="Rechercher (nom, email, téléphone, spécialités)..." class="form__control" />
+        <label class="form__label">Rechercher</label>
+      </div>
+      <div class="col-span-12 md:col-span-5 form__group form__group--static">
+        <select data-role="sort" class="form__control">
+          <option value="name_asc">Nom (A→Z)</option>
+          <option value="name_desc">Nom (Z→A)</option>
+          <option value="workload_desc">Charge (desc)</option>
+          <option value="created_desc">Récents</option>
+        </select>
+        <label class="form__label">Tri</label>
+      </div>
+      <div class="col-span-12 md:col-span-2 flex items-end gap-2">
+        <button type="button" data-action="refresh" class="btn btn--outline w-full px-4 py-2 text-sm">Actualiser</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+      <div class="flex items-center justify-between mb-3">
+        <div class="text-sm text-slate-600"><span data-role="count">0</span> résultat(s)</div>
+        <div class="flex items-center gap-2">
+          <button type="button" data-action="prev" class="btn btn--outline px-3 py-2 text-sm">Préc.</button>
+          <div class="text-sm text-slate-600" data-role="page">Page 1</div>
+          <button type="button" data-action="next" class="btn btn--outline px-3 py-2 text-sm">Suiv.</button>
+        </div>
+      </div>
+      <div data-role="list" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+      <div data-role="empty" class="hidden text-slate-600 text-sm bg-white card p-6 text-center">Aucun journaliste trouvé.</div>
+    </div>
+    <aside class="bg-white card p-5 lg:sticky lg:top-28 h-fit">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <div class="text-sm text-slate-500">Détails</div>
+          <div class="font-semibold" data-role="detail-title">Sélectionnez un journaliste</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" data-action="edit" class="btn btn--outline px-3 py-2 text-sm hidden">Modifier</button>
+          <button type="button" data-action="delete" class="btn btn--outline px-3 py-2 text-sm hidden">Supprimer</button>
+        </div>
+      </div>
+      <div class="mt-4 space-y-4" data-role="detail-body">
+        <div class="text-sm text-slate-600">Cliquez sur une carte pour afficher les informations et les missions.</div>
+      </div>
+    </aside>
+  </section>
+
+  <dialog data-role="modal" class="rounded-2xl p-0 w-full max-w-xl">
+    <form method="dialog" class="bg-white rounded-2xl overflow-hidden">
+      <div class="p-5 border-b flex items-center justify-between">
+        <div class="font-semibold" data-role="modal-title">Ajouter</div>
+        <button type="submit" class="text-slate-500 hover:text-slate-800" aria-label="Fermer">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="p-5 space-y-4">
+        <input type="hidden" data-role="id" />
+        <div class="form__group">
+          <input data-role="name" type="text" placeholder="Nom" class="form__control" required />
+          <label class="form__label">Nom</label>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="form__group">
+            <input data-role="email" type="email" placeholder="Email" class="form__control" />
+            <label class="form__label">Email</label>
+          </div>
+          <div class="form__group">
+            <input data-role="phone" type="text" placeholder="Téléphone" class="form__control" />
+            <label class="form__label">Téléphone</label>
+          </div>
+        </div>
+        <div class="form__group">
+          <input data-role="photo" type="file" accept="image/*" class="form__control" />
+          <label class="form__label">Photo</label>
+        </div>
+        <div class="form__group">
+          <input data-role="specialties" type="text" placeholder="Spécialités (séparées par des virgules)" class="form__control" />
+          <label class="form__label">Spécialités</label>
+        </div>
+      </div>
+      <div class="p-5 border-t flex items-center justify-end gap-2">
+        <button type="submit" class="btn btn--outline px-4 py-2 text-sm" data-action="cancel">Annuler</button>
+        <button type="button" class="btn btn--primary px-4 py-2 text-sm" data-action="save">Enregistrer</button>
+      </div>
+    </form>
+  </dialog>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'editorial/people.js' %}" defer></script>
+{% endblock %}
+

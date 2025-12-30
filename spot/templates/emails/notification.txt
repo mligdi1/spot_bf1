@@ -1,0 +1,26 @@
+BF1 TV - Gestion Publicitaire
+=============================
+
+Bonjour {{ user.username }},
+
+{{ message }}
+
+{% if campaign %}
+Détails de la campagne:
+- Titre: {{ campaign.title }}
+- Période: {{ campaign.start_date|date:"d/m/Y" }} - {{ campaign.end_date|date:"d/m/Y" }}
+- Budget: {{ campaign.budget|floatformat:0 }} FCFA
+{% endif %}
+
+Vous pouvez consulter tous les détails dans votre tableau de bord:
+{{ site_url }}/dashboard/
+
+Si vous avez des questions, n'hésitez pas à nous contacter.
+
+Cordialement,
+L'équipe BF1 TV
+
+---
+BF1 TV - Votre partenaire publicitaire de confiance au Burkina Faso
+Email: contact@bf1tv.bf | Téléphone: +226 XX XX XX XX
+Ouagadougou, Burkina Faso

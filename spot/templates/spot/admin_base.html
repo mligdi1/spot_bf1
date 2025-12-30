@@ -1,0 +1,33 @@
+{% extends 'spot/base.html' %}
+{% load static %}
+{% block title %}Admin - BF1{% endblock %}
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+  <div>
+    <!-- Main sans sidebar -->
+    <section class="w-full">
+      <header class="bg-gradient-to-r from-bf1-red to-pink-600 px-4 sm:px-6 py-5 sm:py-6 text-white">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div class="flex items-center gap-3 min-w-0">
+            <img src="{% static 'logo_bf1.jpg' %}" alt="BF1 TV" class="h-8 w-8 rounded flex-none" />
+            <div class="min-w-0">
+              <div class="text-xl sm:text-2xl font-bold truncate">{% block admin_header %}Console d’administration{% endblock %}</div>
+              <div class="text-white/80 text-sm truncate">BF1 TV — Pilotage des campagnes et spots</div>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 text-sm">
+            <span class="bg-white/20 px-3 py-1 rounded max-w-full truncate">{{ user.username }}</span>
+            <a href="{% url 'admin_dashboard' %}" class="px-3 py-1 rounded bg-white/10 hover:bg-white/20 whitespace-nowrap"><i class="fas fa-cogs mr-1"></i> Dashboard</a>
+            <a href="{% url 'home' %}" class="px-3 py-1 rounded bg-white/10 hover:bg-white/20 whitespace-nowrap"><i class="fas fa-home mr-1"></i> Accueil</a>
+          </div>
+        </div>
+        <div class="h-2 w-full bg-white/10 mt-4"></div>
+      </header>
+
+      <div class="px-4 sm:px-6 lg:px-8 py-6 space-y-6 max-w-7xl mx-auto">
+        {% block admin_content %}{% endblock %}
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

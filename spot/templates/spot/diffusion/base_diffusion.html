@@ -1,0 +1,417 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Diffusion – BF1{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-TbdgqZKx" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="icon" type="image/png" href="{% static 'favicon-32x32.png' %}">
+    <style>
+      :root{
+        --brand-red:#d4272e;
+        --brand-red-700:#b31f25;
+        --brand-red-500:#e43a41;
+        --brand-dark:#0e0f12;
+        --brand-muted:#6b7280;
+        --card-bg:#111316;
+        --glass-bg: rgba(255,255,255,0.06);
+        --glass-border: rgba(255,255,255,0.2);
+        --shadow-1: 0 10px 30px rgba(0,0,0,.10);
+        --shadow-2: 0 16px 40px rgba(0,0,0,.18);
+      }
+      body{font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial,'Noto Sans','Apple Color Emoji','Segoe UI Emoji';}
+      .heading{font-family:'Playfair Display',serif;}
+      .premium-gradient{background: linear-gradient(135deg, rgba(212,39,46,.95) 0%, rgba(14,15,18,.96) 80%);} 
+      .glass{background: var(--glass-bg); backdrop-filter: blur(10px); border: 1px solid var(--glass-border);} 
+      .card{background: #fff; border-radius: .75rem; box-shadow: var(--shadow-1);} 
+      .card-dark{background: var(--card-bg); color:#e5e7eb; box-shadow: var(--shadow-1);} 
+      .hover-raise{transition: transform .25s ease, box-shadow .25s ease;} 
+      .hover-raise:hover{transform: translateY(-3px); box-shadow: var(--shadow-2);} 
+      .fade-in{opacity:0; transform: translateY(12px); animation: fadeIn .45s ease forwards;} 
+      @keyframes fadeIn{to{opacity:1; transform: none;}} 
+      .page-enter{opacity:0; transform: translateY(8px);} .page-enter-active{transition: opacity .25s ease, transform .25s ease; opacity:1; transform:none;}
+      .page-leave{opacity:1;} .page-leave-active{transition: opacity .2s ease; opacity:0;}
+      @media (prefers-reduced-motion: reduce){
+        .hover-raise{transition: none}
+        .fade-in{animation: none; opacity:1; transform:none}
+        .page-enter-active,.page-leave-active{transition:none}
+      }
+      html, body { max-width: 100%; overflow-x: hidden; }
+      img, video, canvas, svg { max-width: 100%; height: auto; }
+      /* Thème sombre minimaliste */
+      [data-theme="dark"] body{ background-color: #0f1114; }
+      [data-theme="dark"] header, [data-theme="dark"] footer{ background-color: #121417; color:#e5e7eb; }
+      [data-theme="dark"] nav a{ color:#e5e7eb; }
+      [data-theme="dark"] .card{ background: var(--card-bg); color:#e5e7eb; }
+      [data-theme="dark"] .bg-white{ background-color: #121417; }
+      [data-theme="dark"] .text-gray-800{ color:#e5e7eb; }
+      [data-theme="dark"] .text-gray-500{ color:#9aa0a6; }
+      [data-theme="dark"] .border{ border-color:#2b3036; }
+      [data-theme="dark"] .bg-gray-50{ background-color:#171a1f; }
+      /* Badges & chips */
+      .badge{display:inline-flex;align-items:center;padding:.25rem .5rem;border-radius:.5rem;font-size:.75rem;font-weight:600}
+      .badge-red{background:#fee2e2;color:#991b1b}
+      .badge-gray{background:#f3f4f6;color:#1f2937}
+      .badge-dark{background:#1f2937;color:#e5e7eb}
+      /* Form inputs premium */
+      .input-premium{width:100%;padding:.5rem .75rem;border:1px solid #d1d5db;border-radius:.5rem;transition:border-color .2s ease, box-shadow .2s ease, background-color .2s ease}
+      .input-premium:focus{outline:none;border-color:var(--brand-red);box-shadow:0 0 0 3px rgba(212,39,46,.15);}
+      .input-valid{border-color:#10b981;background:#f0fdf4}
+      .input-invalid{border-color:#ef4444;background:#fef2f2}
+      .form-group{display:block}
+      .form-label{display:block;font-size:.875rem;color:#374151;margin-bottom:.25rem}
+      .form-error{font-size:.75rem;color:#b91c1c;margin-top:.25rem}
+      /* BEM form with floating labels */
+      .form{--label-color:#374151}
+      .form__group{position:relative;margin-bottom:1rem}
+      .form__control{width:100%;padding:1rem .875rem;border:1px solid #d1d5db;border-radius:.75rem;background:#fff;transition:border-color .2s ease, box-shadow .2s ease, transform .2s ease}
+      .form__control::placeholder{color:transparent}
+      .form__label{position:absolute;left:.875rem;top:50%;transform:translateY(-50%);font-size:.95rem;color:var(--brand-muted);pointer-events:none;transition:all .18s ease;padding:0 .25rem}
+      .form__control:focus{outline:none;border-color:var(--brand-red);box-shadow:0 0 0 3px rgba(212,39,46,.15)}
+      .form__control:focus + .form__label,
+      .form__control:not(:placeholder-shown) + .form__label{top:.5rem;transform:none;font-size:.75rem;color:var(--brand-red)}
+      /* Static label mode for inputs without placeholder (select, date, number) */
+      .form__group--static .form__label{top:.5rem !important; transform:none !important; font-size:.75rem !important; color:var(--brand-muted) !important}
+      .form__group--static .form__control{padding-top:1.5rem !important}
+      .form__error{font-size:.75rem;color:#b91c1c;margin-top:.25rem;min-height:1em}
+      .form__icon{position:absolute;right:.75rem;top:50%;transform:translateY(-50%);font-size:1rem}
+      .form__group.is-valid .form__control{border-color:#10b981;background:#f0fdf4}
+      .form__group.is-invalid .form__control{border-color:#ef4444;background:#fef2f2;animation:formVibrate .18s ease}
+      @keyframes formVibrate{0%{transform:translateX(0)}35%{transform:translateX(-1px)}70%{transform:translateX(1px)}100%{transform:translateX(0)}}
+      /* Button premium with ripple */
+      .btn-premium{position:relative;overflow:hidden}
+      .btn-premium::after{content:'';position:absolute;left:var(--rx,50%);top:var(--ry,50%);width:0;height:0;background:rgba(255,255,255,.4);border-radius:9999px;transform:translate(-50%,-50%);opacity:0}
+      .btn-premium.ripple::after{opacity:1;width:160%;height:160%;transition:width .35s ease, height .35s ease, opacity .45s ease}
+      .btn-premium:hover{transform:translateY(-1px)}
+      .btn-premium{transition:transform .15s ease, box-shadow .15s ease}
+      /* Extended premium buttons */
+      .btn{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;border-radius:.75rem;padding:.6rem 1rem;font-weight:600;transition:transform .15s ease, box-shadow .15s ease, background-position .25s ease}
+      .btn--primary{background:linear-gradient(140deg, var(--brand-red) 0%, #7a1519 100%);color:#fff;box-shadow:0 10px 20px rgba(212,39,46,.25);background-size:120% 120%}
+      .btn--primary:hover{transform:translateY(-2px)}
+      .btn--primary:active{transform:scale(.98)}
+      .btn--outline{border:1px solid #d1d5db;background:#fff;color:#111827}
+      .btn--ghost{background:transparent;color:#111827}
+      .btn--danger{background:linear-gradient(140deg,#ef4444 0%,#7a1519 100%);color:#fff;box-shadow:0 10px 20px rgba(239,68,68,.25)}
+      .btn::after{content:'';position:absolute;left:var(--rx,50%);top:var(--ry,50%);width:0;height:0;background:rgba(255,255,255,.36);border-radius:9999px;transform:translate(-50%,-50%);opacity:0}
+      .btn.ripple::after{opacity:1;width:160%;height:160%;transition:width .35s ease, height .35s ease, opacity .45s ease}
+      .btn:hover{transform:translateY(-1px)}
+      .btn:active{transform:scale(.96)}
+      .sparkle{position:absolute;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.85);box-shadow:0 0 10px rgba(255,255,255,.85);pointer-events:none;opacity:0;transform:translate(-50%,-50%) scale(.6)}
+      @keyframes sparkleFly{0%{opacity:1;transform:translate(-50%,-50%) scale(.6)}100%{opacity:0;transform:translate(calc(-50% + var(--sx)), calc(-50% + var(--sy))) scale(1.2)}}
+      /* Mobile nav */
+      #mobile_menu{transition:max-height .25s ease, opacity .25s ease}
+      #mobile_menu.open{opacity:1}
+      /* Hamburger morph & Sticky header */
+      .hamburger{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:24px;height:16px}
+      .hamburger span{position:absolute;left:0;right:0;height:2px;background:#1f2937;border-radius:2px;transition:transform .25s ease, opacity .25s ease}
+      .hamburger span:nth-child(1){top:0}
+      .hamburger span:nth-child(2){top:7px}
+      .hamburger span:nth-child(3){bottom:0}
+      #mobile_menu_toggle.is-open .hamburger span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+      #mobile_menu_toggle.is-open .hamburger span:nth-child(2){opacity:0}
+      #mobile_menu_toggle.is-open .hamburger span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+      #site_header.header--hidden{transform:translateY(-100%)}
+      #site_header.header--scrolled{box-shadow:0 8px 24px rgba(0,0,0,.08); background: rgba(255,255,255,.92)}
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <!-- Header -->
+    <header id="site_header" class="bg-white/90 backdrop-blur border-b transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+            <div class="flex items-center space-x-4">
+                <a href="/diffusion/" class="flex items-center space-x-2">
+                    <img src="{% static 'logo_bf1.jpg' %}" alt="BF1" class="h-8 w-auto">
+                    <span class="font-semibold text-xl text-red-600">Diffusion</span>
+                </a>
+            </div>
+            <nav class="hidden md:flex space-x-8">
+                <a href="/diffusion/" class="font-medium transition-colors {% if request.path == '/diffusion/' %}text-red-600{% else %}text-gray-800 hover:text-red-600{% endif %}">Accueil</a>
+                <a href="/diffusion/profil/" class="font-medium transition-colors {% if request.path|slice:':18' == '/diffusion/profil' %}text-red-600{% else %}text-gray-800 hover:text-red-600{% endif %}">Profil</a>
+                
+                <a href="/diffusion/planning/" class="font-medium transition-colors {% if request.path|slice:':20' == '/diffusion/planning' %}text-red-600{% else %}text-gray-800 hover:text-red-600{% endif %}">Planning</a>
+                <a href="/diffusion/spots/" class="font-medium transition-colors {% if request.path|slice:':17' == '/diffusion/spots' %}text-red-600{% else %}text-gray-800 hover:text-red-600{% endif %}">Spots</a>
+                <a href="/diffusion/notifications/" class="font-medium transition-colors {% if request.path|slice:':23' == '/diffusion/notifications' %}text-red-600{% else %}text-gray-800 hover:text-red-600{% endif %}">Notifications</a>
+            
+            </nav>
+            <div class="flex items-center gap-3">
+                <button id="theme_toggle" type="button" class="text-sm px-3 py-1 border rounded hover:bg-gray-50" aria-pressed="false" aria-label="Basculer thème clair/sombre">🌗 Thème</button>
+                <a href="/logout/" class="text-sm text-gray-500 hover:text-red-600 transition-colors">Déconnexion</a>
+                <button id="mobile_menu_toggle" type="button" class="md:hidden text-gray-700 hover:text-red-600 relative w-8 h-8" aria-expanded="false" aria-controls="mobile_menu" aria-label="Ouvrir le menu">
+                  <span class="hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile navigation -->
+    <nav id="mobile_menu" class="md:hidden hidden border-t bg-white">
+      <div class="px-4 py-3 space-y-2">
+        <a href="/diffusion/" class="block py-2 font-medium text-gray-800 hover:text-red-600">Accueil</a>
+        <a href="/diffusion/profil/" class="block py-2 font-medium text-gray-800 hover:text-red-600">Profil</a>
+        
+        <a href="/diffusion/planning/" class="block py-2 font-medium text-gray-800 hover:text-red-600">Planning</a>
+        <a href="/diffusion/spots/" class="block py-2 font-medium text-gray-800 hover:text-red-600">Spots</a>
+        <a href="/diffusion/notifications/" class="block py-2 font-medium text-gray-800 hover:text-red-600">Notifications</a>
+            
+      </div>
+    </nav>
+
+    <!-- Main -->
+    <main class="flex-1 page-enter page-enter-active" id="page-root">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            {% if messages %}
+            <div class="mb-4 space-y-2" role="status" aria-live="polite">
+                {% for message in messages %}
+                <div class="px-4 py-3 rounded border focus:outline-none focus:ring-2 focus:ring-red-500 {% if message.tags == 'error' %}border-red-300 bg-red-50 text-red-700{% elif message.tags == 'success' %}border-green-300 bg-green-50 text-green-700{% else %}border-gray-300 bg-gray-50 text-gray-700{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white/90 backdrop-blur border-t py-4 text-center text-sm text-gray-500">
+        © {{ now|date:'Y' }} BF1 – Interface Diffusion
+    </footer>
+
+    <!-- Toasts (progressive enhancement) -->
+    {% if messages %}
+    <script>
+      window.__messages__ = [
+        {% for message in messages %}
+          { text: "{{ message|escapejs }}", level: "{{ message.tags|default:'info' }}" },
+        {% endfor %}
+      ];
+    </script>
+    <script>
+      // Header sticky & color change on scroll
+      (function(){
+        const header = document.getElementById('site_header'); if(!header) return;
+        let lastY = window.scrollY; let ticking=false;
+        function onScroll(){
+          const y = window.scrollY;
+          if(y > 16){ header.classList.add('header--scrolled'); } else { header.classList.remove('header--scrolled'); }
+          if(y - lastY > 6 && y > 32){ header.classList.add('header--hidden'); } else { header.classList.remove('header--hidden'); }
+          lastY = y; ticking=false;
+        }
+        window.addEventListener('scroll', function(){ if(!ticking){ window.requestAnimationFrame(onScroll); ticking=true; } });
+      })();
+      // Sync hamburger morph with menu state
+      (function(){
+        const btn = document.getElementById('mobile_menu_toggle'); if(!btn) return;
+        const onState = () => {
+          const open = btn.getAttribute('aria-expanded') === 'true';
+          btn.classList.toggle('is-open', open);
+        };
+        const obs = new MutationObserver(onState); obs.observe(btn, { attributes:true, attributeFilter:['aria-expanded'] });
+        btn.addEventListener('click', onState);
+      })();
+      // Document-level ripple & sparkles for .btn (avoids double-binding)
+      (function(){
+        function makeRipple(target, e){
+          if(target.classList.contains('ripple')) return;
+          const rect = target.getBoundingClientRect();
+          const x = e.clientX - rect.left; const y = e.clientY - rect.top;
+          target.style.setProperty('--rx', x + 'px'); target.style.setProperty('--ry', y + 'px');
+          target.classList.add('ripple'); setTimeout(()=> target.classList.remove('ripple'), 340);
+        }
+        function makeSparkles(target){
+          if(target.getAttribute('data-sparkles') !== 'true') return;
+          const rect = target.getBoundingClientRect(); const cx = rect.width/2; const cy = rect.height/2;
+          const count = 6;
+          for(let i=0;i<count;i++){
+            const sp = document.createElement('span'); sp.className = 'sparkle';
+            const angle = Math.random()*Math.PI*2; const dist = 14 + Math.random()*20;
+            sp.style.setProperty('--sx', Math.cos(angle)*dist + 'px'); sp.style.setProperty('--sy', Math.sin(angle)*dist + 'px');
+            sp.style.left = cx + 'px'; sp.style.top = cy + 'px'; target.appendChild(sp);
+            sp.style.animation = 'sparkleFly .5s ease forwards'; setTimeout(()=> sp.remove(), 520);
+          }
+        }
+        document.addEventListener('click', function(e){
+          const t = e.target.closest('.btn'); if(!t) return;
+          makeRipple(t, e); makeSparkles(t);
+        });
+      })();
+      // Validation: upgrade to support BEM form groups and icons
+      (function(){
+        function applyGroupState(el, ok, msg){
+          const group = el.closest('.form__group'); if(!group) return;
+          const err = group.querySelector('.form__error'); const icon = group.querySelector('.form__icon');
+          group.classList.toggle('is-valid', !!ok);
+          group.classList.toggle('is-invalid', !ok);
+          el.setAttribute('aria-invalid', String(!ok));
+          if(err){ err.textContent = ok ? '' : (msg || 'Champ invalide'); }
+          if(icon){ icon.textContent = ok ? '✓' : '!'; }
+        }
+        function enhancedValidate(e){
+          const el = e.target.matches('[data-validate]') ? e.target : null; if(!el) return;
+          const spec = el.getAttribute('data-validate') || ''; const parts = spec.split('|').filter(Boolean);
+          const v = (el.value || '').trim(); let ok = true; let msg = '';
+          for(const p of parts){
+            if(p==='required' && !v){ ok=false; msg='Ce champ est requis'; break; }
+            else if(p==='email'){ if(v && !/.+@.+\..+/.test(v)){ ok=false; msg='Format d’email invalide'; break; } }
+            else if(p.startsWith('min:')){ const n = Number(p.split(':')[1]||0); if(v.length < n){ ok=false; msg=`Au moins ${n} caractères`; break; } }
+          }
+          el.classList.remove('input-valid','input-invalid'); if(!ok){ el.classList.add('input-invalid'); } else if(v){ el.classList.add('input-valid'); }
+          applyGroupState(el, ok, msg);
+        }
+        document.addEventListener('input', enhancedValidate);
+        document.addEventListener('blur', enhancedValidate, true);
+      })();
+    </script>
+    {% endif %}
+    <div id="toast-container" class="fixed z-50 top-4 right-4 space-y-3" aria-live="polite" role="status"></div>
+    <script>
+      (function(){
+        // Theme toggle
+        try{
+          var saved = localStorage.getItem('theme');
+          if(saved === 'dark'){ document.documentElement.setAttribute('data-theme','dark'); }
+        }catch(e){}
+        var tgl = document.getElementById('theme_toggle');
+        if(tgl){
+          tgl.addEventListener('click', function(){
+            var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            if(isDark){ document.documentElement.removeAttribute('data-theme'); localStorage.setItem('theme','light'); this.setAttribute('aria-pressed','false'); }
+            else { document.documentElement.setAttribute('data-theme','dark'); localStorage.setItem('theme','dark'); this.setAttribute('aria-pressed','true'); }
+          });
+        }
+        // Page transitions (grâce à classes page-enter/leave)
+        var root = document.getElementById('page-root');
+        function resetEnter(){
+          if(!root) return;
+          root.classList.remove('page-leave','page-leave-active');
+          root.classList.add('page-enter','page-enter-active');
+        }
+        // s'assurer de l'état correct au chargement et au retour arrière
+        resetEnter();
+        window.addEventListener('pageshow', resetEnter);
+        window.addEventListener('popstate', resetEnter);
+        document.addEventListener('visibilitychange', function(){ if(!document.hidden) resetEnter(); });
+        document.querySelectorAll('a[href]').forEach(function(a){
+          var href = a.getAttribute('href');
+          if(!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+          a.addEventListener('click', function(ev){
+            var isSameOrigin = href.indexOf('http')!==0 || href.indexOf(location.origin)===0;
+            if(!isSameOrigin) return; // laisser externes
+            ev.preventDefault();
+            if(root){ root.classList.remove('page-enter-active'); root.classList.add('page-leave','page-leave-active'); }
+            setTimeout(function(){ window.location.href = href; }, 150);
+          });
+        });
+        const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const msgs = window.__messages__ || [];
+        const container = document.getElementById('toast-container');
+        const levelClasses = {
+          success: 'bg-green-600 text-white',
+          error: 'bg-red-600 text-white',
+          warning: 'bg-yellow-500 text-gray-900',
+          info: 'bg-gray-800 text-white'
+        };
+        function addToast(text, level){
+          const el = document.createElement('div');
+          el.className = 'shadow-lg rounded-lg px-4 py-3 flex items-start gap-3 hover-raise ' + (levelClasses[level] || levelClasses.info);
+          el.setAttribute('role','alert');
+          el.innerHTML = `<span class="sr-only">Notification:</span><div class="flex-1">${text}</div><button type="button" aria-label="Fermer" class="ml-3 text-white/80 hover:text-white">✕</button>`;
+          const closeBtn = el.querySelector('button');
+          closeBtn.addEventListener('click', () => { el.remove(); });
+          container.appendChild(el);
+          if (!prefersReduced){
+            el.style.opacity = '0'; el.style.transform = 'translateY(-6px)';
+            requestAnimationFrame(()=>{ el.style.transition = 'opacity .2s ease, transform .2s ease'; el.style.opacity='1'; el.style.transform='none'; });
+          }
+          setTimeout(()=>{
+            if (!el.parentNode) return;
+            if (!prefersReduced){ el.style.opacity='0'; el.style.transform='translateY(-6px)'; setTimeout(()=>{ el.remove(); }, 200); }
+            else { el.remove(); }
+          }, 4000);
+        }
+        msgs.forEach(m => addToast(m.text, m.level));
+
+        // Mobile menu toggle with accessibility
+        const mobileBtn = document.getElementById('mobile_menu_toggle');
+        const mobileMenu = document.getElementById('mobile_menu');
+        if(mobileBtn && mobileMenu){
+          function closeMobile(){
+            mobileMenu.classList.add('hidden');
+            mobileMenu.classList.remove('open');
+            mobileBtn.setAttribute('aria-expanded','false');
+            mobileBtn.classList.remove('is-open');
+          }
+          function openMobile(){
+            mobileMenu.classList.remove('hidden');
+            mobileMenu.classList.add('open');
+            mobileBtn.setAttribute('aria-expanded','true');
+            mobileBtn.classList.add('is-open');
+          }
+          mobileBtn.addEventListener('click', function(){
+            const expanded = mobileBtn.getAttribute('aria-expanded') === 'true';
+            if(expanded) closeMobile(); else openMobile();
+          });
+          document.addEventListener('keydown', function(e){ if(e.key === 'Escape'){ closeMobile(); } });
+          document.addEventListener('click', function(e){
+            if(mobileMenu.contains(e.target)) return;
+            if(mobileBtn.contains(e.target)) return;
+            closeMobile();
+          });
+          mobileMenu.addEventListener('click', function(e){
+            const t = e.target;
+            if(t && t.closest && t.closest('a[href]')) closeMobile();
+          });
+        }
+
+        // Button ripple micro-interaction
+        const premiumButtons = document.querySelectorAll('.btn-premium');
+        premiumButtons.forEach(btn => {
+          btn.addEventListener('click', function(e){
+            const rect = btn.getBoundingClientRect();
+            const x = e.clientX - rect.left; const y = e.clientY - rect.top;
+            btn.style.setProperty('--rx', x + 'px'); btn.style.setProperty('--ry', y + 'px');
+            btn.classList.add('ripple');
+            setTimeout(()=> btn.classList.remove('ripple'), 450);
+          });
+        });
+
+        // Real-time validation for inputs with data-validate
+        function validateField(el){
+          const rules = (el.dataset.validate || '').split('|').filter(Boolean);
+          let valid = true; let message = '';
+          const val = (el.value || '').trim();
+          rules.forEach(r => {
+            if(r === 'required' && !val){ valid=false; message='Champ requis'; }
+            else if(r === 'email'){ const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; if(val && !re.test(val)){ valid=false; message='Email invalide'; } }
+            else if(r.startsWith('min:')){ const m = parseInt(r.split(':')[1],10)||0; if(val.length < m){ valid=false; message=`Minimum ${m} caractères`; } }
+          });
+          el.classList.remove('input-valid','input-invalid');
+          el.setAttribute('aria-invalid', String(!valid));
+          const errSel = `[data-error-for="${el.id || el.name}"]`;
+          const err = document.querySelector(errSel);
+          if(!valid){ el.classList.add('input-invalid'); if(err){ err.textContent = message; err.classList.remove('hidden'); } }
+          else { if(val) el.classList.add('input-valid'); if(err){ err.textContent=''; err.classList.add('hidden'); } }
+          return valid;
+        }
+        const fields = document.querySelectorAll('[data-validate]');
+        fields.forEach(el => {
+          el.addEventListener('input', () => validateField(el));
+          el.addEventListener('blur', () => validateField(el));
+        });
+        const forms = document.querySelectorAll('form');
+        forms.forEach(f => {
+          f.addEventListener('submit', function(e){
+            const toCheck = f.querySelectorAll('[data-validate]');
+            let allValid = true; toCheck.forEach(el => { if(!validateField(el)) allValid=false; });
+            if(!allValid){ e.preventDefault(); addToast('Veuillez corriger les champs invalides.', 'error'); }
+          });
+        });
+      })();
+    </script>
+</body>
+</html>

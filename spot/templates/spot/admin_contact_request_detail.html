@@ -1,0 +1,68 @@
+{% extends 'spot/admin_base.html' %}
+{% block title %}Demande de contact{% endblock %}
+{% block admin_header %}Demande de contact{% endblock %}
+{% block admin_content %}
+<div class="max-w-4xl mx-auto space-y-6">
+  <h1 class="text-2xl font-bold text-gray-900 mb-4">
+    <i class="fas fa-envelope-open-text text-bf1-red mr-2"></i> Demande de contact
+  </h1>
+
+  <div class="bg-white p-6 rounded-lg bf1-shadow mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <p class="text-sm text-gray-500">Nom</p>
+        <p class="text-gray-900">{{ contact.name }}</p>
+      </div>
+      <div>
+        <p class="text-sm text-gray-500">Email</p>
+        <p class="text-gray-900">{{ contact.email }}</p>
+      </div>
+      {% if contact.phone %}
+      <div>
+        <p class="text-sm text-gray-500">Téléphone</p>
+        <p class="text-gray-900">{{ contact.phone }}</p>
+      </div>
+      {% endif %}
+      <div>
+        <p class="text-sm text-gray-500">Statut</p>
+        <span class="px-2 py-1 text-xs rounded
+          {% if contact.status == 'new' %} bg-yellow-100 text-yellow-800
+          {% elif contact.status == 'contacted' %} bg-blue-100 text-blue-800
+          {% else %} bg-green-100 text-green-800 {% endif %}">
+          {{ contact.get_status_display }}
+        </span>
+      </div>
+    </div>
+    <div class="mt-4">
+      <p class="text-sm text-gray-500">Sujet</p>
+      <p class="text-gray-900">{{ contact.subject }}</p>
+    </div>
+    <div class="mt-4">
+      <p class="text-sm text-gray-500">Message</p>
+      <div class="bg-gray-50 p-4 rounded">{{ contact.message }}</div>
+    </div>
+    {% if contact.preferred_contact_time %}
+    <div class="mt-4">
+      <p class="text-sm text-gray-500">Préférence de contact</p>
+      <p class="text-gray-900">{{ contact.preferred_contact_time }}</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="bg-white p-6 rounded-lg bf1-shadow">
+    <h2 class="text-lg font-semibold text-gray-900 mb-4">
+      <i class="fas fa-reply text-bf1-red mr-2"></i> Réponse rapide (promesse de recontact)
+    </h2>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="respond" />
+      <p class="text-sm text-gray-600 mb-3">
+        Cette action marque la demande comme “contactée”. Si l’utilisateur est connecté, elle crée un fil de discussion avec un message du support.
+      </p>
+      <button type="submit" class="w-full md:w-auto bg-bf1-red text-white px-4 py-2 rounded hover:bg-bf1-red-dark">
+        <i class="fas fa-paper-plane mr-2"></i> Informer l'utilisateur
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,344 @@
+{% extends 'spot/diffusion/base_diffusion.html' %}
+{% load static %}
+
+{% block title %}Détail du spot{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-semibold">{{ spot.title }}</h1>
+    <div class="space-x-2">
+      <a href="{% url 'diffusion_spots' %}" class="px-3 py-2 border rounded">Retour liste</a>
+      {% if media_url %}
+        <a href="{% url 'diffusion_download_spot' spot.id %}" class="px-3 py-2 bg-green-600 text-white rounded">Télécharger</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="md:col-span-2">
+      <div class="border rounded p-4">
+        <h2 class="text-lg font-medium mb-3">Aperçu média</h2>
+        {% if media_url and spot.media_type == 'video' %}
+          <video src="{{ media_url }}" controls class="w-full rounded"></video>
+        {% elif media_url and spot.media_type == 'image' %}
+          <img src="{{ media_url }}" alt="{{ spot.title }}" class="w-full rounded" />
+        {% else %}
+          <div class="text-gray-500">Aucun média disponible pour ce spot.</div>
+        {% endif %}
+      </div>
+    </div>
+    <div>
+      <div class="border rounded p-4">
+        <h2 class="text-lg font-medium mb-3">Informations</h2>
+        <dl class="space-y-2">
+          <div class="flex justify-between"><dt class="text-gray-600">Client</dt><dd>{{ spot.campaign.client.username }}</dd></div>
+          <div class="flex justify-between"><dt class="text-gray-600">Type média</dt><dd>{{ spot.media_type }}</dd></div>
+          <div class="flex justify-between"><dt class="text-gray-600">Durée</dt><dd>{{ spot.duration_seconds }} sec</dd></div>
+          <div class="flex justify-between"><dt class="text-gray-600">Statut</dt><dd>{{ spot.get_status_display }}</dd></div>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-8 border rounded p-4">
+    <h2 class="text-lg font-medium mb-3">Programmations</h2>
+    {% if schedules %}
+      <ul class="divide-y">
+        {% for s in schedules %}
+          <li class="py-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="text-sm text-gray-500">Créneau: {{ s.time_slot.name }}</div>
+                {% if s.is_broadcasted %}
+                  <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">Diffusé</span>
+                {% else %}
+                  <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs">À diffuser</span>
+                {% endif %}
+              </div>
+              <div class="flex items-center gap-2">
+                <button class="px-2 py-1 text-xs border rounded text-red-700 border-red-300 hover:bg-red-50"
+                        onclick="window.deleteSchedule('{{ s.id }}')">Supprimer</button>
+              </div>
+            </div>
+            <div class="mt-2 grid grid-cols-1 md:grid-cols-3 gap-3" data-schedule-id="{{ s.id }}" data-original-date="{{ s.broadcast_date|date:'Y-m-d' }}" data-original-time="{{ s.broadcast_time|time:'H:i' }}" data-pending="0">
+              <div>
+                <label class="block text-xs text-gray-600 mb-1">Date</label>
+                <input type="date" class="w-full border rounded px-3 py-2 js-sched-date" value="{{ s.broadcast_date|date:'Y-m-d' }}" />
+              </div>
+              <div>
+                <label class="block text-xs text-gray-600 mb-1">Heure</label>
+                <input type="time" class="w-full border rounded px-3 py-2 js-sched-time" value="{{ s.broadcast_time|time:'H:i' }}" />
+              </div>
+              <div class="flex items-end">
+                <div class="text-xs" id="status-{{ s.id }}"></div>
+              </div>
+              <div class="md:col-span-3 mt-2 hidden js-confirm-bar">
+                <div class="text-xs text-gray-600 mb-2">Modifier la programmation peut créer un conflit de créneau ou impacter les écrans concernés. Confirmez pour appliquer ou annulez pour revenir en arrière.</div>
+                <div class="flex gap-2">
+                  <button type="button" class="px-3 py-1 bg-blue-600 text-white rounded js-confirm-btn">Confirmer</button>
+                  <button type="button" class="px-3 py-1 bg-gray-200 text-gray-800 rounded js-cancel-btn">Annuler</button>
+                </div>
+              </div>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="text-gray-500">Aucune programmation enregistrée pour ce spot.</div>
+    {% endif %}
+  </div>
+  
+  <div class="mt-8 border rounded p-4">
+    <h2 class="text-lg font-medium mb-3">Ajouter des programmations (multi-dates)</h2>
+    <form method="post" action="{% url 'diffusion_bulk_schedule_spot' spot.id %}" class="space-y-4" onsubmit="return submitBulkSchedule(this)">{% csrf_token %}
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm text-gray-600 mb-1">Date de début</label>
+          <input type="date" name="start_date" class="w-full border rounded px-3 py-2" required />
+        </div>
+        <div>
+          <label class="block text-sm text-gray-600 mb-1">Date de fin</label>
+          <input type="date" name="end_date" class="w-full border rounded px-3 py-2" />
+        </div>
+        <div>
+          <label class="block text-sm text-gray-600 mb-1">Heure de diffusion</label>
+          <input type="time" name="broadcast_time" class="w-full border rounded px-3 py-2" required />
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">Jours</label>
+        <div class="flex flex-wrap gap-2">
+          <label><input type="checkbox" name="days[]" value="mon" class="mr-1">Lun</label>
+          <label><input type="checkbox" name="days[]" value="tue" class="mr-1">Mar</label>
+          <label><input type="checkbox" name="days[]" value="wed" class="mr-1">Mer</label>
+          <label><input type="checkbox" name="days[]" value="thu" class="mr-1">Jeu</label>
+          <label><input type="checkbox" name="days[]" value="fri" class="mr-1">Ven</label>
+          <label><input type="checkbox" name="days[]" value="sat" class="mr-1">Sam</label>
+          <label><input type="checkbox" name="days[]" value="sun" class="mr-1">Dim</label>
+        </div>
+        <p class="text-xs text-gray-500 mt-1">Si aucun jour n'est coché, tous les jours seront inclus.</p>
+      </div>
+      <div>
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Ajouter les créneaux</button>
+        <span id="bulkResult" class="ml-3 text-sm"></span>
+      </div>
+    </form>
+  </div>
+</div>
+<div id="autosaveIndicator" class="fixed bottom-4 right-4 px-3 py-2 bg-gray-800 text-white text-xs rounded shadow">Sauvegarde auto active</div>
+<script>
+function getCookie(name){
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if(parts.length === 2) return parts.pop().split(';').shift();
+}
+function showStatus(id, text, cls){
+  const el = document.getElementById('status-' + id);
+  if(!el) return;
+  el.textContent = text;
+  el.className = 'text-xs ' + (cls || '');
+}
+function markField(el, ok){
+  if(!el) return;
+  el.classList.remove('border-red-500','ring-1','ring-red-400','border-green-500');
+  if(ok === true){ el.classList.add('border-green-500'); }
+  else if(ok === false){ el.classList.add('border-red-500','ring-1','ring-red-400'); }
+}
+function debounce(fn, ms){
+  let t; return function(){ const ctx=this, args=arguments; clearTimeout(t); t=setTimeout(()=>fn.apply(ctx,args), ms||500); };
+}
+function isValidTimeStr(s){ return /^\d{2}:\d{2}$/.test(s || ''); }
+function isValidDateStr(s){ try { return !!(new Date(s).getTime()); } catch(_){ return false; } }
+function autosave(scheduleId, dateStr, timeStr){
+  if(!scheduleId || !dateStr) return;
+  // Bloquer modification le jour en cours côté client
+  try {
+    const todayLocal = new Date();
+    const tzDate = new Date(todayLocal.getTime()-todayLocal.getTimezoneOffset()*60000);
+    const todayStr = tzDate.toISOString().slice(0,10);
+    if(dateStr === todayStr){
+      showStatus(scheduleId, 'Modification non autorisée aujourd\'hui', 'text-red-700');
+      return;
+    }
+  } catch(_){ }
+  const fd = new FormData();
+  fd.append('schedule_id', scheduleId);
+  fd.append('broadcast_date', dateStr);
+  if(timeStr) fd.append('broadcast_time', timeStr);
+  // Si une extension de campagne est demandée, inclure le flag
+  try {
+    const row = document.querySelector(`[data-schedule-id="${scheduleId}"]`);
+    if(row && row.dataset.override === '1'){
+      fd.append('allow_extension', '1');
+    }
+  } catch(_){ }
+  showStatus(scheduleId, 'Sauvegarde…', 'text-gray-600');
+  fetch('{% url 'diffusion_planning_move' %}', {
+    method: 'POST',
+    body: fd,
+    headers: { 'X-CSRFToken': getCookie('csrftoken') }
+  }).then(async r => {
+    const data = await r.json().catch(()=>({}));
+    if(r.ok && data && data.ok){
+      showStatus(scheduleId, 'Enregistré ✓', 'text-green-700');
+      const row = document.querySelector(`[data-schedule-id="${scheduleId}"]`);
+      const d = row && row.querySelector('.js-sched-date');
+      const t = row && row.querySelector('.js-sched-time');
+      markField(d, true); markField(t, true);
+      if(row){
+        row.dataset.originalDate = d ? d.value : row.dataset.originalDate;
+        row.dataset.originalTime = t ? t.value : row.dataset.originalTime;
+        row.dataset.pending = '0';
+        row.dataset.override = '0';
+        hideConfirmBar(row);
+      }
+    } else {
+      const err = (data && data.error) || 'Erreur';
+      if(err === 'after_campaign_end'){
+        const row = document.querySelector(`[data-schedule-id="${scheduleId}"]`);
+        if(row){
+          row.dataset.pending = '1';
+          row.dataset.override = '1';
+          showConfirmBar(row);
+        }
+        showStatus(scheduleId, 'La date dépasse la fin de campagne. Confirmez pour étendre.', 'text-orange-700');
+      } else {
+        showStatus(scheduleId, `Erreur: ${err}`, 'text-red-700');
+      }
+      const row = document.querySelector(`[data-schedule-id="${scheduleId}"]`);
+      const d = row && row.querySelector('.js-sched-date');
+      const t = row && row.querySelector('.js-sched-time');
+      markField(d, false); markField(t, false);
+    }
+  }).catch(() => {
+    showStatus(scheduleId, 'Erreur réseau', 'text-red-700');
+    const row = document.querySelector(`[data-schedule-id="${scheduleId}"]`);
+    const d = row && row.querySelector('.js-sched-date');
+    const t = row && row.querySelector('.js-sched-time');
+    markField(d, false); markField(t, false);
+  });
+}
+window.deleteSchedule = function(scheduleId){
+  if(!confirm('Supprimer cette programmation ?')) return;
+  const fd = new FormData(); fd.append('schedule_id', scheduleId);
+  fetch('{% url 'diffusion_planning_delete' %}', {
+    method:'POST', body:fd, headers:{'X-CSRFToken': getCookie('csrftoken')}
+  }).then(async r=>{
+    const data = await r.json().catch(()=>({}));
+    if(r.ok && data && data.ok){
+      showStatus(scheduleId, 'Supprimé', 'text-gray-600');
+      const li = document.querySelector(`[data-schedule-id="${scheduleId}"]`);
+      if(li){ li.closest('li').remove(); }
+    } else {
+      showStatus(scheduleId, `Erreur: ${(data && data.error)||'inconnue'}`, 'text-red-700');
+    }
+  }).catch(()=> showStatus(scheduleId, 'Erreur réseau', 'text-red-700'));
+};
+// Attach autosave handlers
+document.querySelectorAll('[data-schedule-id]').forEach(function(row){
+  const id = row.getAttribute('data-schedule-id');
+  const d = row.querySelector('.js-sched-date');
+  const t = row.querySelector('.js-sched-time');
+  const onChange = function(){
+    const ds = d && d.value; const ts = t && t.value;
+    if(!isValidDateStr(ds) || (ts && !isValidTimeStr(ts))){
+      showStatus(id, 'Format invalide', 'text-red-700'); markField(d, false); markField(t, false); return;
+    }
+    row.dataset.pending = '1';
+    row.dataset.lastChangedAt = String(Date.now());
+    showConfirmBar(row);
+    showStatus(id, 'Modification en attente de confirmation…', 'text-gray-600');
+  };
+  if(d) d.addEventListener('change', onChange);
+  if(t) t.addEventListener('change', onChange);
+
+  // Boutons Confirmer/Annuler
+  const confirmBar = row.querySelector('.js-confirm-bar');
+  if(confirmBar){
+    const confirmBtn = confirmBar.querySelector('.js-confirm-btn');
+    const cancelBtn = confirmBar.querySelector('.js-cancel-btn');
+    if(confirmBtn){
+      confirmBtn.addEventListener('click', function(){
+        const ds = d && d.value; const ts = t && t.value;
+        autosave(id, ds, ts);
+      });
+    }
+    if(cancelBtn){
+      cancelBtn.addEventListener('click', function(){
+        if(d) d.value = row.dataset.originalDate || d.value;
+        if(t && (row.dataset.originalTime || '').length) t.value = row.dataset.originalTime;
+        markField(d, true); markField(t, true);
+        row.dataset.pending = '0';
+        row.dataset.override = '0';
+        hideConfirmBar(row);
+        showStatus(id, 'Annulé', 'text-gray-600');
+      });
+    }
+  }
+});
+
+function showConfirmBar(row){
+  const bar = row.querySelector('.js-confirm-bar');
+  if(bar) bar.classList.remove('hidden');
+}
+function hideConfirmBar(row){
+  const bar = row.querySelector('.js-confirm-bar');
+  if(bar) bar.classList.add('hidden');
+}
+
+// Autosave périodique des modifications en cours
+setInterval(function(){
+  const rows = document.querySelectorAll('[data-schedule-id]');
+  const now = Date.now();
+  rows.forEach(function(row){
+    if(row.dataset.pending === '1'){
+      const id = row.getAttribute('data-schedule-id');
+      const d = row.querySelector('.js-sched-date');
+      const t = row.querySelector('.js-sched-time');
+      const last = Number(row.dataset.lastChangedAt || 0);
+      // Sauvegarder automatiquement si aucune action pendant 3s
+      if(now - last > 3000){
+        const ds = d && d.value; const ts = t && t.value;
+        if(isValidDateStr(ds) && (!ts || isValidTimeStr(ts))){
+          autosave(id, ds, ts);
+        }
+      }
+    }
+  });
+  // clignote l'indicateur pour montrer l'activité
+  const ind = document.getElementById('autosaveIndicator');
+  if(ind){ ind.style.opacity = ind.style.opacity === '0.6' ? '1' : '0.6'; }
+}, 5000);
+function submitBulkSchedule(form) {
+  const fd = new FormData(form);
+  // transformer days[] en CSV
+  const days = fd.getAll('days[]');
+  if (days && days.length) {
+    fd.append('days', days.join(','));
+  }
+  fd.delete('days[]');
+  fetch(form.action, {
+    method: 'POST',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    body: fd
+  }).then(r => r.json()).then(data => {
+    const el = document.getElementById('bulkResult');
+    if (data.ok) {
+      el.textContent = `${data.created} créneau(x) ajouté(s), ${data.conflicts} conflit(s).`;
+      el.className = 'ml-3 text-sm text-green-700';
+      // Optionnel: recharger pour voir la liste à jour
+      setTimeout(() => { window.location.reload(); }, 800);
+    } else {
+      el.textContent = `Erreur: ${data.error || 'inconnue'}`;
+      el.className = 'ml-3 text-sm text-red-700';
+    }
+  }).catch(err => {
+    const el = document.getElementById('bulkResult');
+    el.textContent = 'Erreur réseau';
+    el.className = 'ml-3 text-sm text-red-700';
+  });
+  return false;
+}
+</script>
+{% endblock %}
