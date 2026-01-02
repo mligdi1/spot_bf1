@@ -119,10 +119,15 @@ L'application sera accessible à l'adresse : http://localhost:8000
 
 ### Comptes par défaut
 
-**Administrateur :**
-- Utilisateur : `admin`
-- Mot de passe : `admin123`
-- URL admin : http://localhost:8000/admin/
+### Compte administrateur
+
+Créez un compte admin localement via :
+
+```bash
+python manage.py createsuperuser
+```
+
+URL admin : http://localhost:8000/admin/
 
 ## 📁 Structure du projet
 
