@@ -12,22 +12,7 @@ class Command(BaseCommand):
         self.stdout.write('Initialisation des données de base...')
         
         # Créer un superutilisateur admin
-        if not User.objects.filter(username='admin').exists():
-            admin_user = User.objects.create_superuser(
-                username='admin',
-                email='admin@bf1tv.bf',
-                password='admin123',
-                role='admin',
-                phone='+226 XX XX XX XX',
-                company='BF1 TV',
-                address='Ouagadougou, Burkina Faso'
-            )
-            self.stdout.write(
-                self.style.SUCCESS(f'Superutilisateur admin créé avec succès')
-            )
-        else:
-            self.stdout.write('Superutilisateur admin existe déjà')
-
+        
         # Créer les créneaux horaires
         time_slots_data = [
             {
@@ -144,6 +129,6 @@ class Command(BaseCommand):
             self.style.SUCCESS('Initialisation des données terminée avec succès!')
         )
         self.stdout.write('\nInformations de connexion:')
-        self.stdout.write('Utilisateur: admin')
-        self.stdout.write('Mot de passe: admin123')
+        self.stdout.write('\nCompte administrateur:')
+        self.stdout.write('Créez-le via: python manage.py createsuperuser')
         self.stdout.write('URL: http://localhost:8000/admin/')

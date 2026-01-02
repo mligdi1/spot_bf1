@@ -7,8 +7,14 @@ import os
 
 # Sécurité
 DEBUG = False
-SECRET_KEY = os.environ.get('SECRET_KEY', 'your-secret-key-here')
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost').split(',')
+SECRET_KEY = os.environ.get('SECRET_KEY', '').strip()
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY manquant en production")
+_allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', '').strip()
+if _allowed_hosts_env:
+    ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts_env.split(',') if h.strip()]
+else:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', '[::1]']
 
 # Base de données de production
 DATABASES = {
@@ -30,18 +36,31 @@ if os.environ.get('DJANGO_USE_SQLITE') == '1':
         }
     }
 
-# Sécurité HTTPS
-SECURE_SSL_REDIRECT = True
-SECURE_HSTS_SECONDS = 31536000
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
+_force_https = os.environ.get('DJANGO_FORCE_HTTPS', '').strip().lower() in ('1', 'true', 'yes')
+_is_localhost = any(h in ('localhost', '127.0.0.1', '0.0.0.0', '[::1]') for h in ALLOWED_HOSTS)
+_enable_https = _force_https or (not _is_localhost)
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+
+SECURE_SSL_REDIRECT = _enable_https
+SECURE_HSTS_SECONDS = 31536000 if _enable_https else 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = _enable_https
+SECURE_HSTS_PRELOAD = _enable_https
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'
 
+if _enable_https:
+    CSRF_TRUSTED_ORIGINS = [
+        f"https://{h}"
+        for h in ALLOWED_HOSTS
+        if h and h not in ('*', '0.0.0.0', '[::1]')
+    ]
+
 # Cookies sécurisés
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = _enable_https
+CSRF_COOKIE_SECURE = _enable_https
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
 

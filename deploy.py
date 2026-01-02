@@ -127,7 +127,7 @@ def main():
     print("   URL: http://localhost:8000")
     print("   Admin: http://localhost:8000/admin/")
     print("   Utilisateur: admin")
-    print("   Mot de passe: admin123")
+    print("   Mot de passe: (défini lors de la création du superuser)")
     
     print("\n🚀 Pour démarrer le serveur:")
     print("   python manage.py runserver")

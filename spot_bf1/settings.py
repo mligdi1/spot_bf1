@@ -21,15 +21,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get(
-    'SECRET_KEY',
-    'django-insecure-*k-w)*v4nnxe=yyrf58j@f(k8r$+oc8_h%$#3w&)7yz4z^%faf',
-)
+SECRET_KEY = os.environ.get('SECRET_KEY', '').strip()
+DEBUG = os.environ.get('DEBUG', '').strip().lower() in {'1', 'true', 'yes', 'on'}
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', '1').strip().lower() in {'1', 'true', 'yes', 'on'}
+_allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', '').strip()
+if _allowed_hosts_env:
+    ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts_env.split(',') if h.strip()]
+else:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
-ALLOWED_HOSTS = [h for h in os.environ.get('ALLOWED_HOSTS', '*').split(',') if h]
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'dev-only-secret-key'
+    else:
+        raise RuntimeError("SECRET_KEY manquant (prod)")
 
 
 # Application definition
@@ -92,7 +97,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('DATABASE_NAME', 'gestion_publicitaire'),
         'USER': os.environ.get('DATABASE_USER', 'spot_bf1'),
-        'PASSWORD': os.environ.get('DATABASE_PASSWORD', '1234Nana'),
+        'PASSWORD': os.environ.get('DATABASE_PASSWORD', ''),
         'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
         'PORT': os.environ.get('DATABASE_PORT', '5433'),
     }

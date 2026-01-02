@@ -5,7 +5,7 @@ Usage: locust -f locustfile.py --host=http://localhost:8000
 
 from locust import HttpUser, task, between
 import random
-
+import os
 
 class BF1TVUser(HttpUser):
     wait_time = between(1, 3)
@@ -78,7 +78,7 @@ class AuthenticatedUser(HttpUser):
         # Se connecter (avec des identifiants de test)
         login_data = {
             'username': 'testuser',
-            'password': 'testpass123'
+            'password': os.environ.get('LOCUST_TEST_PASSWORD', '')
         }
         
         response = self.client.post("/login/", data=login_data)
@@ -145,7 +145,7 @@ class AdminUser(HttpUser):
         # Se connecter en tant qu'admin
         login_data = {
             'username': 'admin',
-            'password': 'admin123'
+            'password': os.environ.get('LOCUST_ADMIN_PASSWORD', '')
         }
         
         response = self.client.post("/login/", data=login_data)
