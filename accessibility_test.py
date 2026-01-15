@@ -294,7 +294,7 @@ class AccessibilityTest:
             ('/login/', 'Page de connexion'),
             ('/register/', 'Page d\'inscription'),
             ('/cost-simulator/', 'Simulateur de coût'),
-            ('/dashboard/', 'Tableau de bord'),
+            ('/home/', 'Accueil connecté'),
         ]
         
         for endpoint, page_name in pages_to_test:

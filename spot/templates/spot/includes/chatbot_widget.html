@@ -5,12 +5,14 @@
        style="{% if pos == 'bottom-left' %}left:16px;{% else %}right:16px;{% endif %} bottom:88px;">
     <button type="button" id="bf1-chatbot-toggle"
             aria-label="Ouvrir l’assistant BF1"
-            class="relative group inline-flex items-center gap-2 rounded-2xl shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bf1-red transition transform hover:scale-[1.03] pointer-events-auto text-white"
+            class="relative group inline-flex items-center gap-2 rounded-2xl shadow-2xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bf1-red transition transform hover:scale-[1.03] pointer-events-auto text-white border border-white/25"
             style="height:54px; padding:0 14px; touch-action:manipulation; background: linear-gradient(135deg, #dc2626, #b91c1c);">
-      <span class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white/15">
+      <span aria-hidden="true" class="absolute -inset-1 rounded-2xl bg-white/10 blur-md opacity-80"></span>
+      <span aria-hidden="true" class="absolute -inset-1 rounded-2xl bg-white/10 animate-pulse opacity-60"></span>
+      <span class="relative inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white/15">
         <i class="fas fa-robot" aria-hidden="true" style="font-size:18px;"></i>
       </span>
-      <span class="text-sm font-semibold tracking-wide">Assistant</span>
+      <span class="relative text-sm font-semibold tracking-wide">Assistant</span>
     </button>
   </div>
   {% endwith %}

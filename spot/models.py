@@ -20,6 +20,7 @@ class User(AbstractUser):
     phone = models.CharField(max_length=20, blank=True, null=True)
     company = models.CharField(max_length=200, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
+    photo = models.ImageField(upload_to='users/photos/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -255,6 +256,15 @@ class Notification(models.Model):
     related_coverage = models.ForeignKey('CoverageRequest', on_delete=models.SET_NULL, null=True, blank=True)
     related_thread = models.ForeignKey('CorrespondenceThread', on_delete=models.SET_NULL, null=True, blank=True)
     related_contact = models.ForeignKey('ContactRequest', on_delete=models.SET_NULL, null=True, blank=True)
+
+    email_status = models.CharField(max_length=20, blank=True, default='')
+    email_sent_at = models.DateTimeField(blank=True, null=True)
+    email_error = models.TextField(blank=True, default='')
+
+    whatsapp_status = models.CharField(max_length=20, blank=True, default='')
+    whatsapp_sent_at = models.DateTimeField(blank=True, null=True)
+    whatsapp_message_id = models.CharField(max_length=120, blank=True, default='')
+    whatsapp_error = models.TextField(blank=True, default='')
     
     class Meta:
         ordering = ['-created_at']

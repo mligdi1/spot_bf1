@@ -4,9 +4,12 @@ Configuration de production pour BF1 TV
 
 from .settings import *
 import os
+import socket
+from urllib.parse import urlparse
 
 # Sécurité
-DEBUG = False
+# Sécurité
+DEBUG = os.environ.get('DEBUG', '0').strip().lower() in ('1', 'true', 'yes')
 SECRET_KEY = os.environ.get('SECRET_KEY', '').strip()
 if not SECRET_KEY:
     raise RuntimeError("SECRET_KEY manquant en production")
@@ -17,22 +20,24 @@ else:
     ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', '[::1]']
 
 # Base de données de production
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DATABASE_NAME', 'spot_bf1_prod'),
-        'USER': os.environ.get('DATABASE_USER', 'postgres'),
-        'PASSWORD': os.environ.get('DATABASE_PASSWORD'),
-        'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
-        'PORT': os.environ.get('DATABASE_PORT', '5432'),
-    }
-}
-
-if os.environ.get('DJANGO_USE_SQLITE') == '1':
+_db_password_env = os.environ.get('DATABASE_PASSWORD')
+_use_sqlite = os.environ.get('DJANGO_USE_SQLITE') == '1' or _db_password_env is None
+if _use_sqlite:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('DATABASE_NAME', 'spot_bf1_prod'),
+            'USER': os.environ.get('DATABASE_USER', 'postgres'),
+            'PASSWORD': _db_password_env,
+            'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
+            'PORT': os.environ.get('DATABASE_PORT', '5432'),
         }
     }
 
@@ -78,37 +83,66 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@bf1tv.bf')
 
 # Cache
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1'),
-    }
-}
+_disable_redis_cache = _use_sqlite or os.environ.get('DISABLE_REDIS', '').strip().lower() in {'1', 'true', 'yes', 'on'}
+_redis_url = '' if _disable_redis_cache else os.environ.get('REDIS_URL', '').strip()
+_redis_ok = False
+if _redis_url:
+    try:
+        parsed = urlparse(_redis_url)
+        host = (parsed.hostname or '').strip()
+        port = parsed.port or 6379
+        if host:
+            with socket.create_connection((host, int(port)), timeout=0.3):
+                _redis_ok = True
+    except Exception:
+        _redis_ok = False
 
-# Channels (Redis si disponible, sinon fallback mémoire)
-_redis_url = os.environ.get('REDIS_URL', '').strip()
-_has_channels_redis = False
-try:
-    import channels_redis  # noqa: F401
-    _has_channels_redis = True
-except Exception:
-    _has_channels_redis = False
-
-if _redis_url and _has_channels_redis:
-    CHANNEL_LAYERS = {
+if _redis_url and _redis_ok:
+    CACHES = {
         'default': {
-            'BACKEND': 'channels_redis.core.RedisChannelLayer',
-            'CONFIG': {'hosts': [_redis_url]},
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': _redis_url,
         }
     }
+    SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+    SESSION_CACHE_ALIAS = 'default'
 else:
-    CHANNEL_LAYERS = {
-        'default': {'BACKEND': 'channels.layers.InMemoryChannelLayer'}
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        }
     }
+    SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies' if _use_sqlite else 'django.contrib.sessions.backends.db'
 
-# Sessions
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-SESSION_CACHE_ALIAS = 'default'
+# Channels (Redis si disponible, sinon fallback mémoire)
+_channels_enabled = os.environ.get('ENABLE_CHANNELS', '0').strip().lower() in {'1', 'true', 'yes', 'on'}
+_channels_available = False
+if _channels_enabled:
+    try:
+        import channels  # noqa: F401
+        _channels_available = True
+    except Exception:
+        _channels_available = False
+
+_has_channels_redis = False
+if _channels_enabled and _channels_available:
+    try:
+        import channels_redis  # noqa: F401
+        _has_channels_redis = True
+    except Exception:
+        _has_channels_redis = False
+
+    if _redis_url and _has_channels_redis:
+        CHANNEL_LAYERS = {
+            'default': {
+                'BACKEND': 'channels_redis.core.RedisChannelLayer',
+                'CONFIG': {'hosts': [_redis_url]},
+            }
+        }
+    else:
+        CHANNEL_LAYERS = {
+            'default': {'BACKEND': 'channels.layers.InMemoryChannelLayer'}
+        }
 
 # Logging path helper
 def get_log_path(filename):
@@ -133,6 +167,11 @@ LOGGING = {
         },
     },
     'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
         'file': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
@@ -156,22 +195,22 @@ LOGGING = {
         },
     },
     'root': {
-        'handlers': ['file'],
+        'handlers': ['file', 'console'],
         'level': 'INFO',
     },
     'loggers': {
         'django': {
-            'handlers': ['file', 'error_file'],
+            'handlers': ['file', 'error_file', 'console'],
             'level': 'INFO',
             'propagate': False,
         },
         'django.request': {
-            'handlers': ['error_file', 'mail_admins'],
+            'handlers': ['error_file', 'mail_admins', 'console'],
             'level': 'ERROR',
             'propagate': False,
         },
         'spot': {
-            'handlers': ['file'],
+            'handlers': ['file', 'console'],
             'level': 'INFO',
             'propagate': False,
         },

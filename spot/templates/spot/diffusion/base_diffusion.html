@@ -5,17 +5,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Diffusion – BF1{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'bf1-red': '#dc2626',
+              'bf1-red-dark': '#b91c1c',
+              'bf1-red-light': '#fee2e2',
+              'bf1-gray': '#1f2937',
+              'bf1-gray-dark': '#111827'
+            },
+          },
+          fontFamily: {
+            montserrat: ['Montserrat', 'sans-serif'],
+            poppins: ['Poppins', 'sans-serif'],
+          }
+        }
+      }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-TbdgqZKx" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="icon" type="image/png" href="{% static 'favicon-32x32.png' %}">
     <style>
       :root{
-        --brand-red:#d4272e;
-        --brand-red-700:#b31f25;
-        --brand-red-500:#e43a41;
+        --bf1-brand:#dc2626;
+        --bf1-brand-dark:#b91c1c;
+        --bf1-ring:rgba(220,38,38,.28);
+        --bf1-shadow-soft:0 10px 28px -18px rgba(0,0,0,.35);
+        --bf1-shadow-deep:0 18px 46px -22px rgba(0,0,0,.45);
+        --bf1-shadow-brand:0 18px 42px -24px rgba(220,38,38,.65);
+        --brand-red:#dc2626;
+        --brand-red-700:#b91c1c;
+        --brand-red-500:#ef4444;
         --brand-dark:#0e0f12;
         --brand-muted:#6b7280;
         --card-bg:#111316;
@@ -23,10 +48,28 @@
         --glass-border: rgba(255,255,255,0.2);
         --shadow-1: 0 10px 30px rgba(0,0,0,.10);
         --shadow-2: 0 16px 40px rgba(0,0,0,.18);
+        --shadow-brand: 0 18px 42px -24px rgba(220,38,38,.55);
       }
-      body{font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial,'Noto Sans','Apple Color Emoji','Segoe UI Emoji';}
-      .heading{font-family:'Playfair Display',serif;}
-      .premium-gradient{background: linear-gradient(135deg, rgba(212,39,46,.95) 0%, rgba(14,15,18,.96) 80%);} 
+      .bf1-ui :where(a,button,[role="button"],input,select,textarea){transition:color .2s ease-out,background-color .2s ease-out,border-color .2s ease-out,opacity .2s ease-out,transform .3s ease-out,box-shadow .3s ease-out,filter .3s ease-out}
+      .bf1-ui :where(a,button,[role="button"],input,select,textarea):focus-visible{outline:none;box-shadow:0 0 0 3px var(--bf1-ring)}
+      .bf1-ui :where(button,[role="button"],input[type="submit"],input[type="button"]):active{transform:scale(.98)}
+      @media (hover:hover){
+        .bf1-ui :where(a,button,[role="button"]):not([disabled]):hover{filter:saturate(1.03)}
+      }
+      .bf1-page-enter{opacity:0;transition:opacity .3s ease-out}
+      body.bf1-loaded .bf1-page-enter{opacity:1}
+      .bf1-reveal{opacity:0;transform:translateY(14px);transition:opacity .45s ease-out,transform .45s cubic-bezier(0.22,1,0.36,1);transition-delay:calc(var(--bf1-reveal-delay, 0) * 1ms);will-change:opacity,transform}
+      .bf1-reveal.is-inview{opacity:1;transform:none}
+      .bf1-cta{position:relative;overflow:hidden;transform-origin:center;transition:transform .3s ease-out,box-shadow .3s ease-out,filter .3s ease-out,background-color .2s ease-out,color .2s ease-out,border-color .2s ease-out}
+      .bf1-cta::after{content:'';position:absolute;inset:-40%;background:radial-gradient(circle at var(--bf1-rx,30%) var(--bf1-ry,30%),rgba(255,255,255,.35),transparent 55%);opacity:0;transition:opacity .3s ease-out;pointer-events:none}
+      @media (hover:hover){
+        .bf1-cta:hover{transform:translateY(-2px) scale(1.03);box-shadow:var(--bf1-shadow-brand)}
+        .bf1-cta:hover::after{opacity:1}
+      }
+      .bf1-cta:active{transform:translateY(0) scale(.99);filter:brightness(.96) saturate(1.02)}
+      body{font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial,'Noto Sans','Apple Color Emoji','Segoe UI Emoji';}
+      .heading{font-family:'Montserrat',ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;letter-spacing:-.01em}
+      .premium-gradient{background: linear-gradient(135deg, rgba(220,38,38,.95) 0%, rgba(14,15,18,.96) 80%);} 
       .glass{background: var(--glass-bg); backdrop-filter: blur(10px); border: 1px solid var(--glass-border);} 
       .card{background: #fff; border-radius: .75rem; box-shadow: var(--shadow-1);} 
       .card-dark{background: var(--card-bg); color:#e5e7eb; box-shadow: var(--shadow-1);} 
@@ -40,9 +83,25 @@
         .hover-raise{transition: none}
         .fade-in{animation: none; opacity:1; transform:none}
         .page-enter-active,.page-leave-active{transition:none}
+        .bf1-page-enter,.bf1-reveal,.bf1-cta{transition:none !important;transform:none !important}
+        .bf1-reveal{opacity:1}
+        .bf1-cta::after{display:none}
       }
       html, body { max-width: 100%; overflow-x: hidden; }
       img, video, canvas, svg { max-width: 100%; height: auto; }
+      .bf1-ui :where(.flex,.inline-flex) > *{min-width:0}
+      .bf1-ui :where(.grid) > *{min-width:0}
+      .bf1-ui :where(h1,h2,h3,h4,h5,h6,p,a,span,li,td,th,div){overflow-wrap:anywhere;word-wrap:break-word;word-break:break-word}
+      .card,.glass{max-width:100%;overflow-x:hidden}
+      .u-min-0{min-width:0}
+      .u-fit{max-width:100%;max-height:100%;overflow:hidden}
+      .u-ellipsis{min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .u-clamp-2{min-width:0;max-width:100%;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+      .u-clamp-3{min-width:0;max-width:100%;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+      .u-fluid-xs{font-size:clamp(.72rem,1.2vw,.82rem)}
+      .u-fluid-sm{font-size:clamp(.82rem,1.6vw,.95rem)}
+      .u-fluid-md{font-size:clamp(.95rem,2.2vw,1.1rem)}
+      @media (max-width: 640px){.u-clamp-2{-webkit-line-clamp:3}.u-fluid-md{font-size:clamp(.92rem,4.2vw,1.05rem)}}
       /* Thème sombre minimaliste */
       [data-theme="dark"] body{ background-color: #0f1114; }
       [data-theme="dark"] header, [data-theme="dark"] footer{ background-color: #121417; color:#e5e7eb; }
@@ -60,7 +119,7 @@
       .badge-dark{background:#1f2937;color:#e5e7eb}
       /* Form inputs premium */
       .input-premium{width:100%;padding:.5rem .75rem;border:1px solid #d1d5db;border-radius:.5rem;transition:border-color .2s ease, box-shadow .2s ease, background-color .2s ease}
-      .input-premium:focus{outline:none;border-color:var(--brand-red);box-shadow:0 0 0 3px rgba(212,39,46,.15);}
+      .input-premium:focus{outline:none;border-color:var(--brand-red);box-shadow:0 0 0 3px rgba(220,38,38,.15);}
       .input-valid{border-color:#10b981;background:#f0fdf4}
       .input-invalid{border-color:#ef4444;background:#fef2f2}
       .form-group{display:block}
@@ -72,7 +131,7 @@
       .form__control{width:100%;padding:1rem .875rem;border:1px solid #d1d5db;border-radius:.75rem;background:#fff;transition:border-color .2s ease, box-shadow .2s ease, transform .2s ease}
       .form__control::placeholder{color:transparent}
       .form__label{position:absolute;left:.875rem;top:50%;transform:translateY(-50%);font-size:.95rem;color:var(--brand-muted);pointer-events:none;transition:all .18s ease;padding:0 .25rem}
-      .form__control:focus{outline:none;border-color:var(--brand-red);box-shadow:0 0 0 3px rgba(212,39,46,.15)}
+      .form__control:focus{outline:none;border-color:var(--brand-red);box-shadow:0 0 0 3px rgba(220,38,38,.15)}
       .form__control:focus + .form__label,
       .form__control:not(:placeholder-shown) + .form__label{top:.5rem;transform:none;font-size:.75rem;color:var(--brand-red)}
       /* Static label mode for inputs without placeholder (select, date, number) */
@@ -91,7 +150,7 @@
       .btn-premium{transition:transform .15s ease, box-shadow .15s ease}
       /* Extended premium buttons */
       .btn{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;border-radius:.75rem;padding:.6rem 1rem;font-weight:600;transition:transform .15s ease, box-shadow .15s ease, background-position .25s ease}
-      .btn--primary{background:linear-gradient(140deg, var(--brand-red) 0%, #7a1519 100%);color:#fff;box-shadow:0 10px 20px rgba(212,39,46,.25);background-size:120% 120%}
+      .btn--primary{background:linear-gradient(140deg, var(--brand-red) 0%, #7a1519 100%);color:#fff;box-shadow:0 10px 20px rgba(220,38,38,.25);background-size:120% 120%}
       .btn--primary:hover{transform:translateY(-2px)}
       .btn--primary:active{transform:scale(.98)}
       .btn--outline{border:1px solid #d1d5db;background:#fff;color:#111827}
@@ -119,29 +178,28 @@
       #site_header.header--scrolled{box-shadow:0 8px 24px rgba(0,0,0,.08); background: rgba(255,255,255,.92)}
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen flex flex-col">
+<body class="bf1-ui min-h-screen bg-gray-50 text-gray-900 antialiased font-poppins flex flex-col">
     <!-- Header -->
     <header id="site_header" class="bg-white/90 backdrop-blur border-b transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
-            <div class="flex items-center space-x-4">
-                <a href="/diffusion/" class="flex items-center space-x-2">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16 gap-6">
+            <div class="flex items-center gap-8 min-w-0">
+                <a href="/diffusion/" class="flex items-center space-x-2 flex-none">
                     <img src="{% static 'logo_bf1.jpg' %}" alt="BF1" class="h-8 w-auto">
-                    <span class="font-semibold text-xl text-red-600">Diffusion</span>
+                    <span class="font-semibold text-xl text-blue-600">Diffusion</span>
                 </a>
-            </div>
-            <nav class="hidden md:flex space-x-8">
-                <a href="/diffusion/" class="font-medium transition-colors {% if request.path == '/diffusion/' %}text-red-600{% else %}text-gray-800 hover:text-red-600{% endif %}">Accueil</a>
-                <a href="/diffusion/profil/" class="font-medium transition-colors {% if request.path|slice:':18' == '/diffusion/profil' %}text-red-600{% else %}text-gray-800 hover:text-red-600{% endif %}">Profil</a>
+                <nav class="hidden md:flex space-x-8">
+                <a href="/diffusion/" class="font-medium transition-colors {% if request.path == '/diffusion/' %}text-blue-600{% else %}text-gray-800 hover:text-blue-600{% endif %}">Accueil</a>
+                <a href="/diffusion/profil/" class="font-medium transition-colors {% if request.path|slice:':18' == '/diffusion/profil' %}text-blue-600{% else %}text-gray-800 hover:text-blue-600{% endif %}">Profil</a>
                 
-                <a href="/diffusion/planning/" class="font-medium transition-colors {% if request.path|slice:':20' == '/diffusion/planning' %}text-red-600{% else %}text-gray-800 hover:text-red-600{% endif %}">Planning</a>
-                <a href="/diffusion/spots/" class="font-medium transition-colors {% if request.path|slice:':17' == '/diffusion/spots' %}text-red-600{% else %}text-gray-800 hover:text-red-600{% endif %}">Spots</a>
-                <a href="/diffusion/notifications/" class="font-medium transition-colors {% if request.path|slice:':23' == '/diffusion/notifications' %}text-red-600{% else %}text-gray-800 hover:text-red-600{% endif %}">Notifications</a>
+                <a href="/diffusion/planning/" class="font-medium transition-colors {% if request.path|slice:':20' == '/diffusion/planning' %}text-blue-600{% else %}text-gray-800 hover:text-blue-600{% endif %}">Planning</a>
+                <a href="/diffusion/spots/" class="font-medium transition-colors {% if request.path|slice:':17' == '/diffusion/spots' %}text-blue-600{% else %}text-gray-800 hover:text-blue-600{% endif %}">Spots</a>
+                <a href="/diffusion/notifications/" class="font-medium transition-colors {% if request.path|slice:':23' == '/diffusion/notifications' %}text-blue-600{% else %}text-gray-800 hover:text-blue-600{% endif %}">Notifications</a>
             
-            </nav>
+                </nav>
+            </div>
             <div class="flex items-center gap-3">
-                <button id="theme_toggle" type="button" class="text-sm px-3 py-1 border rounded hover:bg-gray-50" aria-pressed="false" aria-label="Basculer thème clair/sombre">🌗 Thème</button>
-                <a href="/logout/" class="text-sm text-gray-500 hover:text-red-600 transition-colors">Déconnexion</a>
-                <button id="mobile_menu_toggle" type="button" class="md:hidden text-gray-700 hover:text-red-600 relative w-8 h-8" aria-expanded="false" aria-controls="mobile_menu" aria-label="Ouvrir le menu">
+                <a href="/logout/" class="text-sm text-gray-500 hover:text-blue-600 transition-colors">Déconnexion</a>
+                <button id="mobile_menu_toggle" type="button" class="md:hidden text-gray-700 hover:text-blue-600 relative w-8 h-8" aria-expanded="false" aria-controls="mobile_menu" aria-label="Ouvrir le menu">
                   <span class="hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
                 </button>
             </div>
@@ -151,18 +209,18 @@
     <!-- Mobile navigation -->
     <nav id="mobile_menu" class="md:hidden hidden border-t bg-white">
       <div class="px-4 py-3 space-y-2">
-        <a href="/diffusion/" class="block py-2 font-medium text-gray-800 hover:text-red-600">Accueil</a>
-        <a href="/diffusion/profil/" class="block py-2 font-medium text-gray-800 hover:text-red-600">Profil</a>
+        <a href="/diffusion/" class="block py-2 font-medium text-gray-800 hover:text-blue-600">Accueil</a>
+        <a href="/diffusion/profil/" class="block py-2 font-medium text-gray-800 hover:text-blue-600">Profil</a>
         
-        <a href="/diffusion/planning/" class="block py-2 font-medium text-gray-800 hover:text-red-600">Planning</a>
-        <a href="/diffusion/spots/" class="block py-2 font-medium text-gray-800 hover:text-red-600">Spots</a>
-        <a href="/diffusion/notifications/" class="block py-2 font-medium text-gray-800 hover:text-red-600">Notifications</a>
+        <a href="/diffusion/planning/" class="block py-2 font-medium text-gray-800 hover:text-blue-600">Planning</a>
+        <a href="/diffusion/spots/" class="block py-2 font-medium text-gray-800 hover:text-blue-600">Spots</a>
+        <a href="/diffusion/notifications/" class="block py-2 font-medium text-gray-800 hover:text-blue-600">Notifications</a>
             
       </div>
     </nav>
 
     <!-- Main -->
-    <main class="flex-1 page-enter page-enter-active" id="page-root">
+    <main class="flex-1 page-enter page-enter-active bf1-page-enter" id="page-root" data-bf1-reveal-root>
         <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
             {% if messages %}
             <div class="mb-4 space-y-2" role="status" aria-live="polite">
@@ -179,8 +237,19 @@
 
     <!-- Footer -->
     <footer class="bg-white/90 backdrop-blur border-t py-4 text-center text-sm text-gray-500">
-        © {{ now|date:'Y' }} BF1 – Interface Diffusion
+        © {% now "Y" %} BF1
     </footer>
+
+    <a href="{% if THREAD_NOTIFS_UNREAD_COUNT %}{% url 'diffusion_notifications' %}{% else %}{% url 'diffusion_support_chat' %}{% endif %}"
+       class="fixed right-5 bottom-5 z-40 inline-flex items-center justify-center w-14 h-14 rounded-full bg-bf1-red text-white shadow-lg hover:bg-bf1-red-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+       aria-label="Ouvrir la discussion avec l’administration">
+      <i class="fa-solid fa-comments text-xl"></i>
+      {% if THREAD_NOTIFS_UNREAD_COUNT %}
+      <span class="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-gray-900 text-white text-[11px] font-bold">
+        {{ THREAD_NOTIFS_UNREAD_COUNT }}
+      </span>
+      {% endif %}
+    </a>
 
     <!-- Toasts (progressive enhancement) -->
     {% if messages %}
@@ -276,6 +345,7 @@
           var saved = localStorage.getItem('theme');
           if(saved === 'dark'){ document.documentElement.setAttribute('data-theme','dark'); }
         }catch(e){}
+        window.requestAnimationFrame(function(){ document.body.classList.add('bf1-loaded'); });
         var tgl = document.getElementById('theme_toggle');
         if(tgl){
           tgl.addEventListener('click', function(){
@@ -411,6 +481,60 @@
             if(!allValid){ e.preventDefault(); addToast('Veuillez corriger les champs invalides.', 'error'); }
           });
         });
+
+        var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var revealRoot = document.querySelector('main[data-bf1-reveal-root]');
+        function isButtonLike(el){
+          if(!el || !el.classList) return false;
+          if(el.closest('header') || el.closest('nav') || el.closest('footer')) return false;
+          var cls = Array.from(el.classList);
+          var hasPadding = cls.some(c => c.startsWith('px-') || c.startsWith('py-') || c.startsWith('p-'));
+          var hasRounded = cls.some(c => c.startsWith('rounded'));
+          var hasBg = cls.some(c => c.startsWith('bg-') || c.startsWith('from-') || c.startsWith('to-') || c.startsWith('via-') || c.includes('bg-gradient'));
+          var hasBorderShadow = cls.some(c => c.startsWith('border') || c.startsWith('shadow'));
+          return hasRounded && hasPadding && (hasBg || hasBorderShadow);
+        }
+        function enhanceCTAs(){
+          var scope = revealRoot || document;
+          Array.from(scope.querySelectorAll('a,button,input[type=\"submit\"],input[type=\"button\"]')).forEach(function(el){
+            if(!isButtonLike(el)) return;
+            el.classList.add('bf1-cta');
+            function setPos(e){
+              var rect = el.getBoundingClientRect();
+              var x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / Math.max(1, rect.width)) * 100));
+              var y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / Math.max(1, rect.height)) * 100));
+              el.style.setProperty('--bf1-rx', x.toFixed(2) + '%');
+              el.style.setProperty('--bf1-ry', y.toFixed(2) + '%');
+            }
+            el.addEventListener('pointermove', setPos, { passive:true });
+            el.addEventListener('mouseenter', setPos, { passive:true });
+          });
+        }
+        function initReveal(){
+          if(!revealRoot) return;
+          var direct = Array.from(revealRoot.children).filter(function(n){ return n && n.nodeType === 1; });
+          direct.forEach(function(el, idx){
+            el.classList.add('bf1-reveal');
+            el.style.setProperty('--bf1-reveal-delay', String(Math.min(idx * 70, 420)));
+          });
+          var extras = Array.from(revealRoot.querySelectorAll('[data-bf1-reveal]'));
+          extras.forEach(function(el){ el.classList.add('bf1-reveal'); });
+          var targets = Array.from(new Set(direct.concat(extras)));
+          if(prefersReduced || !('IntersectionObserver' in window)){
+            targets.forEach(function(el){ el.classList.add('is-inview'); });
+            return;
+          }
+          var obs = new IntersectionObserver(function(entries){
+            entries.forEach(function(entry){
+              if(!entry.isIntersecting) return;
+              entry.target.classList.add('is-inview');
+              obs.unobserve(entry.target);
+            });
+          }, { root:null, rootMargin:'0px 0px -10% 0px', threshold:0.05 });
+          targets.forEach(function(el){ obs.observe(el); });
+        }
+        enhanceCTAs();
+        initReveal();
       })();
     </script>
 </body>

@@ -10,6 +10,7 @@ from .models import SpotSchedule, Notification, CorrespondenceThread
 from django.template.loader import render_to_string
 from django.utils import timezone
 from datetime import date, datetime, timedelta, time
+import urllib.parse
 
 User = get_user_model()
 
@@ -156,19 +157,62 @@ class ViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Créer votre compte')
 
-    def test_dashboard_requires_login(self):
-        response = self.client.get(reverse('dashboard'))
-        self.assertRedirects(response, f"{reverse('login')}?next={reverse('dashboard')}")
-
-    def test_dashboard_authenticated(self):
-        self.client.login(username='testuser', password='testpass123')
-        response = self.client.get(reverse('dashboard'))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Tableau de bord')
-
     def test_cost_simulator_view(self):
         response = self.client.get(reverse('cost_simulator'))
         self.assertRedirects(response, f"{reverse('login')}?next={reverse('cost_simulator')}")
+
+class DiffusionAccessTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.diffuser = User.objects.create_user(username='diff', password='pass1234', role='diffuser')
+        self.admin = User.objects.create_user(username='admin1', password='pass1234', role='admin')
+
+    def test_diffuser_cannot_access_standard_views(self):
+        self.client.login(username='diff', password='pass1234')
+        blocked = [
+            'home',
+            'campaign_list',
+            'campaign_create',
+            'campaign_spot_create',
+            'coverage_request_create',
+            'spot_list',
+            'broadcast_grid',
+            'correspondence_list',
+            'pricing_overview',
+            'report_overview',
+        ]
+        for name in blocked:
+            url = reverse(name)
+            resp = self.client.get(url, follow=False)
+            self.assertEqual(resp.status_code, 302)
+            self.assertEqual(resp['Location'], reverse('diffusion_home'))
+
+    def test_diffuser_can_access_diffusion_home(self):
+        self.client.login(username='diff', password='pass1234')
+        resp = self.client.get(reverse('diffusion_home'))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_login_ignores_next_to_standard_view_for_diffuser(self):
+        next_path = reverse('campaign_list')
+        login_url = f"{reverse('login')}?next={urllib.parse.quote(next_path)}"
+        resp = self.client.post(login_url, {'username': 'diff', 'password': 'pass1234'}, follow=False)
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp['Location'], reverse('diffusion_home'))
+
+    def test_diffuser_can_open_support_chat_and_notifies_admin_on_message(self):
+        self.client.login(username='diff', password='pass1234')
+        resp = self.client.get(reverse('diffusion_support_chat'), follow=False)
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/diffusion/chat/', resp['Location'])
+
+        thread_id = resp['Location'].rstrip('/').split('/')[-1]
+        thread_url = reverse('diffusion_chat_thread', kwargs={'thread_id': thread_id})
+        resp2 = self.client.get(thread_url)
+        self.assertEqual(resp2.status_code, 200)
+
+        resp3 = self.client.post(thread_url, {'content': 'Bonjour admin'}, follow=False)
+        self.assertEqual(resp3.status_code, 302)
+        self.assertTrue(Notification.objects.filter(user=self.admin, related_thread__isnull=False).exists())
 
 
 class FormTests(TestCase):
@@ -210,6 +254,41 @@ class FormTests(TestCase):
         
         form = CampaignForm(data=form_data)
         self.assertFalse(form.is_valid())
+
+    def test_register_username_is_case_insensitive(self):
+        from .forms import CustomUserCreationForm
+        User.objects.create_user(
+            username='Nana',
+            email='nana1@test.com',
+            password='testpass123',
+            role='client',
+            phone='000',
+            company='X'
+        )
+        form = CustomUserCreationForm(data={
+            'username': 'nana',
+            'email': 'nana2@test.com',
+            'first_name': 'N',
+            'last_name': 'A',
+            'phone': '111',
+            'company': 'Y',
+            'address': '',
+            'password1': 'testpass123',
+            'password2': 'testpass123',
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn('username', form.errors)
+
+    def test_login_username_is_case_insensitive(self):
+        User.objects.create_user(
+            username='Nana',
+            email='nana3@test.com',
+            password='testpass123',
+            role='client',
+            phone='000',
+            company='X'
+        )
+        self.assertTrue(self.client.login(username='nana', password='testpass123'))
 
 
 class IntegrationTests(TestCase):
@@ -296,7 +375,7 @@ class AdminTests(TestCase):
     def test_client_cannot_access_admin_dashboard(self):
         self.client.login(username='client', password='clientpass123')
         response = self.client.get(reverse('admin_dashboard'))
-        self.assertRedirects(response, reverse('dashboard'))
+        self.assertRedirects(response, reverse('home'))
 
 
 class ReportExportFilterTests(TestCase):

@@ -3,7 +3,7 @@ import json
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
@@ -95,14 +95,14 @@ def _assignment_payload(a: CoverageAssignment):
 @login_required
 def journalists_page(request):
     if not _has_editorial_access(request.user):
-        return render(request, "spot/dashboard.html", status=403)
+        return redirect("home")
     return render(request, "editorial/journalists.html")
 
 
 @login_required
 def drivers_page(request):
     if not _has_editorial_access(request.user):
-        return render(request, "spot/dashboard.html", status=403)
+        return redirect("home")
     return render(request, "editorial/drivers.html")
 
 

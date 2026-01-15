@@ -1,13 +1,20 @@
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.contrib.auth import get_user_model
+from django.conf import settings
+from django.db import transaction
 from .models import Campaign, CampaignHistory, Notification, Spot, CorrespondenceThread
 from django.utils import timezone
 from decimal import Decimal
 from .models import SpotSchedule, TimeSlot  # Ajouté
 from datetime import timedelta              # Ajouté
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
+from .utils import send_notification_email
+try:
+    from channels.layers import get_channel_layer
+    from asgiref.sync import async_to_sync
+except Exception:
+    get_channel_layer = None
+    async_to_sync = None
 
 User = get_user_model()
 
@@ -21,6 +28,8 @@ def _pending_counts():
 
 
 def broadcast_pending_counts():
+    if not get_channel_layer or not async_to_sync:
+        return
     layer = get_channel_layer()
     if not layer:
         return
@@ -31,6 +40,57 @@ def broadcast_pending_counts():
             'data': _pending_counts(),
         }
     )
+
+
+@receiver(post_save, sender=Notification)
+def deliver_notification_offsite(sender, instance, created, **kwargs):
+    if not created:
+        return
+
+    def _deliver():
+        cfg = getattr(settings, 'OFFSITE_NOTIFICATIONS', None) or {}
+        if not cfg.get('enabled', False):
+            return
+
+        user = getattr(instance, 'user', None)
+        if not user or not getattr(user, 'is_active', True):
+            return
+
+        role = (getattr(user, 'role', '') or '').strip()
+        role_cfg = (cfg.get('roles') or {}).get(role) or {}
+
+        dedupe_minutes = int(cfg.get('dedupe_minutes') or 0)
+        if dedupe_minutes > 0:
+            since = timezone.now() - timedelta(minutes=dedupe_minutes)
+            if Notification.objects.filter(
+                user=user,
+                title=instance.title,
+                message=instance.message,
+                created_at__gte=since,
+            ).exclude(id=instance.id).exists():
+                return
+
+        updates = []
+
+        if role_cfg.get('email') and getattr(user, 'email', '') and not (instance.email_status or '').strip():
+            ok = send_notification_email(
+                user=user,
+                subject=instance.title,
+                message=instance.message,
+                campaign=getattr(instance, 'related_campaign', None),
+            )
+            instance.email_status = 'sent' if ok else 'failed'
+            instance.email_sent_at = timezone.now() if ok else None
+            instance.email_error = '' if ok else 'send_failed'
+            updates.extend(['email_status', 'email_sent_at', 'email_error'])
+
+        if updates:
+            instance.save(update_fields=sorted(set(updates)))
+
+    try:
+        transaction.on_commit(_deliver)
+    except Exception:
+        _deliver()
 
 
 @receiver(post_save, sender=Campaign)

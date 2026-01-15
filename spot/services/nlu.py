@@ -153,7 +153,7 @@ def build_actions(intent: Optional[str], user: Optional[Any] = None) -> List[Dic
     if is_editorial:
         if intent in {'editorial', 'coverage_request'}:
             return [
-                {'type': 'redirect', 'url': link('editorial_dashboard'), 'label': 'Dashboard Rédaction'},
+                {'type': 'redirect', 'url': link('editorial_dashboard'), 'label': 'Tableau de bord Rédaction'},
                 {'type': 'redirect', 'url': link('editorial_coverages'), 'label': 'Demandes validées'},
                 {'type': 'redirect', 'url': link('editorial_planning'), 'label': 'Planning'},
                 {'type': 'redirect', 'url': link('editorial_assignments'), 'label': 'Assignations'},
@@ -161,10 +161,10 @@ def build_actions(intent: Optional[str], user: Optional[Any] = None) -> List[Dic
         if intent == 'notifications':
             return [
                 {'type': 'redirect', 'url': link('editorial_notifications'), 'label': 'Notifications Rédaction'},
-                {'type': 'redirect', 'url': link('editorial_dashboard'), 'label': 'Dashboard Rédaction'},
+                {'type': 'redirect', 'url': link('editorial_dashboard'), 'label': 'Tableau de bord Rédaction'},
             ]
         return [
-            {'type': 'redirect', 'url': link('editorial_dashboard'), 'label': 'Dashboard Rédaction'},
+            {'type': 'redirect', 'url': link('editorial_dashboard'), 'label': 'Tableau de bord Rédaction'},
             {'type': 'redirect', 'url': link('editorial_coverages'), 'label': 'Demandes validées'},
             {'type': 'redirect', 'url': link('editorial_journalists'), 'label': 'Journalistes'},
             {'type': 'redirect', 'url': link('editorial_drivers'), 'label': 'Chauffeurs'},

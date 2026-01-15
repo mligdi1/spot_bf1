@@ -12,8 +12,8 @@ Détails de la campagne:
 - Budget: {{ campaign.budget|floatformat:0 }} FCFA
 {% endif %}
 
-Vous pouvez consulter tous les détails dans votre tableau de bord:
-{{ site_url }}/dashboard/
+Vous pouvez consulter tous les détails dans votre espace:
+{{ site_url }}/home/
 
 Si vous avez des questions, n'hésitez pas à nous contacter.
 

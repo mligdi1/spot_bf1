@@ -67,7 +67,7 @@
 
                 <div>
                     <label for="id_phone" class="block text-sm font-medium text-gray-700">Téléphone</label>
-                    <input id="id_phone" name="phone" type="tel" 
+                    <input id="id_phone" name="phone" type="tel" required 
                            class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-bf1-red focus:border-bf1-red sm:text-sm" 
                            placeholder="+226 XX XX XX XX" value="{{ form.phone.value|default:'' }}">
                     {% if form.phone.errors %}
@@ -76,8 +76,8 @@
                 </div>
 
                 <div>
-                    <label for="id_company" class="block text-sm font-medium text-gray-700">Entreprise (optionnel)</label>
-                    <input id="id_company" name="company" type="text" 
+                    <label for="id_company" class="block text-sm font-medium text-gray-700">Entreprise</label>
+                    <input id="id_company" name="company" type="text" required 
                            class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-bf1-red focus:border-bf1-red sm:text-sm" 
                            placeholder="Nom de votre entreprise" value="{{ form.company.value|default:'' }}">
                     {% if form.company.errors %}

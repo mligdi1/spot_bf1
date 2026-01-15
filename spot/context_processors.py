@@ -68,11 +68,15 @@ def chatbot_config(request):
 def notifications_summary(request):
     """Expose le compteur de notifications non lues à toutes les templates."""
     count = 0
+    thread_count = 0
     if getattr(request, 'user', None) and request.user.is_authenticated:
         try:
             count = Notification.objects.filter(user=request.user, is_read=False).count()
+            thread_count = Notification.objects.filter(user=request.user, is_read=False, related_thread__isnull=False).count()
         except Exception:
             count = 0
+            thread_count = 0
     return {
-        'NOTIFS_UNREAD_COUNT': count
+        'NOTIFS_UNREAD_COUNT': count,
+        'THREAD_NOTIFS_UNREAD_COUNT': thread_count,
     }

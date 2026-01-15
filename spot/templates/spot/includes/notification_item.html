@@ -1,6 +1,8 @@
 {# Composant <li> réutilisable pour une notification #}
 <li id="notif-{{ notification.id }}"
-    class="group p-4 rounded-lg border transition-colors
+    data-notif-id="{{ notification.id }}"
+    data-notif-is-read="{% if notification.is_read %}1{% else %}0{% endif %}"
+    class="js-notif-item group p-4 rounded-lg border transition-colors
            {% if notification.type == 'warning' or notification.type == 'error' %}
                bg-yellow-50 border-yellow-200 text-yellow-800
            {% elif not notification.is_read %}
@@ -27,7 +29,7 @@
       </span>
       <div>
         <p class="text-xs opacity-70">
-          <i class="fas fa-clock mr-1"></i>{{ notification.created_at|timesince }} ago
+          <i class="fas fa-clock mr-1"></i>il y a {{ notification.created_at|timesince }}
         </p>
         <h3 class="text-sm font-semibold flex items-center gap-2">
           {{ notification.title }}
@@ -42,10 +44,22 @@
         </h3>
         <p class="text-sm">{{ notification.message }}</p>
         {% if notification.related_thread %}
-          <a href="{% url 'correspondence_thread' notification.related_thread.id %}"
-             class="inline-flex items-center text-xs mt-2 underline">
-             <i class="fas fa-comments mr-1"></i>Voir la discussion
-          </a>
+          {% if request.user.is_diffuser %}
+            <a href="{% url 'diffusion_chat_thread' notification.related_thread.id %}"
+               class="inline-flex items-center text-xs mt-2 underline">
+               <i class="fas fa-comments mr-1"></i>Voir la discussion
+            </a>
+          {% elif request.user.is_editorial_manager %}
+            <a href="{% url 'editorial_chat_thread' notification.related_thread.id %}"
+               class="inline-flex items-center text-xs mt-2 underline">
+               <i class="fas fa-comments mr-1"></i>Voir la discussion
+            </a>
+          {% else %}
+            <a href="{% url 'correspondence_thread' notification.related_thread.id %}"
+               class="inline-flex items-center text-xs mt-2 underline">
+               <i class="fas fa-comments mr-1"></i>Voir la discussion
+            </a>
+          {% endif %}
         {% elif notification.related_spot %}
           {% if request.user.is_diffuser %}
             <a href="{% url 'diffusion_spot_detail' notification.related_spot.id %}"
@@ -83,15 +97,7 @@
       </div>
     </div>
     <div class="flex items-center gap-2">
-      {% if not notification.is_read %}
-      <button type="button"
-              class="px-2 py-1 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200"
-              onclick="markAsRead('{{ notification.id }}')"
-              title="Marquer comme lu">
-        <i class="fas fa-check"></i>
-      </button>
-      {% endif %}
-      <button type="button" class="px-2 py-1 rounded-full bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-600"
+      <button type="button" class="js-notif-delete px-2 py-1 rounded-full bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-600"
               onclick="deleteNotification('{{ notification.id }}')"
               title="Supprimer">
         <i class="fas fa-trash"></i>

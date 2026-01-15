@@ -23,7 +23,13 @@ urlpatterns = [
     path('planning/undo_broadcast/', is_diffuser_required(views_diffusion.planning_undo_broadcast), name='diffusion_planning_undo_broadcast'),
     path('telechargements/spot/<uuid:spot_id>/', is_diffuser_required(views_diffusion.download_spot_media), name='diffusion_download_spot'),
     path('notifications/', is_diffuser_required(views_diffusion.notifications_diffusion), name='diffusion_notifications'),
+    path('notifications/mark_read/<int:id>/', is_diffuser_required(views_diffusion.diffusion_notifications_mark_read), name='diffusion_notifications_mark_read'),
+    path('notifications/mark_all_read/', is_diffuser_required(views_diffusion.diffusion_notifications_mark_all_read), name='diffusion_notifications_mark_all_read'),
+    path('notifications/delete/<int:id>/', is_diffuser_required(views_diffusion.diffusion_notifications_delete), name='diffusion_notifications_delete'),
+    path('chat/', is_diffuser_required(views_diffusion.diffusion_support_chat), name='diffusion_support_chat'),
+    path('chat/<uuid:thread_id>/', is_diffuser_required(views_diffusion.diffusion_chat_thread), name='diffusion_chat_thread'),
     # API et exports
+    path('api/notifications/list/', is_diffuser_required(views_diffusion.diffusion_notifications_list_partial), name='diffusion_notifications_list_partial'),
     path('api/kpi/', is_diffuser_required(views_diffusion.kpi_api), name='diffusion_kpi_api'),
     path('api/clients-search/', is_diffuser_required(views_diffusion.clients_search_api), name='diffusion_clients_search_api'),
     path('export/spots/csv/', is_diffuser_required(views_diffusion.export_spots_csv), name='diffusion_export_spots_csv'),

@@ -1,15 +1,19 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
+from django.core.validators import validate_email
 from django.db.models import Q, Sum, Count
 from django.utils import timezone
+from django.utils.formats import date_format
 from datetime import datetime
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 import json
 import logging
 from decimal import Decimal
@@ -66,6 +70,12 @@ def home(request):
     # Si un diffuseur arrive sur la racine, redirigeons-le vers son interface dédiée
     if request.user.is_authenticated and hasattr(request.user, 'is_diffuser') and request.user.is_diffuser():
         return redirect('diffusion_home')
+    quick_guide_user_is_active = False
+    if request.user.is_authenticated and hasattr(request.user, 'is_client') and request.user.is_client():
+        quick_guide_user_is_active = (
+            Campaign.objects.filter(client=request.user).exists()
+            or CoverageRequest.objects.filter(user=request.user).exists()
+        )
     context = {
         'total_campaigns': Campaign.objects.count(),
         'active_campaigns': Campaign.objects.filter(status='active').count(),
@@ -80,6 +90,7 @@ def home(request):
         'completed_services_count': SpotSchedule.objects.filter(
             is_broadcasted=True
         ).count(),
+        'quick_guide_user_is_active': quick_guide_user_is_active,
     }
     return render(request, 'spot/home.html', context)
 
@@ -103,20 +114,43 @@ def user_login(request):
     if request.method == 'POST':
         form = CustomAuthenticationForm(request, data=request.POST)
         if form.is_valid():
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password')
-            user = authenticate(username=username, password=password)
-            if user is not None:
+            user = form.get_user()
+            try:
                 login(request, user)
-                messages.success(request, f'Bienvenue, {user.username} !')
-                next_url = request.GET.get('next')
+            except Exception:
+                logging.getLogger('django.request').exception('LOGIN_ERROR username=%s', getattr(user, 'username', ''))
+                messages.error(request, "Connexion impossible pour le moment. Réessayez plus tard.")
+                return render(request, 'spot/login.html', {'form': form})
+
+            messages.success(request, f'Bienvenue, {user.username} !')
+            next_url = (request.POST.get('next') or request.GET.get('next') or '').strip()
+            if next_url and url_has_allowed_host_and_scheme(
+                url=next_url,
+                allowed_hosts={request.get_host()},
+                require_https=request.is_secure(),
+            ):
+                try:
+                    path = urllib.parse.urlparse(next_url).path or ''
+                except Exception:
+                    path = ''
+                if hasattr(user, 'is_admin') and user.is_admin():
+                    if not (path.startswith('/console/') or path.startswith('/admin/')):
+                        next_url = ''
+                elif hasattr(user, 'is_diffuser') and user.is_diffuser():
+                    if not path.startswith('/diffusion/'):
+                        next_url = ''
+                elif hasattr(user, 'is_editorial_manager') and user.is_editorial_manager():
+                    if not (path.startswith('/editorial/') or path.startswith('/assignments/')):
+                        next_url = ''
                 if next_url:
                     return redirect(next_url)
-                if hasattr(user, 'is_diffuser') and user.is_diffuser():
-                    return redirect('diffusion_home')
-                if hasattr(user, 'is_editorial_manager') and user.is_editorial_manager():
-                    return redirect('editorial_dashboard')
-                return redirect('home')
+            if hasattr(user, 'is_diffuser') and user.is_diffuser():
+                return redirect('diffusion_home')
+            if hasattr(user, 'is_editorial_manager') and user.is_editorial_manager():
+                return redirect('editorial_dashboard')
+            return redirect('home')
+        else:
+            messages.error(request, "Identifiants invalides.")
     else:
         form = CustomAuthenticationForm()
     
@@ -136,49 +170,7 @@ def dashboard(request):
     user = request.user
     if hasattr(user, 'is_editorial_manager') and user.is_editorial_manager():
         return redirect('editorial_dashboard')
-    if user.is_client():
-        campaigns = Campaign.objects.filter(client=user).order_by('-created_at')[:5]
-        recent_spots = Spot.objects.filter(campaign__client=user).order_by('-created_at')[:5]
-        notifications = Notification.objects.filter(
-            user=user, 
-            is_read=False
-        ).order_by('-created_at')[:10]
-        spots_in_progress_count = SpotSchedule.objects.filter(
-            spot__campaign__client=user,
-            is_broadcasted=False
-        ).count()
-        broadcasted_spots_count = SpotSchedule.objects.filter(
-            spot__campaign__client=user,
-            is_broadcasted=True
-        ).count()
-        context = {
-            'campaigns': campaigns,
-            'recent_spots': recent_spots,
-            'notifications': notifications,
-            'total_campaigns': Campaign.objects.filter(client=user).count(),
-            'active_campaigns': Campaign.objects.filter(client=user, status='active').count(),
-            'spots_in_progress_count': spots_in_progress_count,
-            'broadcasted_spots_count': broadcasted_spots_count,
-        }
-    else:
-        pending_campaigns = Campaign.objects.filter(status='pending').order_by('-created_at')
-        pending_spots = Spot.objects.filter(status='pending_review').order_by('-created_at')
-        notifications = Notification.objects.filter(
-            user=user, 
-            is_read=False
-        ).order_by('-created_at')[:10]
-        stats = {
-            'total_campaigns': Campaign.objects.count(),
-            'pending_campaigns': pending_campaigns.count(),
-            'total_clients': User.objects.filter(role='client').count(),
-        }
-        context = {
-            'pending_campaigns': pending_campaigns,
-            'pending_spots': pending_spots,
-            'notifications': notifications,
-            'stats': stats,
-        }
-    return render(request, 'spot/dashboard.html', context)
+    return redirect('home')
 
 
 @login_required
@@ -226,7 +218,7 @@ def campaign_create(request):
             getattr(request.user, 'id', None), getattr(request.user, 'username', ''), request.method, timezone.now().isoformat(timespec='seconds')
         )
         messages.error(request, "Cette fonctionnalité est réservée aux clients. En tant qu'administrateur, vous n'avez pas accès à cette option.")
-        return redirect('dashboard')
+        return redirect('home')
     # Variables de contexte par défaut
     locked_fields = []
     selection_note = ''
@@ -285,7 +277,7 @@ def campaign_spot_create(request):
             getattr(request.user, 'id', None), getattr(request.user, 'username', ''), request.method, timezone.now().isoformat(timespec='seconds')
         )
         messages.error(request, "Cette fonctionnalité est réservée aux clients. En tant qu'administrateur, vous n'avez pas accès à cette option.")
-        return redirect('dashboard')
+        return redirect('home')
     # Variables de contexte par défaut
     locked_fields = []
     selection_note = ''
@@ -411,7 +403,7 @@ def coverage_request_create(request):
             getattr(request.user, 'id', None), getattr(request.user, 'username', ''), request.method, timezone.now().isoformat(timespec='seconds')
         )
         messages.error(request, "Cette fonctionnalité est réservée aux clients. En tant qu'administrateur, vous n'avez pas accès à cette option.")
-        return redirect('dashboard')
+        return redirect('home')
 
     if request.method == 'POST':
         form = CoverageRequestForm(request.POST, request.FILES)
@@ -437,7 +429,7 @@ def coverage_request_create(request):
                     type='info'
                 )
             messages.success(request, 'Votre demande de couverture a été envoyée. Notre rédaction vous contactera rapidement.')
-            return redirect('dashboard')
+            return redirect('home')
         else:
             messages.error(request, 'Veuillez corriger les erreurs du formulaire.')
     else:
@@ -621,7 +613,7 @@ def admin_required(view_func):
             return redirect('admin_login')
         if not request.user.is_admin():
             messages.error(request, 'Accès réservé aux administrateurs.')
-            return redirect('dashboard')
+            return redirect('home')
         return view_func(request, *args, **kwargs)
     return _wrapped
 
@@ -903,7 +895,7 @@ def coverage_request_detail(request, coverage_id):
     # Contrôle d'accès
     if not (request.user.is_admin() or (coverage.user and coverage.user == request.user)):
         messages.error(request, "Vous n'avez pas accès à cette demande de couverture.")
-        return redirect('dashboard')
+        return redirect('home')
     attachments = coverage.attachments.all()
     return render(request, 'spot/coverage_request_detail.html', {
         'coverage': coverage,
@@ -917,7 +909,7 @@ def admin_dashboard(request):
     """Tableau de bord administrateur"""
     if not request.user.is_admin():
         messages.error(request, 'Accès non autorisé.')
-        return redirect('dashboard')
+        return redirect('home')
     stats = {
         'total_campaigns': Campaign.objects.count(),
         'pending_campaigns': Campaign.objects.filter(status='pending').count(),
@@ -954,7 +946,7 @@ def spot_detail(request, spot_id):
     # Vérifier que l'utilisateur est propriétaire ou admin
     if not (request.user == spot.campaign.client or request.user.is_admin()):
         messages.error(request, "Vous n'avez pas accès à ce spot.")
-        return redirect('dashboard')
+        return redirect('home')
     
     context = {
         'spot': spot,
@@ -1124,7 +1116,7 @@ def correspondence_thread(request, thread_id):
     thread = get_object_or_404(CorrespondenceThread, id=thread_id)
 
     # Contrôle d'accès
-    if request.user.is_client() and thread.client != request.user and not request.user.is_admin():
+    if not (getattr(request.user, 'is_admin', lambda: False)() or getattr(request.user, 'is_staff', False)) and thread.client_id != request.user.id:
         messages.error(request, "Accès non autorisé.")
         return redirect('correspondence_list')
 
@@ -1162,7 +1154,7 @@ def correspondence_thread(request, thread_id):
             return redirect('correspondence_thread', thread_id=thread.id)
 
         # Action: relancer (admin)
-        if action == 'relance' and request.user.is_admin():
+        if action == 'relance' and (getattr(request.user, 'is_admin', lambda: False)() or getattr(request.user, 'is_staff', False)):
             relance_text = (request.POST.get('relance_text') or "Bonjour, nous relançons la discussion pour avancer.").strip()
             CorrespondenceMessage.objects.create(
                 thread=thread,
@@ -1202,13 +1194,14 @@ def correspondence_thread(request, thread_id):
                 attachment=attachment
             )
             # Mettre à jour statut + notifier
-            if request.user.is_client():
+            sender_is_thread_owner = request.user.id == thread.client_id
+            if sender_is_thread_owner:
                 thread.status = 'pending'
                 for admin in User.objects.filter(role='admin'):
                     Notification.objects.create(
                         user=admin,
-                        title='Nouvelle réponse client',
-                        message=f'{request.user.username} a répondu sur "{thread.subject}".',
+                        title='Nouveau message',
+                        message=f'{request.user.username} a écrit sur "{thread.subject}".',
                         related_campaign=thread.related_campaign,
                         related_thread=thread
                     )
@@ -1236,6 +1229,124 @@ def correspondence_thread(request, thread_id):
         'state_label': state_label,
     })
 
+
+@login_required
+def editorial_support_chat(request):
+    u = request.user
+    if not (getattr(u, 'is_editorial_manager', lambda: False)() or getattr(u, 'is_admin', lambda: False)() or getattr(u, 'is_staff', False)):
+        messages.error(request, 'Accès réservé à la rédaction.')
+        return redirect('home')
+    thread = CorrespondenceThread.objects.filter(client=u, subject='Support Rédaction').order_by('-created_at').first()
+    if not thread:
+        thread = CorrespondenceThread.objects.create(
+            client=u,
+            subject='Support Rédaction',
+            status='open',
+            last_message_at=timezone.now()
+        )
+    return redirect('editorial_chat_thread', thread_id=thread.id)
+
+
+@login_required
+def editorial_chat_thread(request, thread_id):
+    u = request.user
+    if not (getattr(u, 'is_editorial_manager', lambda: False)() or getattr(u, 'is_admin', lambda: False)() or getattr(u, 'is_staff', False)):
+        messages.error(request, 'Accès réservé à la rédaction.')
+        return redirect('home')
+    thread = get_object_or_404(CorrespondenceThread, id=thread_id)
+    if not (getattr(u, 'is_admin', lambda: False)() or getattr(u, 'is_staff', False)) and thread.client_id != u.id:
+        messages.error(request, "Accès non autorisé.")
+        return redirect('editorial_dashboard')
+
+    now = timezone.now()
+    last_msg = thread.messages.last()
+    can_reply_now = True
+    next_allowed_reply_at = None
+
+    if thread.status == 'closed':
+        state_code = 'closed'
+        state_label = 'Résolu'
+    elif last_msg and last_msg.author_id == thread.client_id:
+        state_code = 'waiting'
+        state_label = 'En attente de réponse'
+    else:
+        state_code = 'answered'
+        state_label = 'Réponse reçue'
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'resolve':
+            thread.status = 'closed'
+            thread.save(update_fields=['status', 'updated_at'])
+            messages.success(request, "Discussion marquée comme résolue.")
+            return redirect('editorial_chat_thread', thread_id=thread.id)
+
+        if action == 'relance' and (getattr(u, 'is_admin', lambda: False)() or getattr(u, 'is_staff', False)):
+            relance_text = (request.POST.get('relance_text') or "Bonjour, nous relançons la discussion pour avancer.").strip()
+            CorrespondenceMessage.objects.create(
+                thread=thread,
+                author=u,
+                content=relance_text
+            )
+            thread.status = 'open'
+            thread.last_message_at = timezone.now()
+            thread.save(update_fields=['status', 'last_message_at', 'updated_at'])
+            Notification.objects.create(
+                user=thread.client,
+                title='Relance du support',
+                message=f'Le support a relancé la discussion: "{thread.subject}".',
+                related_campaign=thread.related_campaign,
+                related_thread=thread
+            )
+            messages.success(request, "Relance envoyée.")
+            return redirect('editorial_chat_thread', thread_id=thread.id)
+
+        content = (request.POST.get('content') or '').strip()
+        attachment = request.FILES.get('attachment')
+        if not content:
+            messages.error(request, "Veuillez saisir un message.")
+        else:
+            CorrespondenceMessage.objects.create(
+                thread=thread,
+                author=u,
+                content=content,
+                attachment=attachment
+            )
+            sender_is_thread_owner = u.id == thread.client_id
+            if sender_is_thread_owner:
+                thread.status = 'pending'
+                for admin in User.objects.filter(role='admin'):
+                    Notification.objects.create(
+                        user=admin,
+                        title='Nouveau message',
+                        message=f'{u.username} a écrit sur "{thread.subject}".',
+                        related_campaign=thread.related_campaign,
+                        related_thread=thread
+                    )
+            else:
+                thread.status = 'open'
+                Notification.objects.create(
+                    user=thread.client,
+                    title='Réponse du support',
+                    message=f'Nouvelle réponse sur votre demande "{thread.subject}".',
+                    related_campaign=thread.related_campaign,
+                    related_thread=thread
+                )
+            thread.last_message_at = timezone.now()
+            thread.save(update_fields=['status', 'last_message_at', 'updated_at'])
+            messages.success(request, "Message envoyé.")
+            return redirect('editorial_chat_thread', thread_id=thread.id)
+
+    return render(request, 'spot/correspondence_thread.html', {
+        'thread': thread,
+        'messages_qs': thread.messages.all(),
+        'can_reply_now': can_reply_now,
+        'next_allowed_reply_at': next_allowed_reply_at,
+        'state_code': state_code,
+        'state_label': state_label,
+        'base_template': 'editorial/base.html',
+    })
+
 @login_required
 def correspondence_new(request):
     """Création d'une nouvelle correspondance"""
@@ -1246,7 +1357,7 @@ def correspondence_new(request):
             getattr(request.user, 'id', None), getattr(request.user, 'username', ''), request.method, timezone.now().isoformat(timespec='seconds')
         )
         messages.error(request, "Cette fonctionnalité est réservée aux clients. En tant qu'administrateur, vous n'avez pas accès à cette option.")
-        return redirect('dashboard')
+        return redirect('home')
     if request.method == 'POST':
         subject = (request.POST.get('subject') or '').strip()
         content = (request.POST.get('content') or '').strip()
@@ -1361,24 +1472,88 @@ def admin_login(request):
 def profile(request):
     """Page de profil utilisateur"""
     user = request.user
+    open_profile_form = False
+    open_password_section = False
     
     if request.method == 'POST':
-        # Traitement de la mise à jour du profil
-        user.first_name = request.POST.get('first_name', user.first_name)
-        user.last_name = request.POST.get('last_name', user.last_name)
-        user.email = request.POST.get('email', user.email)
-        user.phone = request.POST.get('phone', user.phone)
-        user.company = request.POST.get('company', user.company)
-        user.address = request.POST.get('address', user.address)
-        
-        # Changement de mot de passe (optionnel)
-        password = request.POST.get('password')
+        if (request.POST.get('profile_action') or '').strip() == 'photo':
+            photo = request.FILES.get('photo')
+            if not photo:
+                messages.error(request, "Veuillez sélectionner une image.")
+                return redirect('profile')
+
+            errors = []
+            content_type = (getattr(photo, 'content_type', '') or '').lower()
+            if not content_type.startswith('image/'):
+                errors.append("Le fichier choisi doit être une image.")
+            max_bytes = 5 * 1024 * 1024
+            if getattr(photo, 'size', 0) > max_bytes:
+                errors.append("L’image ne doit pas dépasser 5 Mo.")
+
+            if errors:
+                for err in errors:
+                    messages.error(request, err)
+                return redirect('profile')
+
+            if hasattr(user, 'photo'):
+                user.photo = photo
+                user.save()
+                messages.success(request, "Votre photo de profil a été mise à jour.")
+            return redirect('profile')
+
+        open_profile_form = True
+        first_name = (request.POST.get('first_name') or '').strip() or user.first_name
+        last_name = (request.POST.get('last_name') or '').strip() or user.last_name
+        email = (request.POST.get('email') or '').strip() or user.email
+        phone = (request.POST.get('phone') or '').strip() or getattr(user, 'phone', '')
+        company = (request.POST.get('company') or '').strip() or getattr(user, 'company', '')
+        address = (request.POST.get('address') or '').strip() or getattr(user, 'address', '')
+
+        password = (request.POST.get('password') or '').strip()
+        password_confirm = (request.POST.get('password_confirm') or '').strip()
+        open_password_section = bool(password)
+
+        errors = []
+        if not email:
+            errors.append("L’adresse email est requise.")
+        else:
+            try:
+                validate_email(email)
+            except ValidationError:
+                errors.append("Le format de l’adresse email est invalide.")
+            else:
+                if User.objects.filter(email=email).exclude(pk=user.pk).exists():
+                    errors.append("Cette adresse email est déjà utilisée par un autre compte.")
+
         if password:
-            user.set_password(password)
-        
-        user.save()
-        messages.success(request, 'Votre profil a été mis à jour avec succès !')
-        return redirect('profile')
+            if len(password) < 8:
+                errors.append("Le mot de passe doit comporter au moins 8 caractères.")
+            if password != password_confirm:
+                errors.append("Les mots de passe ne correspondent pas.")
+
+        if errors:
+            for err in errors:
+                messages.error(request, err)
+        else:
+            user.first_name = first_name
+            user.last_name = last_name
+            user.email = email
+            if hasattr(user, 'phone'):
+                user.phone = phone
+            if hasattr(user, 'company'):
+                user.company = company
+            if hasattr(user, 'address'):
+                user.address = address
+
+            if password:
+                user.set_password(password)
+                user.save()
+                update_session_auth_hash(request, user)
+                messages.success(request, "Votre mot de passe a été mis à jour et vous restez connecté.")
+            else:
+                user.save()
+                messages.success(request, 'Votre profil a été mis à jour avec succès !')
+            return redirect('profile')
     
     # Statistiques pour les clients
     stats = {}
@@ -1390,37 +1565,11 @@ def profile(request):
             'pending_spots': Spot.objects.filter(campaign__client=user, status='pending_review').count(),
         }
     
-    # Récupérer les dernières notifications
-    notifications = Notification.objects.filter(user=user).order_by('-created_at')[:5]
-    
-    # Discussions et demandes initiées par l'utilisateur
-    threads = CorrespondenceThread.objects.filter(client=user)\
-        .select_related('related_campaign')\
-        .order_by('-updated_at', '-created_at')[:10]
-    contact_requests = ContactRequest.objects.filter(user=user)\
-        .order_by('-updated_at', '-created_at')[:10]
-
-    # Statistiques correspondance
-    correspondence_stats = {
-        'threads': {
-            'open': CorrespondenceThread.objects.filter(client=user, status='open').count(),
-            'pending': CorrespondenceThread.objects.filter(client=user, status='pending').count(),
-            'closed': CorrespondenceThread.objects.filter(client=user, status='closed').count(),
-        },
-        'requests': {
-            'new': ContactRequest.objects.filter(user=user, status='new').count(),
-            'contacted': ContactRequest.objects.filter(user=user, status='contacted').count(),
-            'closed': ContactRequest.objects.filter(user=user, status='closed').count(),
-        },
-    }
-    
     context = {
         'user': user,
         'stats': stats,
-        'notifications': notifications,
-        'threads': threads,
-        'contact_requests': contact_requests,
-        'correspondence_stats': correspondence_stats,
+        'open_profile_form': open_profile_form,
+        'open_password_section': open_password_section,
     }
     
     return render(request, 'spot/profile.html', context)
@@ -1436,7 +1585,7 @@ def advisor_wizard(request):
             getattr(request.user, 'id', None), getattr(request.user, 'username', ''), request.method, timezone.now().isoformat(timespec='seconds')
         )
         messages.error(request, "Cette fonctionnalité est réservée aux clients. En tant qu'administrateur, vous n'avez pas accès à cette option.")
-        return redirect('dashboard')
+        return redirect('home')
     recommendation = None
     if request.method == 'POST':
         form = AdvisorWizardForm(request.POST)
@@ -1495,7 +1644,7 @@ def contact_advisor(request):
             getattr(request.user, 'id', None), getattr(request.user, 'username', ''), request.method, timezone.now().isoformat(timespec='seconds')
         )
         messages.error(request, "Cette fonctionnalité est réservée aux clients. En tant qu'administrateur, vous n'avez pas accès à cette option.")
-        return redirect('dashboard')
+        return redirect('home')
     # Numéros de contact (paramétrables via settings, sinon valeurs par défaut)
     from django.conf import settings
     contact_phone = getattr(settings, 'BF1_CONTACT_PHONE', '+22674470032')
@@ -1522,7 +1671,7 @@ def guides_list(request):
             getattr(request.user, 'id', None), getattr(request.user, 'username', ''), request.method, timezone.now().isoformat(timespec='seconds')
         )
         messages.error(request, "Cette fonctionnalité est réservée aux clients. En tant qu'administrateur, vous n'avez pas accès à cette option.")
-        return redirect('dashboard')
+        return redirect('home')
     articles = AdvisoryArticle.objects.filter(is_published=True).order_by('-published_at', '-created_at')
     curated_articles = [
         {
@@ -1564,7 +1713,7 @@ def guide_detail(request, slug):
             getattr(request.user, 'id', None), getattr(request.user, 'username', ''), slug, request.method, timezone.now().isoformat(timespec='seconds')
         )
         messages.error(request, "Cette fonctionnalité est réservée aux clients. En tant qu'administrateur, vous n'avez pas accès à cette option.")
-        return redirect('dashboard')
+        return redirect('home')
     article = AdvisoryArticle.objects.filter(slug=slug, is_published=True).first()
     return render(request, 'spot/guide_detail.html', {'article': article, 'slug': slug})
 
@@ -1577,7 +1726,7 @@ def inspiration(request):
             getattr(request.user, 'id', None), getattr(request.user, 'username', ''), request.method, timezone.now().isoformat(timespec='seconds')
         )
         messages.error(request, "Cette fonctionnalité est réservée aux clients. En tant qu'administrateur, vous n'avez pas accès à cette option.")
-        return redirect('dashboard')
+        return redirect('home')
     cases = CaseStudy.objects.filter(is_published=True).order_by('-published_at', '-created_at')
     return render(request, 'spot/inspiration.html', {'cases': cases})
 
@@ -1971,7 +2120,7 @@ def pricing_overview(request):
             getattr(request.user, 'id', None), getattr(request.user, 'username', ''), request.method, timezone.now().isoformat(timespec='seconds')
         )
         messages.error(request, "Cette fonctionnalité est réservée aux clients. En tant qu'administrateur, vous n'avez pas accès à cette option.")
-        return redirect('dashboard')
+        return redirect('home')
     from .models import ServiceCategory, TimeSlot
 
     service_categories = ServiceCategory.objects.filter(is_active=True).prefetch_related('items').order_by('order', 'name')
@@ -2173,7 +2322,7 @@ def editorial_dashboard(request):
     u = request.user
     if not (getattr(u, 'is_editorial_manager', lambda: False)() or getattr(u, 'is_admin', lambda: False)() or getattr(u, 'is_staff', False)):
         messages.error(request, 'Accès réservé à la rédaction.')
-        return redirect('dashboard')
+        return redirect('home')
     today = timezone.now().date()
     pending = CoverageRequest.objects.filter(status='new').order_by('-created_at')[:10]
     todays = CoverageRequest.objects.filter(event_date=today).order_by('start_time')[:10]
@@ -2196,7 +2345,7 @@ def editorial_coverage_detail(request, coverage_id):
     u = request.user
     if not (getattr(u, 'is_editorial_manager', lambda: False)() or getattr(u, 'is_admin', lambda: False)() or getattr(u, 'is_staff', False)):
         messages.error(request, 'Accès réservé à la rédaction.')
-        return redirect('dashboard')
+        return redirect('home')
     coverage = get_object_or_404(CoverageRequest, id=coverage_id)
     assignments = coverage.assignments.select_related('journalist', 'driver').order_by('-assigned_at')
     # Simplifier: lister uniquement les disponibles pour une sélection claire
@@ -2237,7 +2386,7 @@ def editorial_assign_coverage(request, coverage_id):
     u = request.user
     if not (getattr(u, 'is_editorial_manager', lambda: False)() or getattr(u, 'is_admin', lambda: False)() or getattr(u, 'is_staff', False)):
         messages.error(request, 'Accès réservé à la rédaction.')
-        return redirect('dashboard')
+        return redirect('home')
     coverage = get_object_or_404(CoverageRequest, id=coverage_id)
     if coverage.status not in ['review', 'scheduled']:
         messages.error(request, "Cette couverture n'est pas encore validée par l'administration.")
@@ -2346,7 +2495,7 @@ def assignment_notify_email(request, campaign_id):
     u = request.user
     if not (getattr(u, 'is_editorial_manager', lambda: False)() or getattr(u, 'is_admin', lambda: False)() or getattr(u, 'is_staff', False)):
         messages.error(request, 'Accès réservé à la rédaction.')
-        return redirect('dashboard')
+        return redirect('home')
     campaign = (
         AssignmentNotificationCampaign.objects.select_related('assignment', 'assignment__coverage')
         .filter(id=campaign_id)
@@ -2405,7 +2554,7 @@ def assignment_notify_whatsapp(request, campaign_id):
     u = request.user
     if not (getattr(u, 'is_editorial_manager', lambda: False)() or getattr(u, 'is_admin', lambda: False)() or getattr(u, 'is_staff', False)):
         messages.error(request, 'Accès réservé à la rédaction.')
-        return redirect('dashboard')
+        return redirect('home')
     campaign = (
         AssignmentNotificationCampaign.objects.select_related('assignment', 'assignment__coverage')
         .filter(id=campaign_id)
@@ -2488,7 +2637,7 @@ def editorial_assignments(request):
     u = request.user
     if not (getattr(u, 'is_editorial_manager', lambda: False)() or getattr(u, 'is_admin', lambda: False)() or getattr(u, 'is_staff', False)):
         messages.error(request, 'Accès réservé à la rédaction.')
-        return redirect('dashboard')
+        return redirect('home')
     if request.method == 'POST':
         action = request.POST.get('action')
         aid = request.POST.get('assignment_id')
@@ -2553,7 +2702,7 @@ def editorial_notifications(request):
     u = request.user
     if not (getattr(u, 'is_editorial_manager', lambda: False)() or getattr(u, 'is_admin', lambda: False)() or getattr(u, 'is_staff', False)):
         messages.error(request, 'Accès réservé à la rédaction.')
-        return redirect('dashboard')
+        return redirect('home')
     
     # Gestion des actions (marquer comme lu, archiver)
     if request.method == 'POST':
@@ -2570,13 +2719,9 @@ def editorial_notifications(request):
                 Notification.objects.filter(id=nid, user=request.user).delete()
             return JsonResponse({'ok': True})
 
-    # Filtrer uniquement les notifications des couvertures validées par l'administration
-    # On considère qu'une demande validée a le statut 'scheduled' ou 'review'
-    # Et on filtre aussi par type 'success' (souvent utilisé pour les validations) ou 'info'
-    qs = Notification.objects.filter(
-        user=request.user,
-        related_coverage__isnull=False,
-        related_coverage__status__in=['scheduled', 'review']
+    qs = Notification.objects.filter(user=request.user).filter(
+        Q(related_coverage__isnull=False, related_coverage__status__in=['scheduled', 'review']) |
+        Q(related_thread__isnull=False)
     )
     
     # Filtres supplémentaires
@@ -2600,7 +2745,7 @@ def editorial_planning(request):
     u = request.user
     if not (getattr(u, 'is_editorial_manager', lambda: False)() or getattr(u, 'is_admin', lambda: False)() or getattr(u, 'is_staff', False)):
         messages.error(request, 'Accès réservé à la rédaction.')
-        return redirect('dashboard')
+        return redirect('home')
     view = (request.GET.get('view') or 'week').lower()
     ref_str = (request.GET.get('ref') or '').strip()
     try:
@@ -2642,13 +2787,13 @@ def editorial_planning(request):
     if view == 'day':
         prev_ref = (base - timezone.timedelta(days=1)).strftime('%Y-%m-%d')
         next_ref = (base + timezone.timedelta(days=1)).strftime('%Y-%m-%d')
-        range_label = base.strftime('%A %d/%m/%Y')
+        range_label = date_format(base, 'l d/m/Y')
     elif view == 'month':
         prev_month = (base.replace(day=1) - timezone.timedelta(days=1)).replace(day=1)
         next_month_start = (base.replace(day=28) + timezone.timedelta(days=4)).replace(day=1)
         prev_ref = prev_month.strftime('%Y-%m-%d')
         next_ref = next_month_start.strftime('%Y-%m-%d')
-        range_label = base.strftime('%B %Y')
+        range_label = date_format(base, 'F Y')
     else:
         start_week = base - timezone.timedelta(days=base.weekday())
         end_week = start_week + timezone.timedelta(days=6)
@@ -2700,7 +2845,7 @@ def editorial_coverages(request):
     u = request.user
     if not (getattr(u, 'is_editorial_manager', lambda: False)() or getattr(u, 'is_admin', lambda: False)() or getattr(u, 'is_staff', False)):
         messages.error(request, 'Accès réservé à la rédaction.')
-        return redirect('dashboard')
+        return redirect('home')
     q = (request.GET.get('q') or '').strip()
     status = (request.GET.get('status') or '').strip() or 'validated'
     sort = (request.GET.get('sort') or 'date_desc').strip()

@@ -9,9 +9,11 @@
         <div class="text-center mb-12">
             <div class="flex flex-col sm:flex-row items-center justify-center mb-6">
                 <div class="flex flex-col sm:flex-row items-center">
-    <img src="{% static 'logo_bf1.jpg' %}" alt="Logo BF1" class="h-14 sm:h-16 w-auto mb-3 sm:mb-0">
                     <div class="ml-0 sm:ml-3 text-center sm:text-left">
-                        <h1 class="text-3xl sm:text-4xl font-bold text-bf1-gray-dark font-montserrat">BF1 <span class="text-bf1-red">TV</span></h1>
+                        <h1 class="text-3xl sm:text-4xl font-bold text-bf1-gray-dark font-montserrat">
+                            <span class="text-white" style="-webkit-text-stroke: 1px #111827; text-stroke: 1px #111827;">BF1</span>
+                            <span class="text-bf1-red">TV</span>
+                        </h1>
                         <p class="text-gray-600 italic heart-text">La chaîne au cœur de nos défis</p>
                     </div>
                 </div>
@@ -44,7 +46,7 @@
                     </a>
                     {% else %}
                     <a href="{% url 'campaign_spot_create' %}" class="inline-flex items-center px-5 py-3 bg-white text-bf1-red font-semibold rounded-lg shadow hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white">
-                        <i class="fas fa-bullhorn mr-2"></i> Créer ma campagne
+                        <i class="fas fa-bullhorn mr-2"></i> Créer ma campagne/couverture
                     </a>
                     {% endif %}
                 </div>
@@ -81,10 +83,10 @@
 
         <section class="mb-12 grid md:grid-cols-[1fr_420px] gap-6 items-center" data-animate="fade-up">
             <div class="bg-white p-6 rounded-lg bf1-shadow">
-    <h2 class="text-2xl font-bold text-gray-900 mb-3">BF1, toujours plus proche de vous</h2>
+    <h2 class="text-2xl font-bold text-gray-900 mb-3">BF1, proche de vous</h2>
                 <p class="text-gray-700">Diffuser le bon message, au bon moment, avec un budget maîtrisé.</p>
                 <div class="mt-4 flex gap-3">
-                    <a href="{% url 'pricing_overview' %}" class="px-4 py-2 bg-gray-800 text-white rounded bf1-hover"><i class="fas fa-tags mr-2"></i> Voir les tarifs</a>
+                    <a href="{% url 'pricing_overview' %}" class="px-4 py-2 bg-gray-800 text-white rounded bf1-hover"><i class="fas fa-tags mr-2"></i> Voir nos tarifs</a>
                     <a href="{% url 'contact_advisor' %}" class="px-4 py-2 bg-bf1-red text-white rounded bf1-hover"><i class="fas fa-envelope mr-2"></i> Contact rapide</a>
                 </div>
             </div>
@@ -106,7 +108,7 @@
                     </a>
                 {% else %}
                     <div class="flex flex-wrap gap-3">
-                        <a href="{% url 'pricing_overview' %}" class="px-4 py-2 bg-white text-gray-900 rounded bf1-hover"><i class="fas fa-tags mr-2"></i> Voir les tarifs</a>
+                        <a href="{% url 'pricing_overview' %}" class="px-4 py-2 bg-white text-gray-900 rounded bf1-hover"><i class="fas fa-tags mr-2"></i> Voir nos tarifs</a>
                         <a href="{% url 'contact_advisor' %}" class="px-4 py-2 bg-bf1-red text-white rounded bf1-hover"><i class="fas fa-envelope mr-2"></i> Parler à un conseiller</a>
                     </div>
                 {% endif %}
@@ -114,37 +116,29 @@
         </section>
 
         {% if not user.is_authenticated or user.role != 'admin' %}
-        <!-- Guide rapide: bouton flottant + badge + modal -->
-        <style>
-          @keyframes pulse-glow {
-            0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.5); }
-            70% { box-shadow: 0 0 0 16px rgba(220, 38, 38, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
-          }
-        </style>
+        <!-- Guide rapide: bouton fixe (gauche, mi-hauteur) + modal -->
+        <div class="fixed left-0 top-[28%] -translate-y-1/2 z-40 flex flex-col items-start gap-2">
+          <div
+            id="quick-guide-badge"
+            class="ml-4 px-3 py-1.5 rounded-full bg-white text-gray-900 text-sm font-medium shadow border border-gray-200"
+            role="note"
+            aria-live="polite"
+          >
+            Besoin d’aide ?
+          </div>
 
-        <!-- Badge aide, masqué dès interaction -->
-        <div
-          id="quick-guide-badge"
-          class="fixed bottom-20 right-6 z-40 px-3 py-1.5 rounded-full bg-white text-gray-900 text-sm font-medium shadow border border-gray-200"
-          role="note"
-          aria-live="polite"
-        >
-          Besoin d’aide ?
+          <button
+            id="quick-guide-launcher"
+            type="button"
+            class="inline-flex items-center gap-2 pl-4 pr-3 py-3 rounded-r-full shadow-xl bg-bf1-red text-white text-base font-semibold hover:bg-bf1-red-dark focus:outline-none focus:ring-4 focus:ring-bf1-red/40"
+            aria-haspopup="dialog"
+            aria-controls="quick-guide-modal"
+            aria-label="Ouvrir le guide rapide"
+          >
+            <i class="fas fa-compass"></i>
+            <span>Guide rapide</span>
+          </button>
         </div>
-
-        <!-- Bouton toujours visible -->
-        <button
-          id="quick-guide-launcher"
-          type="button"
-          class="fixed bottom-6 right-6 z-40 px-5 py-3 rounded-full shadow-2xl bg-bf1-red text-white text-base font-bold hover:bg-bf1-red-dark focus:outline-none focus:ring-4 focus:ring-bf1-red/40"
-          style="animation: pulse-glow 2s infinite"
-          aria-haspopup="dialog"
-          aria-controls="quick-guide-modal"
-          aria-label="Ouvrir le guide rapide"
-        >
-          <i class="fas fa-compass mr-2"></i> Guide rapide
-        </button>
 
         <div
           id="quick-guide-modal"
@@ -165,13 +159,13 @@
 
               <div id="quick-guide-options" class="px-5 py-4 space-y-3"></div>
 
-              <div class="px-5 py-4 border-t flex items-center justify-between">
-                <label class="inline-flex items-center gap-2 text-sm text-gray-600">
-                  <input id="quick-guide-dontshow" type="checkbox" class="rounded border-gray-300">
-                  Ne plus me proposer aujourd’hui
+              <div class="px-5 py-4 border-t flex items-center justify-between gap-4">
+                <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                  <input id="quick-guide-disable-today" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-bf1-red focus:ring-bf1-red">
+                  Ne plus afficher aujourd’hui
                 </label>
                 <button id="quick-guide-continue" type="button" class="px-4 py-2 bg-gray-900 text-white rounded hover:bg-gray-800">
-                  Continuer
+                  Fermer
                 </button>
               </div>
             </div>
@@ -248,17 +242,22 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   {% if not user.is_authenticated or user.role != 'admin' %}
-  // Quick Guide logic (permanent launcher + auto-open conditional)
   const launcher = document.getElementById('quick-guide-launcher');
   const badge = document.getElementById('quick-guide-badge');
   const modal = document.getElementById('quick-guide-modal');
   const overlay = document.getElementById('quick-guide-overlay');
   const closeBtn = document.getElementById('quick-guide-close');
-  const dontShow = document.getElementById('quick-guide-dontshow');
   const continueBtn = document.getElementById('quick-guide-continue');
+  const disableTodayCheckbox = document.getElementById('quick-guide-disable-today');
   const optionsContainer = modal ? modal.querySelector('#quick-guide-options') : null;
 
+  const serverActiveUser = {{ quick_guide_user_is_active|yesno:"true,false" }};
+  try {
+    if (serverActiveUser) localStorage.setItem('bf1_user_active', '1');
+  } catch {}
+
   function isActiveUser() {
+    if (serverActiveUser) return true;
     try { return localStorage.getItem('bf1_user_active') === '1'; } catch { return false; }
   }
 
@@ -269,7 +268,6 @@ document.addEventListener('DOMContentLoaded', function() {
       btn.addEventListener('click', () => {
         const target = btn.getAttribute('data-target');
         navigateTo(target);
-        if (dontShow && dontShow.checked) disableAutoOpenToday();
       });
     });
   }
@@ -278,12 +276,16 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!optionsContainer) return;
     const base = `
       <button data-target="create" class="w-full text-left px-4 py-3 rounded bg-bf1-red text-white hover:bg-bf1-red-dark">
-        <span class="font-semibold">Créer une campagne</span>
-        <div class="text-sm opacity-90">Démarrer la création de votre campagne</div>
+        <span class="font-semibold">Créer une campagne/couverture</span>
+        <div class="text-sm opacity-90">Démarrer votre demande en quelques clics</div>
       </button>
       <button data-target="contact" class="w-full text-left px-4 py-3 rounded bg-gray-50 hover:bg-gray-100">
         <span class="font-medium text-gray-900">Contacter un conseiller</span>
         <div class="text-sm text-gray-600">Obtenir de l’aide rapidement</div>
+      </button>
+      <button data-target="pricing" class="w-full text-left px-4 py-3 rounded bg-gray-50 hover:bg-gray-100">
+        <span class="font-medium text-gray-900">Nos tarifs</span>
+        <div class="text-sm text-gray-600">Comparer les offres et prestations</div>
       </button>
     `;
     const extra = `
@@ -304,31 +306,40 @@ document.addEventListener('DOMContentLoaded', function() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   }
-  // Désactive uniquement l’auto-ouverture pour la journée
-  function shouldAutoOpen() {
-    try {
-      const disabledOn = localStorage.getItem('bf1_quick_guide_disable_auto_for_day');
-      return disabledOn !== todayKey();
-    } catch { return true; }
+
+  const disableAutoKey = 'bf1_quick_guide_disable_auto_for_day';
+  function isAutoOpenDisabledForToday() {
+    try { return localStorage.getItem(disableAutoKey) === todayKey(); } catch { return false; }
   }
-  function disableAutoOpenToday() {
-    try { localStorage.setItem('bf1_quick_guide_disable_auto_for_day', todayKey()); } catch {}
+  function shouldAutoOpen() {
+    return !isAutoOpenDisabledForToday();
+  }
+
+  if (modal && modal.parentElement !== document.body) {
+    document.body.appendChild(modal);
   }
 
   function hideBadge() { if (badge) badge.classList.add('hidden'); }
+  function showBadge() { if (badge) badge.classList.remove('hidden'); }
   function openModal() {
     if (!modal) return;
     hideBadge();
+    document.documentElement.classList.add('overflow-hidden');
+    document.body.classList.add('overflow-hidden');
     modal.classList.remove('hidden');
     const first = modal.querySelector('button[data-target]');
     if (first) first.focus();
     document.addEventListener('keydown', onKeyDown);
+    if (disableTodayCheckbox) disableTodayCheckbox.checked = isAutoOpenDisabledForToday();
     renderQuickGuideOptions(isActiveUser());
   }
   function closeModal() {
     if (!modal) return;
     modal.classList.add('hidden');
     document.removeEventListener('keydown', onKeyDown);
+    document.documentElement.classList.remove('overflow-hidden');
+    document.body.classList.remove('overflow-hidden');
+    showBadge();
   }
   function onKeyDown(e) { if (e.key === 'Escape') closeModal(); }
   function navigateTo(target) {
@@ -338,23 +349,39 @@ document.addEventListener('DOMContentLoaded', function() {
       case 'reports': window.location.href = "{% url 'report_overview' %}"; break;
       case 'spots': window.location.href = "{% url 'spot_list' %}"; break;
       case 'contact': window.location.href = "{% url 'contact_advisor' %}"; break;
+      case 'pricing': window.location.href = "{% url 'pricing_overview' %}"; break;
     }
   }
 
-  if (shouldAutoOpen()) { openModal(); }
-  if (launcher) launcher.addEventListener('click', () => { openModal(); });
+  if (launcher) launcher.addEventListener('click', openModal);
   if (overlay) overlay.addEventListener('click', closeModal);
   if (closeBtn) closeBtn.addEventListener('click', closeModal);
 
   if (continueBtn) {
     continueBtn.addEventListener('click', () => {
-      if (dontShow && dontShow.checked) disableAutoOpenToday();
       closeModal();
+    });
+  }
+
+  if (disableTodayCheckbox) {
+    disableTodayCheckbox.addEventListener('change', () => {
+      try {
+        if (disableTodayCheckbox.checked) localStorage.setItem(disableAutoKey, todayKey());
+        else localStorage.removeItem(disableAutoKey);
+      } catch {}
     });
   }
 
   // Rendu initial (au cas où le modal serait déjà visible)
   renderQuickGuideOptions(isActiveUser());
+
+  if (shouldAutoOpen()) {
+    window.setTimeout(() => {
+      if (!modal) return;
+      if (!modal.classList.contains('hidden')) return;
+      openModal();
+    }, 450);
+  }
 
   // Mise à jour en temps réel après création d’activité (autres onglets)
   window.addEventListener('storage', (e) => {
@@ -366,191 +393,3 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
-
-<!-- Hero d’accueil BF1TV -->
-<div class="relative overflow-hidden rounded-xl bg-gradient-to-r from-bf1-red/10 to-gray-900/5 p-6 bf1-shadow mb-8">
-    <div class="flex items-center gap-4">
-            <img src="{% static 'logo_bf1.jpg' %}" alt="BF1" class="w-14 h-14 rounded-lg shadow" />
-        <div>
-            <h1 class="text-3xl md:text-4xl font-bold">BF1 — votre partenaire pub</h1>
-            <p class="text-gray-700 mt-2">Comprendre, planifier et suivre vos diffusions.</p>
-        </div>
-    </div>
-</div>
-
-<!-- Actions rapides (navigation immédiate) MASQUÉES -->
-<!--
-<section class="mb-12" aria-label="Actions rapides" data-animate="fade-up">
-    <h2 class="text-2xl font-bold text-gray-900 mb-6">Actions rapides</h2>
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <a href="{% url 'advisory_wizard' %}" class="home-card bg-white p-6 rounded-lg bf1-shadow hover:shadow-xl transition focus:outline-none focus:ring-2 focus:ring-bf1-red">
-            <div class="text-center">
-                <div class="w-20 h-20 rounded-full bg-bf1-red text-white flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-lightbulb text-3xl"></i>
-                </div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-1">Conseils publicitaires</h3>
-                <p class="text-gray-600 text-sm">Objectifs → format/durée → repères de budget</p>
-            </div>
-        </a>
-        <a href="{% url 'guides_list' %}" class="home-card bg-white p-6 rounded-lg bf1-shadow hover:shadow-xl transition focus:outline-none focus:ring-2 focus:ring-bf1-red">
-            <div class="text-center">
-                <div class="w-20 h-20 rounded-full bg-blue-500 text-white flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-book text-3xl"></i>
-                </div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-1">Guides pratiques</h3>
-                <p class="text-gray-600 text-sm">Pas à pas pour réussir vos campagnes</p>
-            </div>
-        </a>
-        <a href="{% url 'inspiration' %}" class="home-card bg-white p-6 rounded-lg bf1-shadow hover:shadow-xl transition focus:outline-none focus:ring-2 focus:ring-bf1-red">
-            <div class="text-center">
-                <div class="w-20 h-20 rounded-full bg-purple-500 text-white flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-fire text-3xl"></i>
-                </div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-1">Inspiration</h3>
-                <p class="text-gray-600 text-sm">Exemples et idées pour votre message</p>
-            </div>
-        </a>
-        <a href="{% url 'pricing_overview' %}" class="home-card bg-white p-6 rounded-lg bf1-shadow hover:shadow-xl transition focus:outline-none focus:ring-2 focus:ring-bf1-red">
-            <div class="text-center">
-                <div class="w-20 h-20 rounded-full bg-green-500 text-white flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-tags text-3xl"></i>
-                </div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-1">Tarifs & packs</h3>
-                <p class="text-gray-600 text-sm">Options claires adaptées à votre budget</p>
-            </div>
-        </a>
-    </div>
-</section>
--->
-
-
-<!-- Processus, Pourquoi, Exemples, Marque & CTA (inchangés) -->
-<section class="mb-12" data-animate="fade-up"> 
-    <h2 class="text-2xl font-bold text-gray-900 mb-6">Exemples de campagnes</h2>
-    <div class="grid md:grid-cols-3 gap-6">
-        <div class="bg-white p-6 rounded-lg bf1-shadow">
-            <h3 class="font-semibold text-gray-900">Visibilité rapide</h3>
-            <p class="text-gray-600 text-sm mt-2">Spots courts + annonces sur 7 jours pour émerger vite.</p>
-            <div class="mt-4">
-                <a href="{% url 'pricing_overview' %}" class="px-4 py-2 bg-gray-800 text-white rounded bf1-hover"><i class="fas fa-tags mr-2"></i> Voir les repères</a>
-            </div>
-        </div>
-        <div class="bg-white p-6 rounded-lg bf1-shadow">
-            <h3 class="font-semibold text-gray-900">Trafic en magasin</h3>
-            <p class="text-gray-600 text-sm mt-2">Diffusions régulières en journée + message défilant.</p>
-            <div class="mt-4">
-                <a href="{% url 'guides_list' %}" class="px-4 py-2 bg-bf1-red text-white rounded bf1-hover"><i class="fas fa-book mr-2"></i> Lire les guides</a>
-            </div>
-        </div>
-        <div class="bg-white p-6 rounded-lg bf1-shadow">
-            <h3 class="font-semibold text-gray-900">Institutionnel JT</h3>
-            <p class="text-gray-600 text-sm mt-2">Publireportage au JT + spots prime pour maximum d’impact.</p>
-            <div class="mt-4">
-                <a href="{% url 'contact_advisor' %}" class="px-4 py-2 bg-bf1-red text-white rounded bf1-hover"><i class="fas fa-envelope mr-2"></i> Demander un devis</a>
-            </div>
-        </div>
-    </div>
-</section>
-
-
-<!-- Marque & équipe -->
-<section class="mb-12 grid md:grid-cols-[1fr_420px] gap-6 items-center" data-animate="fade-up">
-    <div class="bg-white p-6 rounded-lg bf1-shadow">
-    <h2 class="text-2xl font-bold text-gray-900 mb-3">BF1, proche des entreprises</h2>
-        <p class="text-gray-700">Nous vous aidons à diffuser le bon message, au bon moment, avec un budget maîtrisé.</p>
-        <div class="mt-4 flex gap-3">
-            <a href="{% url 'pricing_overview' %}" class="px-4 py-2 bg-gray-800 text-white rounded bf1-hover"><i class="fas fa-tags mr-2"></i> Voir les tarifs</a>
-            <a href="{% url 'contact_advisor' %}" class="px-4 py-2 bg-bf1-red text-white rounded bf1-hover"><i class="fas fa-envelope mr-2"></i> Contact rapide</a>
-        </div>
-    </div>
-    <div class="relative overflow-hidden rounded-lg bf1-shadow bg-white">
-            <img src="{% static 'teambf1.jpg' %}" alt="Équipe BF1" class="w-full h-full object-cover">
-    </div>
-</section>
-
-<!-- Appel à l’action final -->
-<section class="mb-16" data-animate="fade-up">
-    <div class="bg-gray-900 text-white rounded-lg p-6 md:p-8 bf1-shadow flex flex-col md:flex-row items-center justify-between gap-4">
-        <div>
-            <h3 class="text-xl font-semibold">Prêt à lancer votre campagne ?</h3>
-            <p class="text-gray-300 text-sm mt-1">Choisissez vos créneaux et nous vous accompagnons.</p>
-        </div>
-        {% if user.is_authenticated %}
-            <a href="{% url 'campaign_spot_create' %}" class="px-5 py-2.5 bg-bf1-red text-white rounded-lg bf1-hover"><i class="fas fa-magic mr-2"></i> Créer ma pub</a>
-        {% else %}
-            <div class="flex flex-wrap gap-3">
-                <a href="{% url 'pricing_overview' %}" class="px-4 py-2 bg-white text-gray-900 rounded bf1-hover"><i class="fas fa-tags mr-2"></i> Voir les tarifs</a>
-                <a href="{% url 'contact_advisor' %}" class="px-4 py-2 bg-bf1-red text-white rounded bf1-hover"><i class="fas fa-envelope mr-2"></i> Parler à un conseiller</a>
-            </div>
-        {% endif %}
-    </div>
-</section>
-
-    {% if not user.is_authenticated or user.role != 'admin' %}
-    <!-- Guide rapide: bouton flottant + badge + modal -->
-    <style>
-      @keyframes pulse-glow {
-        0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.5); }
-        70% { box-shadow: 0 0 0 16px rgba(220, 38, 38, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
-      }
-    </style>
-
-    <!-- Badge aide, masqué dès interaction -->
-    <div
-      id="quick-guide-badge"
-      class="fixed bottom-20 right-6 z-40 px-3 py-1.5 rounded-full bg-white text-gray-900 text-sm font-medium shadow border border-gray-200"
-      role="note"
-      aria-live="polite"
-    >
-      Besoin d’aide ?
-    </div>
-
-    <!-- Bouton toujours visible -->
-    <button
-      id="quick-guide-launcher"
-      type="button"
-      class="fixed bottom-6 right-6 z-40 px-5 py-3 rounded-full shadow-2xl bg-bf1-red text-white text-base font-bold hover:bg-bf1-red-dark focus:outline-none focus:ring-4 focus:ring-bf1-red/40"
-      style="animation: pulse-glow 2s infinite"
-      aria-haspopup="dialog"
-      aria-controls="quick-guide-modal"
-      aria-label="Ouvrir le guide rapide"
-    >
-      <i class="fas fa-compass mr-2"></i> Guide rapide
-    </button>
-
-    <div
-      id="quick-guide-modal"
-      class="hidden fixed inset-0 z-50"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="quick-guide-title"
-    >
-      <div id="quick-guide-overlay" class="absolute inset-0 bg-black/40"></div>
-      <div class="absolute inset-0 flex items-center justify-center p-4">
-        <div class="w-full max-w-md rounded-lg bg-white shadow-2xl">
-          <div class="flex items-center justify-between px-5 py-4 border-b">
-            <h3 id="quick-guide-title" class="text-lg font-semibold text-gray-900">Où souhaitez-vous aller ?</h3>
-            <button id="quick-guide-close" type="button" class="text-gray-500 hover:text-gray-700" aria-label="Fermer">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-
-          <div id="quick-guide-options" class="px-5 py-4 space-y-3"></div>
-
-          <div class="px-5 py-4 border-t flex items-center justify-between">
-            <label class="inline-flex items-center gap-2 text-sm text-gray-600">
-              <input id="quick-guide-dontshow" type="checkbox" class="rounded border-gray-300">
-              Ne plus me proposer aujourd’hui
-            </label>
-            <button id="quick-guide-continue" type="button" class="px-4 py-2 bg-gray-900 text-white rounded hover:bg-gray-800">
-              Continuer
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- /Guide rapide -->
-    {% endif %}
-</section>
-

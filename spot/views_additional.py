@@ -237,9 +237,9 @@ def cost_simulator(request):
     try:
         if hasattr(request.user, 'is_admin') and request.user.is_admin():
             messages.error(request, "Cette fonctionnalité est réservée aux clients.")
-            return redirect('dashboard')
+            return redirect('home')
     except Exception:
-        return redirect('dashboard')
+        return redirect('home')
     tax_rate = Decimal('0.18')
     time_slots = TimeSlot.objects.filter(is_active=True).order_by('start_time')
     pricing_rules = list(
@@ -307,7 +307,7 @@ def admin_campaign_approve(request, campaign_id):
     """Approbation d'une campagne par l'admin"""
     if not request.user.is_admin():
         messages.error(request, 'Accès non autorisé.')
-        return redirect('dashboard')
+        return redirect('home')
     
     campaign = get_object_or_404(Campaign, id=campaign_id)
     
@@ -337,7 +337,7 @@ def admin_spot_approve(request, spot_id):
     """Approbation d'un spot par l'admin"""
     if not request.user.is_admin():
         messages.error(request, 'Accès non autorisé.')
-        return redirect('dashboard')
+        return redirect('home')
     
     spot = get_object_or_404(Spot, id=spot_id)
     
@@ -367,7 +367,7 @@ def admin_dashboard(request):
     """Tableau de bord administrateur"""
     if not request.user.is_admin():
         messages.error(request, 'Accès non autorisé.')
-        return redirect('dashboard')
+        return redirect('home')
     
     # Statistiques générales
     stats = {

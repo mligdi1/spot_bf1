@@ -84,13 +84,11 @@ class AuthenticatedUser(HttpUser):
         response = self.client.post("/login/", data=login_data)
         
         if response.status_code == 302:  # Redirection après connexion
-            # Visiter le tableau de bord
-            self.client.get("/dashboard/")
+            self.client.get("/home/")
     
     @task(3)
-    def view_dashboard(self):
-        """Consulter le tableau de bord"""
-        self.client.get("/dashboard/")
+    def view_home(self):
+        self.client.get("/home/")
     
     @task(2)
     def view_campaigns(self):
@@ -140,7 +138,7 @@ class AdminUser(HttpUser):
     def on_start(self):
         """Connexion de l'administrateur"""
         # Visiter la page de connexion
-        self.client.get("/login/")
+        self.client.get("/console/login/")
         
         # Se connecter en tant qu'admin
         login_data = {
@@ -148,16 +146,16 @@ class AdminUser(HttpUser):
             'password': os.environ.get('LOCUST_ADMIN_PASSWORD', '')
         }
         
-        response = self.client.post("/login/", data=login_data)
+        response = self.client.post("/console/login/", data=login_data)
         
         if response.status_code == 302:
             # Visiter le tableau de bord admin
-            self.client.get("/admin/dashboard/")
+            self.client.get("/console/dashboard/")
     
     @task(3)
     def view_admin_dashboard(self):
         """Consulter le tableau de bord administrateur"""
-        self.client.get("/admin/dashboard/")
+        self.client.get("/console/dashboard/")
     
     @task(2)
     def view_admin_interface(self):

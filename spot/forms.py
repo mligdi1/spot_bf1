@@ -18,7 +18,7 @@ class CustomUserCreationForm(UserCreationForm):
     
     class Meta:
         model = User
-        fields = ('username', 'email', 'phone', 'company', 'address', 'password1', 'password2')
+        fields = ('username', 'email', 'first_name', 'last_name', 'phone', 'company', 'address', 'password1', 'password2')
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -27,6 +27,11 @@ class CustomUserCreationForm(UserCreationForm):
             Row(
                 Column('username', css_class='form-group col-md-6 mb-0'),
                 Column('email', css_class='form-group col-md-6 mb-0'),
+                css_class='form-row'
+            ),
+            Row(
+                Column('first_name', css_class='form-group col-md-6 mb-0'),
+                Column('last_name', css_class='form-group col-md-6 mb-0'),
                 css_class='form-row'
             ),
             Row(
@@ -42,10 +47,28 @@ class CustomUserCreationForm(UserCreationForm):
             ),
             Submit('submit', 'Créer mon compte', css_class='btn btn-primary btn-block')
         )
+
+    def clean_email(self):
+        email = (self.cleaned_data.get('email') or '').strip()
+        if not email:
+            return email
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("Cette adresse email est déjà utilisée par un autre compte.")
+        return email
+
+    def clean_username(self):
+        username = (self.cleaned_data.get('username') or '').strip()
+        if not username:
+            return username
+        if User.objects.filter(username__iexact=username).exists():
+            raise forms.ValidationError("Ce nom d'utilisateur est déjà utilisé.")
+        return username
     
     def save(self, commit=True):
         user = super().save(commit=False)
         user.email = self.cleaned_data['email']
+        user.first_name = (self.cleaned_data.get('first_name') or '').strip()
+        user.last_name = (self.cleaned_data.get('last_name') or '').strip()
         user.phone = self.cleaned_data['phone']
         user.company = self.cleaned_data['company']
         user.address = self.cleaned_data['address']

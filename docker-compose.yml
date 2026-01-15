@@ -40,6 +40,7 @@ services:
       - "8000:8000"
     environment:
       - DJANGO_SETTINGS_MODULE=spot_bf1.settings_production
+      - ENABLE_CHANNELS=0
       - DATABASE_NAME=spot_bf1_db
       - DATABASE_USER=postgres
       - DATABASE_PASSWORD=password

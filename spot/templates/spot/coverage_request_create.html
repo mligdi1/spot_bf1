@@ -9,6 +9,19 @@
       <p class="text-lg text-gray-600">Décrivez votre événement et vos besoins rédactionnels</p>
     </div>
 
+    <div class="flex justify-center mb-6" role="tablist" aria-label="Choix du mode de création">
+      <div class="inline-flex rounded-md shadow-sm" role="group">
+        <button type="button" id="btn-mode-easy" role="tab" aria-selected="false" aria-controls="campaign-mode-section"
+                class="px-4 py-2 text-sm font-medium bg-gray-200 text-gray-900 rounded-l-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300">
+          Campagne/Spot
+        </button>
+        <button type="button" id="btn-mode-detail" role="tab" aria-selected="true" aria-controls="coverage-mode-section"
+                class="px-4 py-2 text-sm font-medium bg-bf1-red text-white rounded-r-lg hover:bg-bf1-red-dark focus:outline-none focus:ring-2 focus:ring-bf1-red">
+          Demande de couverture
+        </button>
+      </div>
+    </div>
+
 
     <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
       <form method="post" enctype="multipart/form-data" id="coverage-form">
@@ -17,14 +30,15 @@
         <!-- Barre de progression -->
         <div class="px-8 py-6 bg-gradient-to-r from-white via-gray-50 to-white border-b">
           <div class="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-gray-600">
-            <div class="px-2 py-1 rounded-full bg-gray-100">Étape 1: Événement</div>
-            <div class="px-2 py-1 rounded-full bg-gray-100">Étape 2: Coordonnées</div>
-            <div class="px-2 py-1 rounded-full bg-gray-100">Étape 3: Couverture</div>
-            <div class="px-2 py-1 rounded-full bg-gray-100">Étape 4: Pièces jointes</div>
+            <button type="button" class="px-2 py-1 rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-bf1-red/40 transition" data-wizard-step="0">Étape 1: Événement</button>
+            <button type="button" class="px-2 py-1 rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-bf1-red/40 transition" data-wizard-step="1">Étape 2: Coordonnées</button>
+            <button type="button" class="px-2 py-1 rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-bf1-red/40 transition" data-wizard-step="2">Étape 3: Couverture</button>
+            <button type="button" class="px-2 py-1 rounded-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-bf1-red/40 transition" data-wizard-step="3">Étape 4: Pièces jointes</button>
           </div>
           <div class="mt-4 h-3 bg-gray-200/70 rounded-full overflow-hidden">
             <div id="wizard-progress-bar" class="h-3 bg-gradient-to-r from-bf1-red via-pink-500 to-indigo-600 shadow-lg rounded-full transition-all duration-500 ease-out" style="width:25%"></div>
           </div>
+          <div id="wizard-step-alert" class="hidden mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert" aria-live="polite"></div>
         </div>
 
         <!-- Viewport/Track -->
@@ -193,14 +207,92 @@ document.addEventListener('DOMContentLoaded', function() {
   const steps = Array.from(document.querySelectorAll('.wizard-step'));
   const track = document.getElementById('wizard-track');
   const progressBar = document.getElementById('wizard-progress-bar');
+  const stepAlert = document.getElementById('wizard-step-alert');
   const prevBtn = document.getElementById('wizard-prev');
   const nextBtn = document.getElementById('wizard-next');
   const submitBtn = document.getElementById('wizard-submit');
+  const stepButtons = Array.from(document.querySelectorAll('[data-wizard-step]'));
+  const formEl = document.getElementById('coverage-form');
   let currentStep = 0;
+  let maxReached = 0;
+
+  const btnModeEasy = document.getElementById('btn-mode-easy');
+  const btnModeDetail = document.getElementById('btn-mode-detail');
+  if (btnModeEasy) btnModeEasy.addEventListener('click', function() {
+    window.location.href = "{% url 'campaign_spot_create' %}";
+  });
+  if (btnModeDetail) btnModeDetail.addEventListener('click', function() {});
+
+  function showStepAlert(message) {
+    if (!stepAlert) return;
+    stepAlert.textContent = message || '';
+    stepAlert.classList.toggle('hidden', !message);
+    if (message) {
+      window.clearTimeout(showStepAlert._t);
+      showStepAlert._t = window.setTimeout(() => showStepAlert(''), 5000);
+    }
+  }
+
+  function isFieldVisible(el) {
+    if (!el) return false;
+    if (el.closest('.hidden')) return false;
+    return !!(el.offsetParent || el.getClientRects().length);
+  }
+
+  function markFieldValidity(el, ok) {
+    if (!el) return;
+    el.classList.toggle('ring-2', !ok);
+    el.classList.toggle('ring-red-500', !ok);
+    el.addEventListener('input', function() {
+      const nowOk = el.checkValidity();
+      el.classList.toggle('ring-2', !nowOk);
+      el.classList.toggle('ring-red-500', !nowOk);
+    }, { once: true });
+  }
+
+  function stepInputs(stepEl) {
+    if (!stepEl) return [];
+    return Array.from(stepEl.querySelectorAll('input, select, textarea'))
+      .filter((el) => !el.disabled && el.type !== 'hidden' && isFieldVisible(el));
+  }
+
+  function validateStep(index) {
+    const stepEl = steps[index];
+    if (!stepEl) return true;
+    const inputs = stepInputs(stepEl);
+    for (const el of inputs) {
+      const ok = el.checkValidity();
+      markFieldValidity(el, ok);
+      if (!ok) {
+        showStepAlert('Veuillez remplir les champs obligatoires avant de passer à l’étape suivante.');
+        try { el.focus({ preventScroll: true }); } catch (e) {}
+        try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+        if (typeof el.reportValidity === 'function') el.reportValidity();
+        return false;
+      }
+    }
+    showStepAlert('');
+    return true;
+  }
 
   function updateProgress() {
     const pct = Math.round(((currentStep + 1) / steps.length) * 100);
     if (progressBar) progressBar.style.width = pct + '%';
+  }
+  function updateStepper() {
+    stepButtons.forEach((btn) => {
+      const idx = Number(btn.getAttribute('data-wizard-step') || '0');
+      const reached = idx <= maxReached;
+      btn.disabled = !reached;
+      btn.classList.toggle('cursor-pointer', reached);
+      btn.classList.toggle('cursor-not-allowed', !reached);
+      btn.classList.toggle('opacity-60', !reached);
+      btn.classList.toggle('ring-2', idx === currentStep);
+      btn.classList.toggle('ring-bf1-red', idx === currentStep);
+      btn.classList.toggle('ring-offset-2', idx === currentStep);
+      if (idx === currentStep) btn.setAttribute('aria-current', 'step');
+      else btn.removeAttribute('aria-current');
+    });
   }
   function updateNav() {
     const isFirst = currentStep === 0;
@@ -214,6 +306,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const newStep = Math.max(0, Math.min(index, steps.length - 1));
     const last = currentStep;
     currentStep = newStep;
+    maxReached = Math.max(maxReached, currentStep);
     if (steps[last]) {
       steps[last].classList.remove('opacity-100');
       steps[last].classList.add('opacity-0');
@@ -226,11 +319,45 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     updateProgress();
     updateNav();
+    updateStepper();
+    showStepAlert('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   showStep(0);
+  stepButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const idx = Number(btn.getAttribute('data-wizard-step') || '0');
+      if (idx > maxReached) return;
+      if (idx > currentStep && !validateStep(currentStep)) return;
+      showStep(idx);
+    });
+  });
   prevBtn.addEventListener('click', () => showStep(currentStep - 1));
-  nextBtn.addEventListener('click', () => showStep(currentStep + 1));
+  nextBtn.addEventListener('click', () => {
+    if (!validateStep(currentStep)) return;
+    showStep(currentStep + 1);
+  });
+
+  if (formEl) {
+    let invalidJumpAt = 0;
+    formEl.addEventListener('invalid', function(e) {
+      const now = Date.now();
+      if (now - invalidJumpAt < 300) return;
+      invalidJumpAt = now;
+      const el = e.target;
+      if (!el || !el.closest) return;
+      const stepEl = el.closest('.wizard-step');
+      if (!stepEl) return;
+      const idx = Number(stepEl.getAttribute('data-step') || '0');
+      if (idx !== currentStep) showStep(idx);
+      window.setTimeout(() => {
+        markFieldValidity(el, false);
+        try { el.focus({ preventScroll: true }); } catch (err) {}
+        try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (err) {}
+        if (typeof el.reportValidity === 'function') el.reportValidity();
+      }, 250);
+    }, true);
+  }
 
   // Event type: afficher le champ "Autre"
   const eventTypeSelect = document.getElementById('id_event_type');
@@ -355,7 +482,6 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Réglages de validation douce pour quelques champs clés
-  const formEl = document.getElementById('coverage-form');
   if (formEl && submitBtn) {
     submitBtn.addEventListener('click', function() {
       if (typeof formEl.requestSubmit === 'function') {

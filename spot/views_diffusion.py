@@ -8,6 +8,7 @@ from django.utils import timezone
 from datetime import datetime
 from decimal import Decimal
 from django.http import JsonResponse, HttpResponse, FileResponse
+from django.template.loader import render_to_string
 from django.contrib import messages
 from django.db import transaction
 from django.db import IntegrityError
@@ -27,8 +28,12 @@ except Exception:
     SimpleDocTemplate = None
 
 from .models import Spot, SpotSchedule, Campaign, Notification, CampaignHistory, TimeSlot, CorrespondenceThread, CorrespondenceMessage
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
+try:
+    from channels.layers import get_channel_layer
+    from asgiref.sync import async_to_sync
+except Exception:
+    get_channel_layer = None
+    async_to_sync = None
 
 
 # Parsing tolérant pour accepter un maximum d’entrées utilisateur
@@ -162,6 +167,17 @@ def _base_context(user):
         'user': user,
     }
 
+def _fr_weekday_abbr(d):
+    labels = {0: 'Lun', 1: 'Mar', 2: 'Mer', 3: 'Jeu', 4: 'Ven', 5: 'Sam', 6: 'Dim'}
+    try:
+        return labels.get(d.weekday(), '')
+    except Exception:
+        return ''
+
+def _week_label(d):
+    abbr = _fr_weekday_abbr(d)
+    return (abbr + ' ' if abbr else '') + d.strftime('%d/%m')
+
 
 @login_required
 def home(request):
@@ -174,7 +190,7 @@ def home(request):
     start_week = today - timezone.timedelta(days=today.weekday())
     week_days = [start_week + timezone.timedelta(days=i) for i in range(7)]
     week_counts = {
-        d.strftime('%a %d/%m'): SpotSchedule.objects.filter(broadcast_date=d).count()
+        _week_label(d): SpotSchedule.objects.filter(broadcast_date=d).count()
         for d in week_days
     }
 
@@ -200,6 +216,31 @@ def profile(request):
     user = request.user
     # Edition du profil via POST
     if request.method == 'POST':
+        if (request.POST.get('profile_action') or '').strip() == 'photo':
+            photo = request.FILES.get('photo')
+            if not photo:
+                messages.error(request, "Veuillez sélectionner une image.")
+                return redirect('diffusion_profile')
+
+            errors = []
+            content_type = (getattr(photo, 'content_type', '') or '').lower()
+            if not content_type.startswith('image/'):
+                errors.append("Le fichier choisi doit être une image.")
+            max_bytes = 5 * 1024 * 1024
+            if getattr(photo, 'size', 0) > max_bytes:
+                errors.append("L’image ne doit pas dépasser 5 Mo.")
+
+            if errors:
+                for err in errors:
+                    messages.error(request, err)
+                return redirect('diffusion_profile')
+
+            if hasattr(user, 'photo'):
+                user.photo = photo
+                user.save()
+                messages.success(request, "Votre photo de profil a été mise à jour.")
+            return redirect('diffusion_profile')
+
         # Récupération et nettoyage des champs
         first_name = (request.POST.get('first_name') or '').strip() or user.first_name
         last_name = (request.POST.get('last_name') or '').strip() or user.last_name
@@ -238,7 +279,7 @@ def profile(request):
             start_week = today - timezone.timedelta(days=today.weekday())
             week_days = [start_week + timezone.timedelta(days=i) for i in range(7)]
             week_counts = {
-                d.strftime('%a %d/%m'): SpotSchedule.objects.filter(broadcast_date=d).count()
+                _week_label(d): SpotSchedule.objects.filter(broadcast_date=d).count()
                 for d in week_days
             }
             # Activités récentes: uniquement les spots non planifiés (sans schedule)
@@ -281,7 +322,7 @@ def profile(request):
     start_week = today - timezone.timedelta(days=today.weekday())
     week_days = [start_week + timezone.timedelta(days=i) for i in range(7)]
     week_counts = {
-        d.strftime('%a %d/%m'): SpotSchedule.objects.filter(broadcast_date=d).count()
+        _week_label(d): SpotSchedule.objects.filter(broadcast_date=d).count()
         for d in week_days
     }
     # Activités récentes: uniquement les spots non planifiés (sans schedule)
@@ -1051,6 +1092,129 @@ def notifications_diffusion(request):
 
 
 @login_required
+def diffusion_notifications_mark_read(request, id):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Méthode invalide'}, status=405)
+    notification = get_object_or_404(Notification, id=id, user=request.user)
+    if not notification.is_read:
+        notification.is_read = True
+        notification.save(update_fields=['is_read'])
+    unread_count = Notification.objects.filter(user=request.user, is_read=False).count()
+    return JsonResponse({'status': 'success', 'unread_count': unread_count})
+
+
+@login_required
+def diffusion_notifications_mark_all_read(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Méthode invalide'}, status=405)
+    Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+    return JsonResponse({'status': 'success', 'unread_count': 0})
+
+
+@login_required
+def diffusion_notifications_delete(request, id):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Méthode invalide'}, status=405)
+    notification = get_object_or_404(Notification, id=id, user=request.user)
+    notification.delete()
+    unread_count = Notification.objects.filter(user=request.user, is_read=False).count()
+    return JsonResponse({'status': 'success', 'unread_count': unread_count})
+
+
+@login_required
+def diffusion_notifications_list_partial(request):
+    notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
+    paginator = Paginator(notifications, 20)
+    page_number = request.GET.get('page')
+    notifications = paginator.get_page(page_number)
+    html = render_to_string('spot/includes/notifications_list.html', {'notifications': notifications}, request=request)
+    unread_count = Notification.objects.filter(user=request.user, is_read=False).count()
+    return JsonResponse({'status': 'success', 'html': html, 'unread_count': unread_count})
+
+
+@login_required
+def diffusion_support_chat(request):
+    u = request.user
+    thread = CorrespondenceThread.objects.filter(client=u, subject='Support Diffusion').order_by('-created_at').first()
+    if not thread:
+        thread = CorrespondenceThread.objects.create(
+            client=u,
+            subject='Support Diffusion',
+            status='open',
+            last_message_at=timezone.now()
+        )
+    return redirect('diffusion_chat_thread', thread_id=thread.id)
+
+
+@login_required
+def diffusion_chat_thread(request, thread_id):
+    u = request.user
+    thread = get_object_or_404(CorrespondenceThread, id=thread_id)
+    if thread.client_id != u.id:
+        messages.error(request, "Accès non autorisé.")
+        return redirect('diffusion_home')
+
+    now = timezone.now()
+    last_msg = thread.messages.last()
+    can_reply_now = True
+    next_allowed_reply_at = None
+
+    if thread.status == 'closed':
+        state_code = 'closed'
+        state_label = 'Résolu'
+    elif last_msg and last_msg.author_id == thread.client_id:
+        state_code = 'waiting'
+        state_label = 'En attente de réponse'
+    else:
+        state_code = 'answered'
+        state_label = 'Réponse reçue'
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'resolve':
+            thread.status = 'closed'
+            thread.save(update_fields=['status', 'updated_at'])
+            messages.success(request, "Discussion marquée comme résolue.")
+            return redirect('diffusion_chat_thread', thread_id=thread.id)
+
+        content = (request.POST.get('content') or '').strip()
+        attachment = request.FILES.get('attachment')
+        if not content:
+            messages.error(request, "Veuillez saisir un message.")
+        else:
+            CorrespondenceMessage.objects.create(
+                thread=thread,
+                author=u,
+                content=content,
+                attachment=attachment
+            )
+            thread.status = 'pending'
+            for admin in get_user_model().objects.filter(role='admin'):
+                Notification.objects.create(
+                    user=admin,
+                    title='Nouveau message',
+                    message=f'{u.username} a écrit sur "{thread.subject}".',
+                    related_campaign=thread.related_campaign,
+                    related_thread=thread
+                )
+            thread.last_message_at = timezone.now()
+            thread.save(update_fields=['status', 'last_message_at', 'updated_at'])
+
+            messages.success(request, "Message envoyé.")
+            return redirect('diffusion_chat_thread', thread_id=thread.id)
+
+    return render(request, 'spot/correspondence_thread.html', {
+        'thread': thread,
+        'messages_qs': thread.messages.all(),
+        'can_reply_now': can_reply_now,
+        'next_allowed_reply_at': next_allowed_reply_at,
+        'state_code': state_code,
+        'state_label': state_label,
+        'base_template': 'spot/diffusion/base_diffusion.html',
+    })
+
+
+@login_required
 def bulk_schedule_spot(request, spot_id):
     """Création de programmations multiples pour un spot (plage de dates et jours).
 
@@ -1460,7 +1624,7 @@ def kpi_api(request):
     start_week = today - timezone.timedelta(days=today.weekday())
     for i in range(7):
         d = start_week + timezone.timedelta(days=i)
-        data['week'][d.strftime('%a %d/%m')] = SpotSchedule.objects.filter(broadcast_date=d).count()
+        data['week'][_week_label(d)] = SpotSchedule.objects.filter(broadcast_date=d).count()
     return JsonResponse(data)
 
 

@@ -178,9 +178,9 @@
 
     <!-- Actions -->
     <div class="mt-8 flex items-center justify-between">
-        <a href="{% url 'dashboard' %}" class="text-gray-600 hover:text-gray-900 flex items-center">
+        <a href="{% url 'home' %}" class="text-gray-600 hover:text-gray-900 flex items-center">
             <i class="fas fa-arrow-left mr-2"></i>
-            Retour au tableau de bord
+            Retour à l'accueil
         </a>
         
         {% if estimated_cost is not None %}
@@ -233,7 +233,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <i class="fas fa-calculator text-4xl"></i>
                     </div>
                     <h3 class="text-xl font-bold text-gray-900 mb-2">Estimation</h3>
-                    <p class="text-3xl font-extrabold text-bf1-red">${total.toLocaleString()} FCFA</p>
+                    <p class="text-3xl font-extrabold text-bf1-red">${total.toLocaleString('fr-FR')} FCFA</p>
                     <p class="text-gray-600 mt-2">TVA incluse</p>
                 </div>
             `;

@@ -21,7 +21,6 @@ class EditorialAccessTests(TestCase):
             'inspiration',
             'pricing_overview',
             'report_overview',
-            'dashboard',
         ]
         for name in blocked:
             url = reverse(name)

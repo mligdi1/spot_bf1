@@ -3,395 +3,241 @@
 {% block title %}Mon Profil - BF1{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-  <!-- En-tête héro -->
-  <div class="bg-white p-6 rounded-lg bf1-shadow mb-8">
-    <div class="flex items-start justify-between">
-      <div class="flex items-center">
-        <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=E63946&color=fff&size=96"
-             alt="Avatar de {{ user.username }}"
-             class="w-16 h-16 rounded-full mr-4">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900 flex items-center">
-            {{ user.first_name }} {{ user.last_name }} 
-            <span class="ml-3 inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold
-                         {% if user.is_admin %} bg-purple-100 text-purple-800 {% else %} bg-blue-100 text-blue-800 {% endif %}">
-              {{ user.get_role_display }}
-            </span>
-          </h1>
-          <p class="text-gray-600 mt-1">
-            {{ user.email }}{% if user.phone %} · {{ user.phone }}{% endif %}{% if user.company %} · {{ user.company }}{% endif %}
-          </p>
-          <p class="text-sm text-gray-500 mt-1">
-            Membre depuis {{ user.date_joined|date:"d/m/Y" }} · Dernière connexion {{ user.last_login|date:"d/m/Y H:i" }}
-          </p>
-        </div>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <a href="{% url 'spot_list' %}" class="px-4 py-2 rounded-md bg-gray-900 text-white hover:bg-black">
-          <i class="fas fa-video mr-2"></i> Mes spots
-        </a>
-        <a href="{% url 'broadcast_grid' %}" class="px-4 py-2 rounded-md bg-gray-100 text-gray-900 hover:bg-gray-200">
-          <i class="fas fa-calendar-alt mr-2"></i> Grille de diffusion
-        </a>
-        <a href="{% url 'correspondence_list' %}" class="px-4 py-2 rounded-md bg-gray-100 text-gray-900 hover:bg-gray-200">
-          <i class="fas fa-comments mr-2"></i> Correspondance
-        </a>
-      </div>
-    </div>
-    <!-- Onglets -->
-    <nav class="mt-6 border-b border-gray-200">
-      <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" role="tablist" aria-label="Sections profil">
-        <li class="mr-2">
-          <button class="inline-block px-4 py-3 border-b-2 border-bf1-red text-bf1-red" data-tab="tab-info" aria-selected="true">Informations</button>
-        </li>
-        <li class="mr-2">
-          <button class="inline-block px-4 py-3 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300" data-tab="tab-security">Sécurité</button>
-        </li>
-        <li class="mr-2">
-          <button class="inline-block px-4 py-3 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300" data-tab="tab-activity">Activités</button>
-        </li>
-        <li class="mr-2">
-          <button class="inline-block px-4 py-3 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300"
-                  data-tab="tab-correspondence">Correspondance</button>
-        </li>
-        <li class="mr-2">
-          <button class="inline-block px-4 py-3 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300" data-tab="tab-notifications">Notifications</button>
-        </li>
-      </ul>
-    </nav>
-  </div>
-
-  <!-- Contenu des onglets -->
-  <div>
-    <!-- Informations -->
-    <section id="tab-info" role="tabpanel" aria-labelledby="tab-info-label">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div class="lg:col-span-2">
-          <div class="bg-white p-6 rounded-lg bf1-shadow">
-            <div class="flex items-start justify-between mb-4">
-              <h2 id="tab-info-label" class="text-xl font-semibold text-gray-900">
-                <i class="fas fa-user-edit text-bf1-red mr-2"></i> Informations personnelles
-              </h2>
-              <button id="toggle-personal-form" type="button" class="px-4 py-2 rounded-md bg-gray-900 text-white hover:bg-black"
-                      aria-controls="personal-form-container" aria-expanded="false">
-                <i class="fas fa-edit mr-2"></i> Modifier ses informations personnelles
-              </button>
-            </div>
-
-            <!-- Résumé compact pour réduire l'encombrement -->
-            <div class="bg-gray-50 rounded-lg p-4 mb-6">
-              <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <dt class="text-gray-600">Email</dt>
-                  <dd class="font-medium text-gray-900">{{ user.email }}</dd>
-                </div>
-                <div>
-                  <dt class="text-gray-600">Téléphone</dt>
-                  <dd class="font-medium text-gray-900">{{ user.phone|default:"—" }}</dd>
-                </div>
-                <div>
-                  <dt class="text-gray-600">Entreprise</dt>
-                  <dd class="font-medium text-gray-900">{{ user.company|default:"—" }}</dd>
-                </div>
-                <div class="md:col-span-2">
-                  <dt class="text-gray-600">Adresse</dt>
-                  <dd class="font-medium text-gray-900">{{ user.address|default:"—" }}</dd>
-                </div>
-              </dl>
-            </div>
-
-            <!-- Formulaire replié par défaut -->
-            <div id="personal-form-container" class="hidden">
-              <form method="post" action="{% url 'profile' %}" class="space-y-6" aria-describedby="profile-help">
-                {% csrf_token %}
-                <!-- Identité -->
-                <div>
-                  <h3 class="text-lg font-medium text-gray-900 mb-4">Identité</h3>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label for="first_name" class="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
-                      <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}"
-                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-bf1-red focus:border-bf1-red">
-                    </div>
-                    <div>
-                      <label for="last_name" class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
-                      <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}"
-                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-bf1-red focus:border-bf1-red">
-                    </div>
-                    <div>
-                      <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Nom d'utilisateur</label>
-                      <input type="text" id="username" value="{{ user.username }}" disabled
-                             class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500">
-                      <p class="text-xs text-gray-500 mt-1">Non modifiable</p>
-                    </div>
-                    <div>
-                      <label for="company" class="block text-sm font-medium text-gray-700 mb-1">Entreprise</label>
-                      <input type="text" id="company" name="company" value="{{ user.company }}"
-                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-bf1-red focus:border-bf1-red">
-                    </div>
-                  </div>
-                </div>
-                <!-- Contact -->
-                <div>
-                  <h3 class="text-lg font-medium text-gray-900 mb-4">Contact</h3>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                      <input type="email" id="email" name="email" value="{{ user.email }}"
-                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-bf1-red focus:border-bf1-red">
-                    </div>
-                    <div>
-                      <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
-                      <input type="tel" id="phone" name="phone" value="{{ user.phone }}"
-                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-bf1-red focus:border-bf1-red">
-                    </div>
-                  </div>
-                </div>
-                <!-- Adresse -->
-                <div>
-                  <h3 class="text-lg font-medium text-gray-900 mb-4">Adresse</h3>
-                  <textarea id="address" name="address" rows="3"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-bf1-red focus:border-bf1-red">{{ user.address }}</textarea>
-                </div>
-                <!-- Actions -->
-                <div class="flex justify-end">
-                  <button type="submit" class="bg-bf1-red text-white py-2 px-6 rounded-md hover:bg-bf1-red-dark focus:outline-none focus:ring-2 focus:ring-bf1-red transition-colors">
-                    <i class="fas fa-save mr-2"></i> Enregistrer
-                  </button>
-                </div>
-                <p id="profile-help" class="sr-only">Modifiez votre identité, vos coordonnées et votre adresse.</p>
-              </form>
-            </div>
-          </div>
-        </div>
-        <!-- Aperçu compte -->
-        <aside class="space-y-6">
-          {% if user.is_client %}
-          <div class="bg-white p-6 rounded-lg bf1-shadow">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">
-              <i class="fas fa-chart-pie text-bf1-red mr-2"></i> Mes statistiques
-            </h3>
-            <div class="grid grid-cols-2 gap-4">
-              <div class="bg-gray-50 p-4 rounded-lg">
-                <p class="text-sm text-gray-500">Campagnes</p>
-                <p class="text-2xl font-bold text-bf1-red">{{ stats.total_campaigns }}</p>
-              </div>
-              <div class="bg-gray-50 p-4 rounded-lg">
-                <p class="text-sm text-gray-500">Actives</p>
-                <p class="text-2xl font-bold text-green-600">{{ stats.active_campaigns }}</p>
-              </div>
-              <div class="bg-gray-50 p-4 rounded-lg">
-                <p class="text-sm text-gray-500">Spots</p>
-                <p class="text-2xl font-bold text-bf1-red">{{ stats.total_spots }}</p>
-              </div>
-              <div class="bg-gray-50 p-4 rounded-lg">
-                <p class="text-sm text-gray-500">En attente</p>
-                <p class="text-2xl font-bold text-yellow-500">{{ stats.pending_spots }}</p>
-              </div>
-            </div>
-          </div>
-          {% endif %}
-          <div class="bg-gray-50 p-6 rounded-lg">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">
-              <i class="fas fa-info-circle text-bf1-red mr-2"></i> Informations du compte
-            </h3>
-            <ul class="space-y-3 text-sm">
-              <li class="flex justify-between">
-                <span class="text-gray-600">Type:</span>
-                <span class="font-medium">{{ user.get_role_display }}</span>
-              </li>
-              <li class="flex justify-between">
-                <span class="text-gray-600">Membre depuis:</span>
-                <span class="font-medium">{{ user.date_joined|date:"d/m/Y" }}</span>
-              </li>
-              <li class="flex justify-between">
-                <span class="text-gray-600">Dernière connexion:</span>
-                <span class="font-medium">{{ user.last_login|date:"d/m/Y H:i" }}</span>
-              </li>
-            </ul>
-          </div>
-        </aside>
-      </div>
-    </section>
-
-    <!-- Sécurité -->
-    <section id="tab-security" role="tabpanel" aria-labelledby="tab-security-label" class="hidden">
-      <div class="bg-white p-6 rounded-lg bf1-shadow">
-        <h2 id="tab-security-label" class="text-xl font-semibold text-gray-900 mb-6">
-          <i class="fas fa-lock text-bf1-red mr-2"></i> Sécurité du compte
-        </h2>
-        <form method="post" action="{% url 'profile' %}" class="space-y-6" id="security-form">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+  <section class="bg-white rounded-2xl bf1-shadow p-6 sm:p-8">
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6">
+      <div class="flex items-center gap-4 min-w-0">
+        <form method="post" action="{% url 'profile' %}" enctype="multipart/form-data" class="flex-none">
           {% csrf_token %}
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Nouveau mot de passe</label>
-              <input type="password" id="password" name="password"
-                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-bf1-red focus:border-bf1-red" aria-describedby="pwd-help">
-              <p id="pwd-help" class="text-xs text-gray-500 mt-1">Laissez vide pour conserver le mot de passe actuel.</p>
-              <div class="mt-3">
-                <div class="w-full h-2 bg-gray-200 rounded">
-                  <div id="pwd-strength" class="h-2 rounded bg-red-500" style="width: 0%"></div>
-                </div>
-                <p id="pwd-strength-text" class="text-xs mt-1 text-gray-600"></p>
-              </div>
-            </div>
-            <div>
-              <label for="password_confirm" class="block text-sm font-medium text-gray-700 mb-1">Confirmer</label>
-              <input type="password" id="password_confirm" name="password_confirm"
-                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-bf1-red focus:border-bf1-red">
-            </div>
-          </div>
-          <div class="flex justify-end">
-            <button type="submit" class="bg-bf1-red text-white py-2 px-6 rounded-md hover:bg-bf1-red-dark focus:outline-none focus:ring-2 focus:ring-bf1-red transition-colors">
-              <i class="fas fa-shield-alt mr-2"></i> Mettre à jour le mot de passe
+          <input type="hidden" name="profile_action" value="photo">
+          <input id="profile-photo-input" type="file" name="photo" accept="image/*" class="hidden">
+          <div class="relative">
+            <button type="button" id="profile-photo-view-trigger"
+                    class="block rounded-full focus:outline-none focus:ring-2 focus:ring-bf1-red"
+                    aria-label="Voir la photo de profil">
+              {% if user.photo %}
+              <img src="{{ user.photo.url }}"
+                   alt="Avatar de {{ user.username }}"
+                   class="w-16 h-16 rounded-full ring-2 ring-bf1-red-light object-cover" loading="lazy">
+              {% else %}
+              <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=E63946&color=fff&size=256"
+                   alt="Avatar de {{ user.username }}"
+                   class="w-16 h-16 rounded-full ring-2 ring-bf1-red-light" loading="lazy">
+              {% endif %}
+            </button>
+            <button type="button" id="profile-photo-trigger-badge"
+                    class="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center shadow-md hover:bg-black focus:outline-none focus:ring-2 focus:ring-bf1-red"
+                    aria-label="Ajouter ou modifier la photo de profil">
+              <i class="fas fa-camera text-xs"></i>
             </button>
           </div>
         </form>
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 u-clamp-2">{{ user.first_name }} {{ user.last_name }}</h1>
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold {% if user.is_admin %}bg-purple-100 text-purple-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+              {{ user.get_role_display }}
+            </span>
+          </div>
+          <p class="mt-1 text-gray-600 text-sm sm:text-base u-clamp-2">
+            {{ user.email }}{% if user.phone %} · {{ user.phone }}{% endif %}{% if user.company %} · {{ user.company }}{% endif %}
+          </p>
+          <p class="mt-1 text-xs text-gray-500 u-clamp-2">
+            Membre depuis {{ user.date_joined|date:"d/m/Y" }}{% if user.last_login %} · Dernière connexion {{ user.last_login|date:"d/m/Y H:i" }}{% endif %}
+          </p>
+        </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- Activités -->
-    <section id="tab-activity" role="tabpanel" aria-labelledby="tab-activity-label" class="hidden">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div class="bg-white p-6 rounded-lg bf1-shadow">
-          <h2 id="tab-activity-label" class="text-xl font-semibold text-gray-900 mb-4">
-            <i class="fas fa-bolt text-bf1-red mr-2"></i> Raccourcis
-          </h2>
-          <div class="flex flex-wrap gap-3">
-            <a href="{% url 'spot_list' %}" class="bg-gray-900 text-white px-4 py-2 rounded hover:bg-black">
-              <i class="fas fa-video mr-2"></i> Mes spots
-            </a>
-            <a href="{% url 'broadcast_grid' %}" class="bg-gray-100 text-gray-900 px-4 py-2 rounded hover:bg-gray-200">
-              <i class="fas fa-calendar-alt mr-2"></i> Grille de diffusion
-            </a>
-            <a href="{% url 'correspondence_list' %}" class="bg-gray-100 text-gray-900 px-4 py-2 rounded hover:bg-gray-200">
-              <i class="fas fa-comments mr-2"></i> Correspondance
-            </a>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-6">
+      <section class="bg-white rounded-2xl bf1-shadow p-6">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div class="min-w-0">
+            <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <i class="fas fa-user text-bf1-red"></i>
+              <span>Informations personnelles</span>
+            </h2>
+            <p class="mt-1 text-sm text-gray-600 u-clamp-2">Vérifiez et mettez à jour vos coordonnées.</p>
+          </div>
+          <button id="toggle-personal-form" type="button" class="px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-black text-sm"
+                  aria-controls="personal-form-container" aria-expanded="{% if open_profile_form %}true{% else %}false{% endif %}">
+            <i class="fas fa-pen mr-2"></i>Modifier
+          </button>
+        </div>
+
+        <div class="mt-5 bg-gray-50 rounded-xl p-4">
+          <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <div class="min-w-0">
+              <dt class="text-gray-600">Email</dt>
+              <dd class="font-medium text-gray-900 u-ellipsis">{{ user.email }}</dd>
+            </div>
+            <div class="min-w-0">
+              <dt class="text-gray-600">Téléphone</dt>
+              <dd class="font-medium text-gray-900 u-ellipsis">{{ user.phone|default:"—" }}</dd>
+            </div>
+            <div class="min-w-0">
+              <dt class="text-gray-600">Entreprise</dt>
+              <dd class="font-medium text-gray-900 u-ellipsis">{{ user.company|default:"—" }}</dd>
+            </div>
+            <div class="sm:col-span-2 min-w-0">
+              <dt class="text-gray-600">Adresse</dt>
+              <dd class="font-medium text-gray-900 u-clamp-2">{{ user.address|default:"—" }}</dd>
+            </div>
+            <div class="min-w-0">
+              <dt class="text-gray-600">Rôle</dt>
+              <dd class="font-medium text-gray-900 u-ellipsis">{{ user.get_role_display }}</dd>
+            </div>
+            <div class="min-w-0">
+              <dt class="text-gray-600">Membre depuis</dt>
+              <dd class="font-medium text-gray-900 u-ellipsis">{{ user.date_joined|date:"d/m/Y" }}</dd>
+            </div>
+            <div class="sm:col-span-2 min-w-0">
+              <dt class="text-gray-600">Dernière connexion</dt>
+              <dd class="font-medium text-gray-900 u-ellipsis">{% if user.last_login %}{{ user.last_login|date:"d/m/Y H:i" }}{% else %}—{% endif %}</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div id="personal-form-container" class="mt-6 {% if not open_profile_form %}hidden{% endif %}">
+          <form method="post" action="{% url 'profile' %}" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            <div>
+              <h3 class="text-lg font-medium text-gray-900 mb-4">Identité</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="min-w-0">
+                  <label for="first_name" class="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
+                  <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}"
+                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-bf1-red focus:border-bf1-red">
+                </div>
+                <div class="min-w-0">
+                  <label for="last_name" class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+                  <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}"
+                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-bf1-red focus:border-bf1-red">
+                </div>
+                <div class="min-w-0">
+                  <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Nom d'utilisateur</label>
+                  <input type="text" id="username" value="{{ user.username }}" disabled
+                         class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                </div>
+                <div class="min-w-0">
+                  <label for="company" class="block text-sm font-medium text-gray-700 mb-1">Entreprise</label>
+                  <input type="text" id="company" name="company" value="{{ user.company }}"
+                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-bf1-red focus:border-bf1-red">
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="text-lg font-medium text-gray-900 mb-4">Contact</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="min-w-0">
+                  <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <input type="email" id="email" name="email" value="{{ user.email }}"
+                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-bf1-red focus:border-bf1-red">
+                </div>
+                <div class="min-w-0">
+                  <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
+                  <input type="tel" id="phone" name="phone" value="{{ user.phone }}"
+                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-bf1-red focus:border-bf1-red">
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="text-lg font-medium text-gray-900 mb-4">Adresse</h3>
+              <textarea id="address" name="address" rows="3"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-bf1-red focus:border-bf1-red">{{ user.address }}</textarea>
+            </div>
+
+            <div class="bg-gray-50 rounded-xl p-4">
+              <div class="flex items-center justify-between gap-4">
+                <div class="min-w-0">
+                  <div class="text-sm font-medium text-gray-900">Mot de passe</div>
+                  <div class="text-xs text-gray-600 u-clamp-2">Laissez masqué si vous ne souhaitez pas le changer.</div>
+                </div>
+                <button id="toggle-password-fields" type="button" class="px-3 py-2 rounded-lg bg-white text-gray-900 hover:bg-gray-100 text-sm border border-gray-200"
+                        aria-controls="password-fields" aria-expanded="{% if open_password_section %}true{% else %}false{% endif %}">
+                  Changer
+                </button>
+              </div>
+              <div id="password-fields" class="mt-4 {% if not open_password_section %}hidden{% endif %}">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div class="min-w-0">
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Nouveau mot de passe</label>
+                    <input type="password" id="password" name="password" autocomplete="new-password"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-bf1-red focus:border-bf1-red">
+                    <p class="text-xs text-gray-500 mt-1">Minimum 8 caractères.</p>
+                  </div>
+                  <div class="min-w-0">
+                    <label for="password_confirm" class="block text-sm font-medium text-gray-700 mb-1">Confirmer</label>
+                    <input type="password" id="password_confirm" name="password_confirm" autocomplete="new-password"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-bf1-red focus:border-bf1-red">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
+              <button type="submit" class="bg-bf1-red text-white py-2 px-6 rounded-lg hover:bg-bf1-red-dark focus:outline-none focus:ring-2 focus:ring-bf1-red transition-colors">
+                <i class="fas fa-save mr-2"></i>Enregistrer
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </div>
+
+    <aside class="space-y-6">
+      {% if user.is_client %}
+      <section class="bg-white rounded-2xl bf1-shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <i class="fas fa-chart-pie text-bf1-red"></i>
+          <span>Statistiques</span>
+        </h3>
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="bg-gray-50 rounded-xl p-4">
+            <div class="text-xs text-gray-600">Campagnes</div>
+            <div class="mt-1 text-2xl font-bold text-bf1-red">{{ stats.total_campaigns|default:"0" }}</div>
+          </div>
+          <div class="bg-gray-50 rounded-xl p-4">
+            <div class="text-xs text-gray-600">Actives</div>
+            <div class="mt-1 text-2xl font-bold text-green-600">{{ stats.active_campaigns|default:"0" }}</div>
+          </div>
+          <div class="bg-gray-50 rounded-xl p-4">
+            <div class="text-xs text-gray-600">Spots</div>
+            <div class="mt-1 text-2xl font-bold text-bf1-red">{{ stats.total_spots|default:"0" }}</div>
+          </div>
+          <div class="bg-gray-50 rounded-xl p-4">
+            <div class="text-xs text-gray-600">En attente</div>
+            <div class="mt-1 text-2xl font-bold text-yellow-600">{{ stats.pending_spots|default:"0" }}</div>
           </div>
         </div>
-        {% if user.is_client %}
-        <div class="bg-white p-6 rounded-lg bf1-shadow">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">
-            <i class="fas fa-chart-line text-bf1-red mr-2"></i> Vue d’ensemble
-          </h3>
-          <div class="grid grid-cols-2 gap-4">
-            <div class="bg-gray-50 p-4 rounded-lg">
-              <p class="text-sm text-gray-500">Campagnes</p>
-              <p class="text-2xl font-bold text-bf1-red">{{ stats.total_campaigns }}</p>
-            </div>
-            <div class="bg-gray-50 p-4 rounded-lg">
-              <p class="text-sm text-gray-500">Actives</p>
-              <p class="text-2xl font-bold text-green-600">{{ stats.active_campaigns }}</p>
-            </div>
-            <div class="bg-gray-50 p-4 rounded-lg">
-              <p class="text-sm text-gray-500">Spots</p>
-              <p class="text-2xl font-bold text-bf1-red">{{ stats.total_spots }}</p>
-            </div>
-            <div class="bg-gray-50 p-4 rounded-lg">
-              <p class="text-sm text-gray-500">En attente</p>
-              <p class="text-2xl font-bold text-yellow-500">{{ stats.pending_spots }}</p>
-            </div>
-          </div>
-        </div>
-        {% endif %}
-      </div>
-    </section>
-
-
-    <!-- Notifications -->
-    <section id="tab-notifications" role="tabpanel" aria-labelledby="tab-notifications-label" class="hidden">
-      <div class="bg-white p-6 rounded-lg bf1-shadow">
-        <h2 id="tab-notifications-label" class="text-xl font-semibold text-gray-900 mb-4">
-          <i class="fas fa-bell text-bf1-red mr-2"></i> Dernières notifications
-        </h2>
-        <div id="profileNotificationsList">
-          {% include 'spot/includes/notifications_list.html' %}
-        </div>
-
-        <script>
-        function getCookie(name) {
-          const value = `; ${document.cookie}`;
-          const parts = value.split(`; ${name}=`);
-          if (parts.length === 2) return parts.pop().split(';').shift();
-        }
-
-        function updateNotifBadge(count) {
-          const badge = document.getElementById('notif-badge-count');
-          if (!badge) return;
-          if (count && count > 0) {
-            badge.textContent = count;
-            badge.classList.remove('hidden');
-          } else {
-            badge.textContent = '';
-            badge.classList.add('hidden');
-          }
-        }
-
-        async function reloadProfileNotifications() {
-          try {
-            const res = await fetch('{% url "notifications_list_partial" %}', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-            const data = await res.json();
-            if (data.status === 'success') {
-              document.getElementById('profileNotificationsList').innerHTML = data.html;
-              updateNotifBadge(data.unread_count);
-            }
-          } catch (e) { console.error(e); }
-        }
-
-        async function markAsRead(notificationId) {
-          try {
-            const urlTpl = '{% url "notifications_mark_read" id=0 %}';
-            const url = urlTpl.replace('0', notificationId);
-            const res = await fetch(url, { method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken') } });
-            const data = await res.json();
-            if (data.status === 'success') {
-              updateNotifBadge(data.unread_count);
-              reloadProfileNotifications();
-            }
-          } catch (e) { console.error(e); }
-        }
-
-        async function deleteNotification(notificationId) {
-          if (!confirm('Supprimer cette notification ?')) return;
-          try {
-            const urlTpl = '{% url "notifications_delete" id=0 %}';
-            const url = urlTpl.replace('0', notificationId);
-            const res = await fetch(url, { method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken') } });
-            const data = await res.json();
-            if (data.status === 'success') {
-              updateNotifBadge(data.unread_count);
-              reloadProfileNotifications();
-            }
-          } catch (e) { console.error(e); }
-        }
-        </script>
-      </div>
-    </section>
+      </section>
+      {% endif %}
+    </aside>
   </div>
 </div>
 
-<!-- Scripts -->
-<script>
-  // Tabs
-  (function() {
-    const buttons = document.querySelectorAll('[data-tab]');
-    const panes = ['tab-info','tab-security','tab-activity','tab-notifications']
-      .map(id => document.getElementById(id));
-    function showTab(id) {
-      panes.forEach(p => p.classList.toggle('hidden', p.id !== id));
-      buttons.forEach(b => {
-        const active = b.getAttribute('data-tab') === id;
-        b.classList.toggle('border-bf1-red', active);
-        b.classList.toggle('text-bf1-red', active);
-        b.setAttribute('aria-selected', active ? 'true' : 'false');
-      });
-    }
-    buttons.forEach(b => b.addEventListener('click', () => showTab(b.getAttribute('data-tab'))));
-    showTab('tab-info'); // défaut
-  })();
+<div id="profile-photo-modal" class="hidden fixed inset-0 z-50">
+  <div id="profile-photo-modal-backdrop" class="absolute inset-0 bg-black/70"></div>
+  <div class="relative w-full h-full flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl overflow-hidden shadow-xl w-full max-w-2xl" role="dialog" aria-modal="true" aria-label="Photo de profil">
+      <div class="p-4 border-b flex items-center justify-between">
+        <div class="font-semibold text-gray-900">Photo de profil</div>
+        <button type="button" id="profile-photo-modal-close" class="text-gray-600 hover:text-gray-900" aria-label="Fermer">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="p-4 bg-gray-50">
+        <img id="profile-photo-modal-image" alt="Photo de profil" class="w-full h-auto max-h-[70vh] object-contain rounded-xl bg-white">
+      </div>
+    </div>
+  </div>
+</div>
 
-  // Bascule du formulaire d'informations personnelles (réduction de l'encombrement)
+<script>
   (function() {
     const btn = document.getElementById('toggle-personal-form');
     const panel = document.getElementById('personal-form-container');
@@ -400,220 +246,70 @@
       const isOpen = !panel.classList.contains('hidden');
       panel.classList.toggle('hidden', isOpen);
       btn.setAttribute('aria-expanded', (!isOpen).toString());
-      // Accentuer le bouton en état actif
-      btn.classList.toggle('bg-gray-900', isOpen);
-      btn.classList.toggle('bg-bf1-red', !isOpen);
     });
   })();
 
-  // Validation sécurité: confirm + force
   (function() {
-    const form = document.getElementById('security-form');
-    if (!form) return;
-    const pwd = document.getElementById('password');
-    const confirm = document.getElementById('password_confirm');
-    const bar = document.getElementById('pwd-strength');
-    const text = document.getElementById('pwd-strength-text');
-
-    function score(value) {
-      let s = 0;
-      if (value.length >= 8) s += 25;
-      if (/[A-Z]/.test(value)) s += 25;
-      if (/[a-z]/.test(value)) s += 25;
-      if (/[0-9\W]/.test(value)) s += 25;
-      return s;
-    }
-    function updateStrength() {
-      const val = pwd.value || '';
-      const s = score(val);
-      bar.style.width = s + '%';
-      bar.classList.remove('bg-red-500','bg-yellow-500','bg-green-500');
-      if (s < 50) { bar.classList.add('bg-red-500'); text.textContent = 'Faible'; }
-      else if (s < 75) { bar.classList.add('bg-yellow-500'); text.textContent = 'Moyen'; }
-      else { bar.classList.add('bg-green-500'); text.textContent = 'Fort'; }
-    }
-    pwd && pwd.addEventListener('input', updateStrength);
-    form.addEventListener('submit', function(e) {
-      if (pwd.value && pwd.value !== confirm.value) {
-        e.preventDefault();
-        alert('Les mots de passe ne correspondent pas.');
-      }
+    const input = document.getElementById('profile-photo-input');
+    const triggerBadge = document.getElementById('profile-photo-trigger-badge');
+    if (!input) return;
+    const openPicker = function() {
+      input.click();
+    };
+    if (triggerBadge) triggerBadge.addEventListener('click', openPicker);
+    input.addEventListener('change', function() {
+      if (!input.files || !input.files.length) return;
+      const form = input.closest('form');
+      if (form) form.submit();
     });
   })();
-</script>
-<section id="tab-correspondence" role="tabpanel" aria-labelledby="tab-correspondence-label" class="hidden">
-  <div class="bg-white p-6 rounded-lg bf1-shadow mb-6">
-    <div class="flex items-center justify-between">
-      <h2 id="tab-correspondence-label" class="text-xl font-semibold text-gray-900">
-        <i class="fas fa-comments text-bf1-red mr-2"></i> Correspondance
-      </h2>
-      <div class="flex gap-2">
-        <a href="{% url 'correspondence_new' %}" class="px-4 py-2 rounded-md bg-gray-900 text-white hover:bg-black">
-          <i class="fas fa-plus mr-2"></i> Nouvelle discussion
-        </a>
-        <a href="{% url 'contact_advisor' %}" class="px-4 py-2 rounded-md bg-gray-100 text-gray-900 hover:bg-gray-200">
-          <i class="fas fa-envelope mr-2"></i> Demande de contact
-        </a>
-      </div>
-    </div>
-  </div>
 
-  <!-- Résumé -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-    <div class="bg-gray-50 p-4 rounded-lg">
-      <p class="text-sm text-gray-600">Discussions ouvertes</p>
-      <p class="text-2xl font-bold text-bf1-red">{{ correspondence_stats.threads.open }}</p>
-    </div>
-    <div class="bg-gray-50 p-4 rounded-lg">
-      <p class="text-sm text-gray-600">Discussions en attente</p>
-      <p class="text-2xl font-bold text-yellow-600">{{ correspondence_stats.threads.pending }}</p>
-    </div>
-    <div class="bg-gray-50 p-4 rounded-lg">
-      <p class="text-sm text-gray-600">Discussions clôturées</p>
-      <p class="text-2xl font-bold text-green-600">{{ correspondence_stats.threads.closed }}</p>
-    </div>
-    <div class="bg-gray-50 p-4 rounded-lg">
-      <p class="text-sm text-gray-600">Demandes (nouvelles)</p>
-      <p class="text-2xl font-bold text-blue-600">{{ correspondence_stats.requests.new }}</p>
-    </div>
-  </div>
-
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-    <!-- Mes discussions -->
-    <div class="bg-white p-6 rounded-lg bf1-shadow">
-      <h3 class="text-lg font-semibold text-gray-900 mb-4">
-        <i class="fas fa-comments mr-2 text-bf1-red"></i> Mes discussions
-      </h3>
-      {% if threads %}
-      <ul class="space-y-3">
-        {% for t in threads %}
-        <li class="p-4 rounded-lg border border-gray-200 hover:border-bf1-red transition-colors">
-          <div class="flex items-start justify-between">
-            <div>
-              <h4 class="font-semibold text-gray-900">{{ t.subject }}</h4>
-              <p class="text-sm text-gray-600">
-                {% if t.related_campaign %}Campagne: {{ t.related_campaign.title }} · {% endif %}
-                Dernier message: {{ t.last_message_at|default:t.updated_at|date:"d/m/Y H:i" }}
-              </p>
-            </div>
-            <span class="text-xs px-2 py-1 rounded
-                         {% if t.status == 'open' %} bg-blue-100 text-blue-800
-                         {% elif t.status == 'pending' %} bg-yellow-100 text-yellow-800
-                         {% else %} bg-green-100 text-green-800 {% endif %}">
-              {{ t.get_status_display }}
-            </span>
-          </div>
-          <div class="mt-3 text-right">
-            <a href="{% url 'correspondence_thread' t.id %}" class="text-gray-700 hover:text-bf1-red">Voir</a>
-          </div>
-        </li>
-        {% endfor %}
-      </ul>
-      {% else %}
-      <div class="text-center py-8 text-gray-500">
-        <i class="fas fa-inbox text-4xl mb-3"></i>
-        <p>Aucune discussion pour le moment.</p>
-        <a href="{% url 'correspondence_new' %}" class="inline-flex mt-3 px-3 py-2 rounded bg-gray-900 text-white hover:bg-black">
-          <i class="fas fa-plus mr-2"></i> Nouvelle discussion
-        </a>
-      </div>
-      {% endif %}
-    </div>
-
-    <!-- Mes demandes de contact -->
-    <div class="bg-white p-6 rounded-lg bf1-shadow">
-      <h3 class="text-lg font-semibold text-gray-900 mb-4">
-        <i class="fas fa-envelope mr-2 text-bf1-red"></i> Mes demandes de contact
-      </h3>
-      {% if contact_requests %}
-      <ul class="space-y-3">
-        {% for r in contact_requests %}
-        <li class="p-4 rounded-lg border border-gray-200">
-          <div class="flex items-start justify-between">
-            <div>
-              <h4 class="font-semibold text-gray-900">{{ r.subject }}</h4>
-              <p class="text-sm text-gray-600">
-                {{ r.created_at|date:"d/m/Y H:i" }}
-                {% if r.preferred_contact_time %} · Préférence: {{ r.preferred_contact_time }}{% endif %}
-              </p>
-            </div>
-            <span class="text-xs px-2 py-1 rounded
-                         {% if r.status == 'new' %} bg-blue-100 text-blue-800
-                         {% elif r.status == 'contacted' %} bg-yellow-100 text-yellow-800
-                         {% else %} bg-green-100 text-green-800 {% endif %}">
-              {{ r.get_status_display }}
-            </span>
-          </div>
-        </li>
-        {% endfor %}
-      </ul>
-      {% else %}
-      <div class="text-center py-8 text-gray-500">
-        <i class="fas fa-inbox text-4xl mb-3"></i>
-        <p>Aucune demande de contact.</p>
-        <a href="{% url 'contact_advisor' %}" class="inline-flex mt-3 px-3 py-2 rounded bg-gray-100 text-gray-900 hover:bg-gray-200">
-          <i class="fas fa-envelope mr-2"></i> Demande de contact
-        </a>
-      </div>
-      {% endif %}
-    </div>
-  </div>
-</section>
-</div>
-
-<!-- Scripts -->
-<script>
-  // Tabs
   (function() {
-    const buttons = document.querySelectorAll('[data-tab]');
-    const panes = [
-      'tab-info',
-      'tab-security',
-      'tab-activity',
-      'tab-correspondence'
-    ].map(id => document.getElementById(id));
-    function showTab(id) {
-      panes.forEach(p => p.classList.toggle('hidden', p.id !== id));
-      buttons.forEach(b => {
-        const active = b.getAttribute('data-tab') === id;
-        b.classList.toggle('border-bf1-red', active);
-        b.classList.toggle('text-bf1-red', active);
-        b.setAttribute('aria-selected', active ? 'true' : 'false');
-      });
-    }
-    buttons.forEach(b => b.addEventListener('click', () => showTab(b.getAttribute('data-tab'))));
-    showTab('tab-info'); // défaut
+    const trigger = document.getElementById('profile-photo-view-trigger');
+    const modal = document.getElementById('profile-photo-modal');
+    const backdrop = document.getElementById('profile-photo-modal-backdrop');
+    const closeBtn = document.getElementById('profile-photo-modal-close');
+    const img = document.getElementById('profile-photo-modal-image');
+    if (!trigger || !modal || !img) return;
+    const avatarImg = trigger.querySelector('img');
+    if (!avatarImg) return;
+    const open = function() {
+      img.src = avatarImg.currentSrc || avatarImg.src || '';
+      modal.classList.remove('hidden');
+    };
+    const close = function() {
+      modal.classList.add('hidden');
+      img.removeAttribute('src');
+    };
+    trigger.addEventListener('click', open);
+    if (closeBtn) closeBtn.addEventListener('click', close);
+    if (backdrop) backdrop.addEventListener('click', close);
+    document.addEventListener('keydown', function(e) {
+      if (e.key !== 'Escape') return;
+      if (!modal.classList.contains('hidden')) close();
+    });
   })();
 
-  // Validation sécurité: confirm + force
   (function() {
-    const form = document.getElementById('security-form');
+    const toggle = document.getElementById('toggle-password-fields');
+    const panel = document.getElementById('password-fields');
+    if (!toggle || !panel) return;
+    toggle.addEventListener('click', function() {
+      const isOpen = !panel.classList.contains('hidden');
+      panel.classList.toggle('hidden', isOpen);
+      toggle.setAttribute('aria-expanded', (!isOpen).toString());
+    });
+  })();
+
+  (function() {
+    const container = document.getElementById('personal-form-container');
+    if (!container) return;
+    const form = container.querySelector('form');
     if (!form) return;
     const pwd = document.getElementById('password');
     const confirm = document.getElementById('password_confirm');
-    const bar = document.getElementById('pwd-strength');
-    const text = document.getElementById('pwd-strength-text');
-
-    function score(value) {
-      let s = 0;
-      if (value.length >= 8) s += 25;
-      if (/[A-Z]/.test(value)) s += 25;
-      if (/[a-z]/.test(value)) s += 25;
-      if (/[0-9\W]/.test(value)) s += 25;
-      return s;
-    }
-    function updateStrength() {
-      const val = pwd.value || '';
-      const s = score(val);
-      bar.style.width = s + '%';
-      bar.classList.remove('bg-red-500','bg-yellow-500','bg-green-500');
-      if (s < 50) { bar.classList.add('bg-red-500'); text.textContent = 'Faible'; }
-      else if (s < 75) { bar.classList.add('bg-yellow-500'); text.textContent = 'Moyen'; }
-      else { bar.classList.add('bg-green-500'); text.textContent = 'Fort'; }
-    }
-    pwd && pwd.addEventListener('input', updateStrength);
     form.addEventListener('submit', function(e) {
-      if (pwd.value && pwd.value !== confirm.value) {
+      if (pwd && confirm && pwd.value && pwd.value !== confirm.value) {
         e.preventDefault();
         alert('Les mots de passe ne correspondent pas.');
       }

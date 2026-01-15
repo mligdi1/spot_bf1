@@ -17,72 +17,71 @@
 
 <form method="get" action="{% url 'diffusion_spots' %}" class="card p-4 mb-4 grid grid-cols-1 md:grid-cols-6 gap-3 hover-raise">
   <div class="form__group">
+    <input id="filter-client" name="client" value="{{ request.GET.client }}" class="form__control" placeholder="Client" data-validate="min:2" aria-describedby="client-help" />
     <label for="filter-client" class="form__label">Client</label>
-    <input id="filter-client" name="client" value="{{ request.GET.client }}" class="form__control" data-validate="min:2" aria-describedby="client-help" />
     <i class="form__icon fa-solid fa-user"></i>
     <p id="client-help" class="text-xs text-gray-500 mt-1">Saisissez un nom de client. Suggestions automatiques.</p>
     <span class="form__error" data-for="client"></span>
   </div>
 
-  <div class="form__group">
-    <label for="filter-type" class="form__label">Type</label>
+  <div class="form__group form__group--static">
     <select id="filter-type" name="type" class="form__control">
-      <option value="">Type</option>
+      <option value="">Tous</option>
       <option value="image" {% if request.GET.type == 'image' %}selected{% endif %}>Image</option>
       <option value="video" {% if request.GET.type == 'video' %}selected{% endif %}>Vidéo</option>
     </select>
+    <label for="filter-type" class="form__label">Type</label>
     <i class="form__icon fa-solid fa-chevron-down"></i>
   </div>
 
-  <div class="form__group">
-    <label for="filter-duration" class="form__label">Durée</label>
+  <div class="form__group form__group--static">
     <select id="filter-duration" name="duration" class="form__control">
-      <option value="">Durée</option>
+      <option value="">Toutes</option>
       <option value="15" {% if request.GET.duration == '15' %}selected{% endif %}>15s</option>
       <option value="30" {% if request.GET.duration == '30' %}selected{% endif %}>30s</option>
       <option value="60" {% if request.GET.duration == '60' %}selected{% endif %}>60s</option>
     </select>
+    <label for="filter-duration" class="form__label">Durée</label>
     <i class="form__icon fa-solid fa-chevron-down"></i>
   </div>
 
-  <div class="form__group">
-    <label for="filter-status" class="form__label">Statut</label>
+  <div class="form__group form__group--static">
     <select id="filter-status" name="status" class="form__control">
-      <option value="">Statut</option>
+      <option value="">Tous</option>
       {% for val,label in status_choices %}
         <option value="{{ val }}" {% if request.GET.status == val %}selected{% endif %}>{{ label }}</option>
       {% endfor %}
     </select>
+    <label for="filter-status" class="form__label">Statut</label>
     <i class="form__icon fa-solid fa-chevron-down"></i>
   </div>
 
   <div class="grid grid-cols-2 gap-2">
-    <div class="form__group">
-      <label for="filter-date" class="form__label">Date</label>
+    <div class="form__group form__group--static">
       <select id="filter-date" name="date" class="form__control">
-        <option value="">Date</option>
+        <option value="">Toutes</option>
         <option value="today" {% if request.GET.date == 'today' %}selected{% endif %}>Aujourd'hui</option>
         <option value="tomorrow" {% if request.GET.date == 'tomorrow' %}selected{% endif %}>Demain</option>
         <option value="week" {% if request.GET.date == 'week' %}selected{% endif %}>Semaine</option>
         <option value="month" {% if request.GET.date == 'month' %}selected{% endif %}>Mois</option>
         <option value="custom" {% if request.GET.date == 'custom' %}selected{% endif %}>Personnalisé</option>
       </select>
+      <label for="filter-date" class="form__label">Date</label>
       <i class="form__icon fa-solid fa-chevron-down"></i>
     </div>
     <div class="grid grid-cols-2 gap-2">
-      <div class="form__group">
-        <label for="filter-date-from" class="form__label">Du</label>
+      <div class="form__group form__group--static">
         <input id="filter-date-from" type="date" name="date_from" value="{{ request.GET.date_from }}" class="form__control" />
+        <label for="filter-date-from" class="form__label">Du</label>
       </div>
-      <div class="form__group">
-        <label for="filter-date-to" class="form__label">Au</label>
+      <div class="form__group form__group--static">
         <input id="filter-date-to" type="date" name="date_to" value="{{ request.GET.date_to }}" class="form__control" />
+        <label for="filter-date-to" class="form__label">Au</label>
       </div>
     </div>
   </div>
 
-  <div class="form__group">
-    <label for="filter-sort" class="form__label">Trier par</label>
+  <div class="form__group form__group--static">
     <select id="filter-sort" name="sort" class="form__control">
       <option value="">Par défaut (début de campagne)</option>
       <option value="campaign_start_asc" {% if request.GET.sort == 'campaign_start_asc' %}selected{% endif %}>Début de campagne (ancien → récent)</option>
@@ -90,6 +89,7 @@
       <option value="next_broadcast_asc" {% if request.GET.sort == 'next_broadcast_asc' %}selected{% endif %}>Prochaine diffusion (proche → lointain)</option>
       <option value="next_broadcast_desc" {% if request.GET.sort == 'next_broadcast_desc' %}selected{% endif %}>Prochaine diffusion (lointain → proche)</option>
     </select>
+    <label for="filter-sort" class="form__label">Trier par</label>
     <i class="form__icon fa-solid fa-chevron-down"></i>
   </div>
 

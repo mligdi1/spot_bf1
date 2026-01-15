@@ -6,7 +6,7 @@ from . import views_editorial_people
 urlpatterns = [
     # Accueil et session
     path('', views.home, name='root'),
-    path('dashboard/', views.dashboard, name='dashboard'),
+    path('dashboard/', views.dashboard),
     path('home/', views.home, name='home'),
     path('register/', views.register, name='register'),
     path('login/', views.user_login, name='login'),
@@ -87,6 +87,8 @@ urlpatterns = [
     path('editorial/coverage/<uuid:coverage_id>/assign/', views.editorial_assign_coverage, name='editorial_assign_coverage'),
     path('editorial/assignments/', views.editorial_assignments, name='editorial_assignments'),
     path('editorial/notifications/', views.editorial_notifications, name='editorial_notifications'),
+    path('editorial/chat/', views.editorial_support_chat, name='editorial_support_chat'),
+    path('editorial/chat/<uuid:thread_id>/', views.editorial_chat_thread, name='editorial_chat_thread'),
     path('editorial/planning/', views.editorial_planning, name='editorial_planning'),
     path('editorial/planning/move/', views.editorial_planning_move, name='editorial_planning_move'),
     path('editorial/journalists/', views_editorial_people.journalists_page, name='editorial_journalists'),

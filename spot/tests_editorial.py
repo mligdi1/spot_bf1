@@ -1,8 +1,10 @@
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from datetime import time
+from django.urls import reverse
+from unittest.mock import patch
 from .models import (
     Journalist,
     Driver,
@@ -10,6 +12,7 @@ from .models import (
     CoverageAssignment,
     AssignmentNotificationCampaign,
     AssignmentNotificationAttempt,
+    Notification,
 )
 
 User = get_user_model()
@@ -22,6 +25,12 @@ class EditorialPagesTests(TestCase):
             email='manager@test.com',
             password='pass12345',
             role='editorial_manager'
+        )
+        self.admin = User.objects.create_user(
+            username='admin1',
+            email='admin1@test.com',
+            password='pass12345',
+            role='admin'
         )
         self.client.login(username='manager', password='pass12345')
         self.journalist = Journalist.objects.create(
@@ -42,6 +51,21 @@ class EditorialPagesTests(TestCase):
             coverage_type='video_report',
             status='review',
         )
+
+    def test_editorial_support_chat_and_notification_on_message(self):
+        resp = self.client.get(reverse('editorial_support_chat'), follow=False)
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/editorial/chat/', resp['Location'])
+
+        thread_id = resp['Location'].rstrip('/').split('/')[-1]
+        thread_url = reverse('editorial_chat_thread', kwargs={'thread_id': thread_id})
+        resp2 = self.client.get(thread_url)
+        self.assertEqual(resp2.status_code, 200)
+
+        resp3 = self.client.post(thread_url, {'content': 'Bonjour admin'}, follow=False)
+        self.assertEqual(resp3.status_code, 302)
+        from .models import Notification
+        self.assertTrue(Notification.objects.filter(user=self.admin, related_thread__isnull=False).exists())
 
     def test_journalist_detail_json(self):
         url = reverse('editorial_api_journalist_detail', args=[self.journalist.id])
@@ -131,3 +155,46 @@ class EditorialPagesTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         camp.refresh_from_db()
         self.assertEqual(camp.status, 'confirmed')
+
+
+@override_settings(
+    EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    OFFSITE_NOTIFICATIONS={
+        'enabled': True,
+        'dedupe_minutes': 60,
+        'roles': {
+            'client': {'email': True},
+        },
+    },
+)
+class OffsiteNotificationDeliveryTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='client1',
+            email='client1@test.com',
+            password='pass12345',
+            role='client',
+            phone='+22670000009',
+        )
+
+    def test_delivers_email_and_whatsapp_and_marks_status_fields(self):
+        with patch('spot.signals.send_notification_email', return_value=True) as email_mock:
+            with self.captureOnCommitCallbacks(execute=True):
+                n = Notification.objects.create(user=self.user, title='Titre', message='Message', type='info')
+
+        n.refresh_from_db()
+        self.assertEqual(email_mock.call_count, 1)
+        self.assertEqual(n.email_status, 'sent')
+        self.assertIsNotNone(n.email_sent_at)
+        self.assertEqual(n.email_error, '')
+
+    def test_dedup_skips_second_notification(self):
+        with patch('spot.signals.send_notification_email', return_value=True) as email_mock:
+            with self.captureOnCommitCallbacks(execute=True):
+                Notification.objects.create(user=self.user, title='Titre', message='Message', type='info')
+            with self.captureOnCommitCallbacks(execute=True):
+                n2 = Notification.objects.create(user=self.user, title='Titre', message='Message', type='info')
+
+        n2.refresh_from_db()
+        self.assertEqual(email_mock.call_count, 1)
+        self.assertEqual((n2.email_status or '').strip(), '')

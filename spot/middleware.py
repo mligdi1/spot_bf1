@@ -56,7 +56,7 @@ class AdminRestrictionMiddleware:
                     messages.error(request, "Cette fonctionnalité est réservée aux clients.")
                 except Exception:
                     pass
-                return redirect('dashboard')
+                return redirect('home')
 
         if getattr(user, 'is_authenticated', False) and hasattr(user, 'is_editorial_manager') and user.is_editorial_manager():
             media_prefix = getattr(settings, 'MEDIA_URL', '/media/') or '/media/'
@@ -83,6 +83,32 @@ class AdminRestrictionMiddleware:
                 except Exception:
                     pass
                 return redirect('editorial_dashboard')
+
+        if getattr(user, 'is_authenticated', False) and hasattr(user, 'is_diffuser') and user.is_diffuser():
+            media_prefix = getattr(settings, 'MEDIA_URL', '/media/') or '/media/'
+            static_prefix = getattr(settings, 'STATIC_URL', '/static/') or '/static/'
+            if request.path_info.startswith(media_prefix) or request.path_info.startswith(static_prefix):
+                return self.get_response(request)
+            allowed = False
+            if view_name:
+                if view_name.startswith('diffusion_'):
+                    allowed = True
+                elif view_name in {'logout', 'login', 'django.views.static.serve'}:
+                    allowed = True
+            if view_name and not allowed:
+                try:
+                    self.logger.info(
+                        'DIFFUSION_BLOCK | user=%s username=%s path=%s view=%s method=%s at=%s',
+                        getattr(user, 'id', None), getattr(user, 'username', ''), request.path, view_name, request.method,
+                        timezone.now().isoformat(timespec='seconds')
+                    )
+                except Exception:
+                    pass
+                try:
+                    messages.error(request, "Accès réservé à l’interface Diffusion.")
+                except Exception:
+                    pass
+                return redirect('diffusion_home')
 
         return self.get_response(request)
 

@@ -155,7 +155,7 @@ class AccessibilityTester {
             { endpoint: '/login/', name: 'Page de connexion' },
             { endpoint: '/register/', name: 'Page d\'inscription' },
             { endpoint: '/cost-simulator/', name: 'Simulateur de coût' },
-            { endpoint: '/dashboard/', name: 'Tableau de bord' },
+            { endpoint: '/home/', name: 'Accueil connecté' },
             { endpoint: '/admin/', name: 'Interface d\'administration' }
         ];
 

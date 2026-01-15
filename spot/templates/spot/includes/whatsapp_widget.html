@@ -4,18 +4,24 @@
 {% endcomment %}
 {% if WHATSAPP_WIDGET.enabled and WHATSAPP_WIDGET.phone %}
   {% with phone=WHATSAPP_WIDGET.phone msg=WHATSAPP_WIDGET.message pos=WHATSAPP_WIDGET.position color=WHATSAPP_WIDGET.color size=WHATSAPP_WIDGET.size %}
-  <div id="bf1-wa-draggable" class="fixed z-40 cursor-grab"
+  <div id="bf1-wa-draggable" class="fixed z-40 cursor-grab flex items-center gap-2 {% if pos == 'bottom-left' %}flex-row{% else %}flex-row-reverse{% endif %}"
        style="{% if pos == 'bottom-left' %}left:16px;{% else %}right:16px;{% endif %} bottom:16px;">
     <a id="bf1-whatsapp-widget-link"
        href="https://wa.me/{{ phone|urlencode }}?text={{ msg|urlencode }}"
        target="_blank" rel="noopener"
        aria-label="Contacter le support via WhatsApp"
-       class="group inline-flex items-center justify-center rounded-full shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bf1-red transition transform hover:scale-105 pointer-events-auto"
+       class="relative group inline-flex items-center justify-center rounded-full shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bf1-red transition transform hover:scale-105 pointer-events-auto border-2 border-white/80"
        style="background-color: {{ color }}; width: {% if size == 'sm' %}48px{% elif size == 'lg' %}64px{% else %}56px{% endif %}; height: {% if size == 'sm' %}48px{% elif size == 'lg' %}64px{% else %}56px{% endif %};">
       <span class="sr-only">WhatsApp</span>
-      <i class="fab fa-whatsapp text-white" aria-hidden="true"
+      <span aria-hidden="true" class="absolute inset-0 rounded-full bg-white/20 animate-ping"></span>
+      <span aria-hidden="true" class="absolute inset-0 rounded-full bg-white/10"></span>
+      <i class="relative fab fa-whatsapp text-white" aria-hidden="true"
          style="font-size: {% if size == 'sm' %}20px{% elif size == 'lg' %}28px{% else %}24px{% endif %};"></i>
     </a>
+    <div class="pointer-events-none hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white text-gray-900 text-sm font-semibold shadow border border-gray-200">
+      <span class="w-2 h-2 rounded-full bg-green-500"></span>
+      WhatsApp
+    </div>
   </div>
 
   <!-- Accessible confirmation dialog -->

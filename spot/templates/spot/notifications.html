@@ -35,9 +35,9 @@
                 {% endif %}
             </div>
             <div class="mt-2 sm:mt-0">
-                <a href="{% url 'dashboard' %}" class="text-bf1-red hover:text-bf1-red-dark font-medium">
+                <a href="{% url 'home' %}" class="text-bf1-red hover:text-bf1-red-dark font-medium">
                     <i class="fas fa-arrow-left mr-1"></i>
-                    Retour au tableau de bord
+                    Retour à l'accueil
                 </a>
             </div>
         </div>
@@ -127,11 +127,11 @@ async function markAsRead(notificationId) {
     const data = await res.json();
     if (data.status === 'success') {
       updateNotifBadge(data.unread_count);
-      reloadNotifications();
+      return true;
     }
   } catch (e) {
     console.error('Erreur:', e);
-    alert('Erreur lors de la mise à jour.');
+    return false;
   }
 }
 
@@ -163,6 +163,31 @@ async function deleteNotification(notificationId) {
     alert('Erreur lors de la suppression.');
   }
 }
+
+function wireAutoReadOnClick() {
+  const list = document.getElementById('notificationsList');
+  if (!list) return;
+  list.addEventListener('click', async function(e) {
+    const li = e.target.closest('.js-notif-item');
+    if (!li || !list.contains(li)) return;
+    if (e.target.closest('.js-notif-delete')) return;
+    if (li.getAttribute('data-notif-is-read') === '1') return;
+
+    const link = e.target.closest('a[href]');
+    if (link) {
+      e.preventDefault();
+      const ok = await markAsRead(li.getAttribute('data-notif-id'));
+      const href = link.getAttribute('href');
+      if (href) window.location.href = href;
+      return;
+    }
+
+    const ok = await markAsRead(li.getAttribute('data-notif-id'));
+    if (ok) reloadNotifications();
+  });
+}
+
+wireAutoReadOnClick();
 
 // Auto-refresh optionnel
 // setInterval(reloadNotifications, 30000);

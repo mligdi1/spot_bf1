@@ -143,12 +143,11 @@ def test_authentication():
             print(f"❌ Erreur de connexion: {response.status_code}")
             return False
         
-        # Test accès au tableau de bord
-        response = client.get('/dashboard/')
+        response = client.get('/home/')
         if response.status_code == 200:
-            print("✅ Accès au tableau de bord réussi")
+            print("✅ Accès à l'accueil connecté réussi")
         else:
-            print(f"❌ Erreur accès tableau de bord: {response.status_code}")
+            print(f"❌ Erreur accès accueil connecté: {response.status_code}")
             return False
         
         # Nettoyer

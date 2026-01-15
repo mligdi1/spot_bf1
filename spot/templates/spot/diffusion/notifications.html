@@ -48,9 +48,30 @@
 <script>
 function getCookie(name){const value=`; ${document.cookie}`;const parts=value.split(`; ${name}=`);if(parts.length===2) return parts.pop().split(';').shift();}
 function updateNotifBadge(count){const b=document.getElementById('notif-badge-count');if(!b) return; if(count && count>0){b.textContent=count;b.classList.remove('hidden');} else {b.textContent='';b.classList.add('hidden');}}
-async function reloadNotifications(){try{const res=await fetch('{% url "notifications_list_partial" %}',{headers:{'X-Requested-With':'XMLHttpRequest'}});const data=await res.json();if(data.status==='success'){document.getElementById('notificationsList').innerHTML=data.html;updateNotifBadge(data.unread_count);}}catch(e){console.error(e);}}
-async function markAsRead(notificationId){try{const urlTpl='{% url "notifications_mark_read" id=0 %}';const url=urlTpl.replace('0',notificationId);const res=await fetch(url,{method:'POST',headers:{'X-CSRFToken':getCookie('csrftoken')}});const data=await res.json();if(data.status==='success'){updateNotifBadge(data.unread_count);reloadNotifications();}}catch(e){console.error(e);alert('Erreur lors de la mise à jour.');}}
-async function markAllAsRead(){if(!confirm('Marquer toutes les notifications comme lues ?')) return;try{const res=await fetch('{% url "notifications_mark_all_read" %}',{method:'POST',headers:{'X-CSRFToken':getCookie('csrftoken')}});const data=await res.json();if(data.status==='success'){updateNotifBadge(data.unread_count);reloadNotifications();}}catch(e){console.error(e);}}
-async function deleteNotification(notificationId){if(!confirm('Supprimer cette notification ?')) return;try{const urlTpl='{% url "notifications_delete" id=0 %}';const url=urlTpl.replace('0',notificationId);const res=await fetch(url,{method:'POST',headers:{'X-CSRFToken':getCookie('csrftoken')}});const data=await res.json();if(data.status==='success'){updateNotifBadge(data.unread_count);reloadNotifications();}}catch(e){console.error(e);alert('Erreur lors de la suppression.');}}
+async function reloadNotifications(){try{const res=await fetch('{% url "diffusion_notifications_list_partial" %}',{headers:{'X-Requested-With':'XMLHttpRequest'}});const data=await res.json();if(data.status==='success'){document.getElementById('notificationsList').innerHTML=data.html;updateNotifBadge(data.unread_count);}}catch(e){console.error(e);}}
+async function markAsRead(notificationId){try{const urlTpl='{% url "diffusion_notifications_mark_read" id=0 %}';const url=urlTpl.replace('0',notificationId);const res=await fetch(url,{method:'POST',headers:{'X-CSRFToken':getCookie('csrftoken')}});const data=await res.json();if(data.status==='success'){updateNotifBadge(data.unread_count);return true;}}catch(e){console.error(e);return false;}}
+async function markAllAsRead(){if(!confirm('Marquer toutes les notifications comme lues ?')) return;try{const res=await fetch('{% url "diffusion_notifications_mark_all_read" %}',{method:'POST',headers:{'X-CSRFToken':getCookie('csrftoken')}});const data=await res.json();if(data.status==='success'){updateNotifBadge(data.unread_count);reloadNotifications();}}catch(e){console.error(e);}}
+async function deleteNotification(notificationId){if(!confirm('Supprimer cette notification ?')) return;try{const urlTpl='{% url "diffusion_notifications_delete" id=0 %}';const url=urlTpl.replace('0',notificationId);const res=await fetch(url,{method:'POST',headers:{'X-CSRFToken':getCookie('csrftoken')}});const data=await res.json();if(data.status==='success'){updateNotifBadge(data.unread_count);reloadNotifications();}}catch(e){console.error(e);alert('Erreur lors de la suppression.');}}
+
+(function(){
+  const list = document.getElementById('notificationsList');
+  if(!list) return;
+  list.addEventListener('click', async function(e){
+    const li = e.target.closest('.js-notif-item');
+    if(!li || !list.contains(li)) return;
+    if(e.target.closest('.js-notif-delete')) return;
+    if(li.getAttribute('data-notif-is-read') === '1') return;
+    const link = e.target.closest('a[href]');
+    if(link){
+      e.preventDefault();
+      await markAsRead(li.getAttribute('data-notif-id'));
+      const href = link.getAttribute('href');
+      if(href) window.location.href = href;
+      return;
+    }
+    const ok = await markAsRead(li.getAttribute('data-notif-id'));
+    if(ok) reloadNotifications();
+  });
+})();
 </script>
 {% endblock %}

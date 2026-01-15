@@ -16,13 +16,15 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+def _env_truthy(name: str, default: str = '0') -> bool:
+    return os.environ.get(name, default).strip().lower() in {'1', 'true', 'yes', 'on'}
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', '').strip()
-DEBUG = os.environ.get('DEBUG', '1').strip().lower() in {'1', 'true', 'yes', 'on'}
+DEBUG = _env_truthy('DEBUG', '1')
 
 _allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', '').strip()
 if _allowed_hosts_env:
@@ -39,6 +41,15 @@ if not SECRET_KEY:
 
 # Application definition
 
+_channels_enabled = _env_truthy('ENABLE_CHANNELS', '1' if DEBUG else '0')
+_channels_available = False
+if _channels_enabled:
+    try:
+        import channels  # noqa: F401
+        _channels_available = True
+    except Exception:
+        _channels_available = False
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -47,15 +58,18 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
-    'channels',
-    'spot',
+    'spot.apps.SpotConfig',
     'crispy_forms',
     'crispy_tailwind',
 ]
 
+if _channels_enabled and _channels_available:
+    INSTALLED_APPS.append('channels')
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -103,14 +117,6 @@ DATABASES = {
     }
 }
 
-if os.environ.get('DJANGO_USE_SQLITE') == '1':
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -134,7 +140,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'fr'
 
 TIME_ZONE = 'UTC'
 
@@ -162,17 +168,32 @@ CRISPY_TEMPLATE_PACK = "tailwind"
 
 # Login/Logout URLs
 LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/dashboard/'
+LOGIN_REDIRECT_URL = '/home/'
 LOGOUT_REDIRECT_URL = '/'
 
 # Email settings (for development)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+OFFSITE_NOTIFICATIONS = {
+    'enabled': _env_truthy('OFFSITE_NOTIFICATIONS_ENABLED', '1'),
+    'dedupe_minutes': int(os.environ.get('OFFSITE_NOTIFICATIONS_DEDUPE_MINUTES', '5')),
+    'roles': {
+        'client': {'email': True},
+        'admin': {'email': True},
+        'diffuser': {'email': True},
+        'editorial_manager': {'email': True},
+    },
+}
 
 # Logging configuration
 from .logging_config import LOGGING
 
 # Custom User Model
 AUTH_USER_MODEL = 'spot.User'
+
+AUTHENTICATION_BACKENDS = [
+    'spot.auth_backends.CaseInsensitiveUsernameBackend',
+]
 
 # Feature flags
 ENABLE_PAYMENTS = False
@@ -218,22 +239,23 @@ CHATBOT_ENABLE_PERSISTENT_MEMORY = bool(int(os.environ.get('CHATBOT_ENABLE_PERSI
 CHATBOT_MEMORY_PATH = os.environ.get('CHATBOT_MEMORY_PATH', os.path.join(BASE_DIR, 'media', 'chatbot_memory.jsonl'))
 
 # Channels (dev: mémoire; prod: Redis via env REDIS_URL si channels_redis est installé)
-_redis_url = os.environ.get('REDIS_URL', '').strip()
-_has_channels_redis = False
-try:
-    import channels_redis  # noqa: F401
-    _has_channels_redis = True
-except Exception:
+if _channels_enabled and _channels_available:
+    _redis_url = os.environ.get('REDIS_URL', '').strip()
     _has_channels_redis = False
+    try:
+        import channels_redis  # noqa: F401
+        _has_channels_redis = True
+    except Exception:
+        _has_channels_redis = False
 
-if _redis_url and _has_channels_redis:
-    CHANNEL_LAYERS = {
-        'default': {
-            'BACKEND': 'channels_redis.core.RedisChannelLayer',
-            'CONFIG': {'hosts': [_redis_url]},
+    if _redis_url and _has_channels_redis:
+        CHANNEL_LAYERS = {
+            'default': {
+                'BACKEND': 'channels_redis.core.RedisChannelLayer',
+                'CONFIG': {'hosts': [_redis_url]},
+            }
         }
-    }
-else:
-    CHANNEL_LAYERS = {
-        'default': {'BACKEND': 'channels.layers.InMemoryChannelLayer'}
-    }
+    else:
+        CHANNEL_LAYERS = {
+            'default': {'BACKEND': 'channels.layers.InMemoryChannelLayer'}
+        }

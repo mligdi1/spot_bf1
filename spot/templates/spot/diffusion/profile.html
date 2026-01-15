@@ -7,7 +7,31 @@
     <img src="{% static 'bf1_spots.jpg' %}" alt="Fond BF1 TV" class="absolute inset-0 w-full h-full object-cover opacity-30" loading="lazy">
     <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 text-white">
       <div class="flex items-center">
-        <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=D4272E&color=fff&size=96" alt="Avatar de {{ user.username }}" class="w-16 h-16 rounded-full ring-2 ring-white/40 shadow mr-4">
+        <form method="post" action="{% url 'diffusion_profile' %}" enctype="multipart/form-data" class="flex-none mr-4">
+          {% csrf_token %}
+          <input type="hidden" name="profile_action" value="photo">
+          <input id="diffusion-profile-photo-input" type="file" name="photo" accept="image/*" class="hidden">
+          <div class="relative">
+            <button type="button" id="diffusion-profile-photo-view-trigger"
+                    class="block rounded-full focus:outline-none focus:ring-2 focus:ring-white"
+                    aria-label="Voir la photo de profil">
+              {% if user.photo %}
+              <img src="{{ user.photo.url }}"
+                   alt="Avatar de {{ user.username }}"
+                   class="w-16 h-16 rounded-full ring-2 ring-white/40 shadow object-cover" loading="lazy">
+              {% else %}
+              <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=DC2626&color=fff&size=256"
+                   alt="Avatar de {{ user.username }}"
+                   class="w-16 h-16 rounded-full ring-2 ring-white/40 shadow" loading="lazy">
+              {% endif %}
+            </button>
+            <button type="button" id="diffusion-profile-photo-trigger-badge"
+                    class="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center shadow-md hover:bg-black focus:outline-none focus:ring-2 focus:ring-white"
+                    aria-label="Ajouter ou modifier la photo de profil">
+              <i class="fas fa-camera text-xs"></i>
+            </button>
+          </div>
+        </form>
         <div>
           <h1 id="profile-hero" class="heading text-3xl sm:text-4xl font-semibold">{{ user.first_name }} {{ user.last_name }}</h1>
           <p class="mt-1 text-white/90 flex items-center">
@@ -256,6 +280,23 @@
   </div>
 </section>
 
+<div id="diffusion-profile-photo-modal" class="hidden fixed inset-0 z-50">
+  <div id="diffusion-profile-photo-modal-backdrop" class="absolute inset-0 bg-black/70"></div>
+  <div class="relative w-full h-full flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl overflow-hidden shadow-xl w-full max-w-2xl" role="dialog" aria-modal="true" aria-label="Photo de profil">
+      <div class="p-4 border-b flex items-center justify-between">
+        <div class="font-semibold text-gray-900">Photo de profil</div>
+        <button type="button" id="diffusion-profile-photo-modal-close" class="text-gray-600 hover:text-gray-900" aria-label="Fermer">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="p-4 bg-gray-50">
+        <img id="diffusion-profile-photo-modal-image" alt="Photo de profil" class="w-full h-auto max-h-[70vh] object-contain rounded-xl bg-white">
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   // Bascule du formulaire d'informations personnelles (diffusion)
   (function() {
@@ -268,6 +309,46 @@
       btn.setAttribute('aria-expanded', (!isOpen).toString());
       btn.classList.toggle('bg-gray-900', isOpen);
       btn.classList.toggle('bg-red-600', !isOpen);
+    });
+  })();
+
+  (function() {
+    const input = document.getElementById('diffusion-profile-photo-input');
+    const triggerBadge = document.getElementById('diffusion-profile-photo-trigger-badge');
+    if (!input) return;
+    const openPicker = function() {
+      input.click();
+    };
+    if (triggerBadge) triggerBadge.addEventListener('click', openPicker);
+    input.addEventListener('change', function() {
+      if (!input.files || !input.files.length) return;
+      const form = input.closest('form');
+      if (form) form.submit();
+    });
+  })();
+
+  (function() {
+    const trigger = document.getElementById('diffusion-profile-photo-view-trigger');
+    const modal = document.getElementById('diffusion-profile-photo-modal');
+    const backdrop = document.getElementById('diffusion-profile-photo-modal-backdrop');
+    const closeBtn = document.getElementById('diffusion-profile-photo-modal-close');
+    const img = document.getElementById('diffusion-profile-photo-modal-image');
+    if (!trigger || !modal || !img) return;
+    const avatarImg = trigger.querySelector('img');
+    if (!avatarImg) return;
+    const open = function() {
+      img.src = avatarImg.currentSrc || avatarImg.src || '';
+      modal.classList.remove('hidden');
+    };
+    const close = function() {
+      modal.classList.add('hidden');
+      img.removeAttribute('src');
+    };
+    trigger.addEventListener('click', open);
+    if (backdrop) backdrop.addEventListener('click', close);
+    if (closeBtn) closeBtn.addEventListener('click', close);
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') close();
     });
   })();
 </script>

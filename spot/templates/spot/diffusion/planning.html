@@ -51,7 +51,7 @@
     <div class="grid grid-cols-1 md:grid-cols-7 gap-4">
       {% for d in week_days %}
       <div class="glass rounded-xl p-4" data-drop-day="{{ d|date:'Y-m-d' }}" ondragover="event.preventDefault()" ondrop="window.handleDrop(event)" ondragenter="window.handleDragEnter(event)" ondragleave="window.handleDragLeave(event)">
-        <h3 class="text-sm font-semibold text-gray-700 mb-2">{{ d|date:'EEE d/m' }}</h3>
+        <h3 class="text-sm font-semibold text-gray-700 mb-2 whitespace-nowrap">{{ d|date:'D d/m' }}</h3>
         <div class="space-y-3 min-h-[60px]">
           {% for s in schedules %}
             {% if s.broadcast_date == d %}

@@ -205,7 +205,7 @@
                                 <h3 class="font-medium text-gray-900">{{ campaign.title }}</h3>
                                 <p class="text-sm text-gray-600">{{ campaign.client.username }}</p>
                                 <p class="text-sm text-gray-500">{{ campaign.budget|floatformat:0 }} FCFA</p>
-                                <p class="text-xs text-gray-400">{{ campaign.created_at|timesince }} ago</p>
+                                <p class="text-xs text-gray-400">il y a {{ campaign.created_at|timesince }}</p>
                             </div>
                             <a href="{% url 'admin_campaign_approve' campaign.id %}" 
                                class="bg-bf1-red text-white px-3 py-1 rounded-full hover:bg-bf1-red-dark transition-colors text-sm">
@@ -248,7 +248,7 @@
                                 <h3 class="font-medium text-gray-900">{{ spot.title }}</h3>
                                 <p class="text-sm text-gray-600">{{ spot.campaign.title }}</p>
                                 <p class="text-sm text-gray-500">{{ spot.duration_seconds }}s - {{ spot.campaign.client.username }}</p>
-                                <p class="text-xs text-gray-400">{{ spot.created_at|timesince }} ago</p>
+                                <p class="text-xs text-gray-400">il y a {{ spot.created_at|timesince }}</p>
                             </div>
                             <a href="{% url 'admin_spot_approve' spot.id %}" 
                                class="bg-bf1-red text-white px-3 py-1 rounded-full hover:bg-bf1-red-dark transition-colors text-sm">
@@ -290,7 +290,7 @@
                                 <h3 class="font-medium text-gray-900">{{ cv.event_title }}</h3>
                                 <p class="text-sm text-gray-600">{{ cv.contact_name }}{% if cv.contact_phone %} · {{ cv.contact_phone }}{% endif %}</p>
                                 <p class="text-sm text-gray-500">{{ cv.get_coverage_type_display }} · {{ cv.event_date|date:"d/m/Y" }}</p>
-                                <p class="text-xs text-gray-400">{{ cv.created_at|timesince }} ago</p>
+                                <p class="text-xs text-gray-400">il y a {{ cv.created_at|timesince }}</p>
                             </div>
                             <a href="{% url 'admin_coverage_list' %}"
                                class="bg-bf1-red text-white px-3 py-1 rounded-full hover:bg-bf1-red-dark transition-colors text-sm">
