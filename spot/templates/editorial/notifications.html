@@ -141,75 +141,105 @@
 <script>
 (function(){
     function csrftoken(){
-      const name = 'csrftoken';
-      const cookies = document.cookie ? document.cookie.split(';') : [];
-      for (let c of cookies){
-        const k = c.trim();
-        if (k.startsWith(name + '=')) return decodeURIComponent(k.split('=')[1]);
-      }
-      return '';
-    }
-
-    const actionBtns = document.querySelectorAll('.action-btn');
-    actionBtns.forEach(btn => {
-        btn.addEventListener('click', async function(e){
-            e.preventDefault();
-            const action = this.dataset.action;
-            const id = this.dataset.id;
-            await performAction(action, id, this);
-        });
-    });
-
-    document.getElementById('mark_all_read')?.addEventListener('click', async function(){
-        if(confirm('Tout marquer comme lu ?')){
-            const ok = await performAction('mark_read', null, null);
-            if(ok) location.reload();
-        }
-    });
-
-    async function performAction(action, id, el){
-        const fd = new FormData();
-        fd.append('action', action);
-        if(id) fd.append('id', id);
-
-        try{
-          const r = await fetch('', {
-            method: 'POST',
-            body: fd,
-            headers: {'X-Requested-With':'XMLHttpRequest','X-CSRFToken': csrftoken()}
-          });
-          const res = await r.json();
-          if(!res.ok) return false;
-          if(action === 'delete' && el){
-            el.closest('.group').remove();
-            return true;
+      var name = 'csrftoken';
+      var cookieValue = '';
+      if(document.cookie && document.cookie !== ''){
+        var cookies = document.cookie.split(';');
+        for(var i = 0; i < cookies.length; i++){
+          var cookie = cookies[i].trim();
+          if(cookie.substring(0, name.length + 1) === (name + '=')){
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
           }
-          return true;
-        }catch(e){
-          return false;
         }
+      }
+      return cookieValue;
     }
 
-    const listRoot = document.querySelector('.js-ed-notif-item')?.parentElement;
-    if(listRoot){
-      listRoot.addEventListener('click', async function(e){
-        const card = e.target.closest('.js-ed-notif-item');
-        if(!card || !listRoot.contains(card)) return;
-        if(e.target.closest('.action-btn')) return;
-        if(card.getAttribute('data-is-read') === '1') return;
+    function performAction(action, id, el, cb){
+      var fd = new FormData();
+      fd.append('action', action);
+      if(id) fd.append('id', id);
 
-        const id = card.getAttribute('data-id');
-        const link = e.target.closest('a[href]');
-        if(link){
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', '', true);
+      xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+      xhr.setRequestHeader('X-CSRFToken', csrftoken());
+      xhr.onreadystatechange = function(){
+        if(xhr.readyState !== 4) return;
+        if(xhr.status < 200 || xhr.status >= 300){ if(cb) cb(false); return; }
+        var res = null;
+        try{ res = JSON.parse(xhr.responseText || '{}'); }catch(e){ if(cb) cb(false); return; }
+        if(!res || !res.ok){ if(cb) cb(false); return; }
+        if(action === 'delete' && el){
+          var card = closest(el, '.js-ed-notif-item');
+          if(card && card.parentNode) card.parentNode.removeChild(card);
+          if(cb) cb(true);
+          return;
+        }
+        if(cb) cb(true);
+      };
+      xhr.send(fd);
+    }
+
+    var proto = window.Element && Element.prototype;
+    var _matches = proto && (proto.matches || proto.msMatchesSelector || proto.webkitMatchesSelector);
+    function matches(el, selector){
+      if(!el || el.nodeType !== 1 || !_matches) return false;
+      return _matches.call(el, selector);
+    }
+    function closest(el, selector){
+      var cur = el;
+      while(cur && cur.nodeType === 1){
+        if(matches(cur, selector)) return cur;
+        cur = cur.parentElement;
+      }
+      return null;
+    }
+
+    var markAll = document.getElementById('mark_all_read');
+    if(markAll){
+      markAll.addEventListener('click', function(){
+        if(!confirm('Tout marquer comme lu ?')) return;
+        performAction('mark_read', null, null, function(ok){
+          if(ok) window.location.reload();
+        });
+      });
+    }
+
+    var first = document.querySelector('.js-ed-notif-item');
+    var listRoot = first ? first.parentNode : null;
+    if(listRoot){
+      listRoot.addEventListener('click', function(e){
+        var btn = closest(e.target, '.action-btn');
+        if(btn){
           e.preventDefault();
-          await performAction('mark_read', id, null);
-          const href = link.getAttribute('href');
-          if(href) window.location.href = href;
+          var action = btn.getAttribute('data-action');
+          var id = btn.getAttribute('data-id');
+          performAction(action, id, btn, function(ok){
+            if(ok && action !== 'delete') window.location.reload();
+          });
           return;
         }
 
-        const ok = await performAction('mark_read', id, null);
-        if(ok) location.reload();
+        var card = closest(e.target, '.js-ed-notif-item');
+        if(!card || !listRoot.contains(card)) return;
+        if(card.getAttribute('data-is-read') === '1') return;
+
+        var id2 = card.getAttribute('data-id');
+        var link = closest(e.target, 'a[href]');
+        if(link){
+          e.preventDefault();
+          var href = link.getAttribute('href');
+          performAction('mark_read', id2, null, function(){
+            if(href) window.location.href = href;
+          });
+          return;
+        }
+
+        performAction('mark_read', id2, null, function(ok){
+          if(ok) window.location.reload();
+        });
       });
     }
 })();
