@@ -49,6 +49,7 @@
 
   <!-- Liste des notifications -->
   <div class="bg-white ed-card p-6 shadow-sm">
+    <form id="csrf-token-form" style="display:none">{% csrf_token %}</form>
     {% if items %}
       <div class="mb-4 flex items-center justify-between">
         <div class="text-sm text-gray-600">
@@ -141,6 +142,11 @@
 <script>
 (function(){
     function csrftoken(){
+      var form = document.getElementById('csrf-token-form');
+      if(form){
+        var input = form.querySelector('input[name="csrfmiddlewaretoken"]');
+        if(input && input.value) return input.value;
+      }
       var name = 'csrftoken';
       var cookieValue = '';
       if(document.cookie && document.cookie !== ''){

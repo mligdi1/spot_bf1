@@ -133,6 +133,16 @@ function getCookie(name){
   const parts = value.split(`; ${name}=`);
   if(parts.length === 2) return parts.pop().split(';').shift();
 }
+function getCsrfToken(){
+  const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+  if (input && input.value) return input.value;
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  if (meta) {
+    const v = meta.getAttribute('content') || '';
+    if (v) return v;
+  }
+  return getCookie('csrftoken') || '';
+}
 function showStatus(id, text, cls){
   const el = document.getElementById('status-' + id);
   if(!el) return;
@@ -177,7 +187,7 @@ function autosave(scheduleId, dateStr, timeStr){
   fetch('{% url 'diffusion_planning_move' %}', {
     method: 'POST',
     body: fd,
-    headers: { 'X-CSRFToken': getCookie('csrftoken') }
+    headers: { 'X-CSRFToken': getCsrfToken() }
   }).then(async r => {
     const data = await r.json().catch(()=>({}));
     if(r.ok && data && data.ok){
@@ -223,7 +233,7 @@ window.deleteSchedule = function(scheduleId){
   if(!confirm('Supprimer cette programmation ?')) return;
   const fd = new FormData(); fd.append('schedule_id', scheduleId);
   fetch('{% url 'diffusion_planning_delete' %}', {
-    method:'POST', body:fd, headers:{'X-CSRFToken': getCookie('csrftoken')}
+    method:'POST', body:fd, headers:{'X-CSRFToken': getCsrfToken()}
   }).then(async r=>{
     const data = await r.json().catch(()=>({}));
     if(r.ok && data && data.ok){

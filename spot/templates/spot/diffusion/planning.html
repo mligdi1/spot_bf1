@@ -141,6 +141,14 @@
         const parts = value.split(`; ${name}=`);
         if(parts.length === 2) return parts.pop().split(';').shift();
       }
+      function getCsrfToken(){
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta) {
+          const v = meta.getAttribute('content') || '';
+          if (v) return v;
+        }
+        return getCookie('csrftoken') || '';
+      }
       window.handleDragStart = function(e){
         const id = e.currentTarget.getAttribute('data-schedule-id');
         e.dataTransfer.setData('text/plain', id);
@@ -162,7 +170,7 @@
         fetch('{% url 'diffusion_planning_move' %}', {
           method:'POST',
           body:form,
-          headers:{'X-CSRFToken': getCookie('csrftoken')}
+          headers:{'X-CSRFToken': getCsrfToken()}
         }).then(r=>r.json()).then(function(res){
           if(res && res.ok){ location.reload(); }
         });
@@ -204,7 +212,7 @@
         fetch('{% url 'diffusion_planning_move' %}', {
           method:'POST',
           body:form,
-          headers:{'X-CSRFToken': getCookie('csrftoken')}
+          headers:{'X-CSRFToken': getCsrfToken()}
         }).then(r=>r.json()).then(function(res){
           if(res && res.ok){ location.reload(); }
           else { alert('Erreur lors de la mise à jour de l\'heure'); }
@@ -219,7 +227,7 @@
           fetch('{% url 'diffusion_planning_confirm_broadcast' %}', {
             method:'POST',
             body:form,
-            headers:{'X-CSRFToken': getCookie('csrftoken')}
+            headers:{'X-CSRFToken': getCsrfToken()}
           }).then(r=>r.json()).then(function(res){
             if(!res || !res.ok){
               const code = (res && res.error) || 'unknown_error';
@@ -265,7 +273,7 @@
           fetch('{% url 'diffusion_planning_undo_broadcast' %}', {
             method:'POST',
             body:form,
-            headers:{'X-CSRFToken': getCookie('csrftoken')}
+            headers:{'X-CSRFToken': getCsrfToken()}
           }).then(r=>r.json()).then(function(res){
             if(!res || !res.ok){
               const code = (res && res.error) || 'unknown_error';

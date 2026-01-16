@@ -241,6 +241,11 @@
         thread.scrollTop = thread.scrollHeight;
       };
       const getCsrfToken = () => {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta) {
+          const v = meta.getAttribute('content') || '';
+          if (v) return v;
+        }
         const name = 'csrftoken=';
         const parts = document.cookie.split(';');
         for (let c of parts) {

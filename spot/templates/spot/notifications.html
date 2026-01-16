@@ -44,6 +44,7 @@
     </div>
 
     <!-- Liste des notifications -->
+    <form id="csrf-token-form" style="display:none">{% csrf_token %}</form>
     <div id="notificationsList">
       {% include 'spot/includes/notifications_list.html' %}
     </div>
@@ -104,6 +105,15 @@ function getCookie(name){
   return cookieValue;
 }
 
+function getCsrfToken(){
+  var form = document.getElementById('csrf-token-form');
+  if(form){
+    var input = form.querySelector('input[name="csrfmiddlewaretoken"]');
+    if(input && input.value) return input.value;
+  }
+  return getCookie('csrftoken') || '';
+}
+
 function updateNotifBadge(count){
   var badge = document.getElementById('notif-badge-count');
   if(!badge) return;
@@ -121,7 +131,7 @@ function requestJson(method, url, onOk, onErr){
   xhr.open(method, url, true);
   xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
   if(method === 'POST'){
-    xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken') || '');
+    xhr.setRequestHeader('X-CSRFToken', getCsrfToken());
   }
   xhr.onreadystatechange = function(){
     if(xhr.readyState !== 4) return;

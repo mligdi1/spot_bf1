@@ -51,6 +51,17 @@
     return "";
   }
 
+  function getMetaCsrfToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return (meta && meta.getAttribute("content")) || "";
+  }
+
+  function getCsrfToken() {
+    const token = getMetaCsrfToken();
+    if (token) return token;
+    return getCookie("csrftoken");
+  }
+
   function buildUrl(path, params) {
     const u = new URL(path, window.location.origin);
     Object.entries(params || {}).forEach(([k, v]) => {
@@ -60,7 +71,7 @@
   }
 
   async function apiFetch(url, options = {}) {
-    const csrfToken = getCookie("csrftoken");
+    const csrfToken = getCsrfToken();
     const headers = new Headers(options.headers || {});
     headers.set("X-Requested-With", "XMLHttpRequest");
     if (csrfToken) headers.set("X-CSRFToken", csrfToken);

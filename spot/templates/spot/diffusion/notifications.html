@@ -4,6 +4,7 @@
 <h1 class="heading text-3xl font-semibold text-gray-800 mb-6 flex items-center"><i class="fa-solid fa-bell mr-2 text-red-600"></i> Notifications</h1>
 
 <div class="bg-white shadow rounded-lg p-6">
+  <form id="csrf-token-form" style="display:none">{% csrf_token %}</form>
   <div class="flex items-center justify-between mb-4">
     <div class="flex items-center gap-3">
       <span class="text-sm text-gray-600">{{ notifications.paginator.count }} notification{{ notifications.paginator.count|pluralize }}</span>
@@ -61,6 +62,15 @@ function getCookie(name){
   return cookieValue;
 }
 
+function getCsrfToken(){
+  var form = document.getElementById('csrf-token-form');
+  if(form){
+    var input = form.querySelector('input[name="csrfmiddlewaretoken"]');
+    if(input && input.value) return input.value;
+  }
+  return getCookie('csrftoken') || '';
+}
+
 function updateNotifBadge(count){
   var b = document.getElementById('notif-badge-count');
   if(!b) return;
@@ -78,7 +88,7 @@ function requestJson(method, url, onOk, onErr){
   xhr.open(method, url, true);
   xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
   if(method === 'POST'){
-    xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken') || '');
+    xhr.setRequestHeader('X-CSRFToken', getCsrfToken());
   }
   xhr.onreadystatechange = function(){
     if(xhr.readyState !== 4) return;
