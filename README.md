@@ -347,8 +347,8 @@ Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
 ## 📞 Support
 
 Pour toute question ou support :
-- Email : support@bf1tv.bf
-- Téléphone : +226 XX XX XX XX
+- Email : zoupoumarcel@gmail.com 
+- Téléphone : +226 70 80 33 44
 - Adresse : Ouagadougou, Burkina Faso
 
 ## 🙏 Remerciements
@@ -505,9 +505,6 @@ python -m venv env
 # 2) Installer les dépendances
 pip install -r requirements.txt
 
-# 3) Configurer la base de données (dev par défaut)
-# settings.py utilise PostgreSQL local (port 5433). Adaptez au besoin.
-
 # 4) Appliquer les migrations
 python manage.py migrate
 
@@ -543,7 +540,6 @@ Production (`settings_production.py`):
 - Fichiers: `STATIC_ROOT`, `MEDIA_ROOT`
 - Email: `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `DEFAULT_FROM_EMAIL`
 - Site: `SITE_URL`
-- Mobile Money: `MOBILE_MONEY_API_URL`, `MOBILE_MONEY_API_KEY`, `MOBILE_MONEY_MERCHANT_ID`
 - WhatsApp Widget: `WHATSAPP_PHONE`, `WHATSAPP_DEFAULT_MESSAGE`, `WHATSAPP_WIDGET_ENABLED`, `WHATSAPP_WIDGET_POSITION`, `WHATSAPP_WIDGET_COLOR`, `WHATSAPP_WIDGET_SIZE`
 
 Options techniques (dev):
