@@ -27,6 +27,11 @@ from PIL import Image
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from django.core.cache import cache
+from django.core.mail import send_mail
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
 
 # Optional dependency: openpyxl for Excel export
 try:
@@ -61,7 +66,8 @@ from .models import (
 from .forms import (
     CustomUserCreationForm, CustomAuthenticationForm, CampaignForm,
     SpotForm, CostSimulatorForm, CampaignSpotForm,
-    AdvisorWizardForm, ContactRequestForm, CoverageRequestForm
+    AdvisorWizardForm, ContactRequestForm, CoverageRequestForm,
+    PasswordResetRequestForm, PasswordResetConfirmForm
 )
 
 
@@ -162,6 +168,88 @@ def user_logout(request):
     logout(request)
     messages.info(request, 'Vous avez été déconnecté.')
     return redirect('home')
+
+def _pwd_reset_rate_key(email: str) -> str:
+    day = timezone.localdate().isoformat()
+    return f"pwdreset:{email.lower()}:{day}"
+
+def _pwd_reset_rate_ttl_seconds() -> int:
+    now = timezone.now()
+    tomorrow = (now + timedelta(days=1)).date()
+    end = datetime.combine(tomorrow, time(0, 0, 0))
+    end = timezone.make_aware(end, now.tzinfo) if timezone.is_aware(now) else end
+    ttl = int((end - now).total_seconds())
+    return max(60, ttl)
+
+def password_reset_request(request):
+    if request.method == 'POST':
+        form = PasswordResetRequestForm(request.POST)
+        if form.is_valid():
+            email = (form.cleaned_data.get('email') or '').strip().lower()
+            key = _pwd_reset_rate_key(email)
+            count = int(cache.get(key) or 0)
+            if count >= 3:
+                form.add_error('email', "Limite atteinte: 3 tentatives par jour pour cette adresse email.")
+                return render(request, 'spot/password_reset_request.html', {'form': form})
+
+            cache.set(key, count + 1, timeout=_pwd_reset_rate_ttl_seconds())
+
+            user = User.objects.filter(email__iexact=email, is_active=True).order_by('id').first()
+            if not user:
+                form.add_error('email', "Aucun compte n'est associé à cette adresse email.")
+                return render(request, 'spot/password_reset_request.html', {'form': form})
+
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
+            link = request.build_absolute_uri(
+                reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
+            )
+            subject = "Réinitialisation de votre mot de passe"
+            body = (
+                "Bonjour,\n\n"
+                "Vous avez demandé la réinitialisation de votre mot de passe.\n"
+                "Cliquez sur le lien suivant pour choisir un nouveau mot de passe (valable 1 heure) :\n\n"
+                f"{link}\n\n"
+                "Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer ce message.\n"
+            )
+            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@bf1tv.local')
+            try:
+                send_mail(subject, body, from_email, [user.email], fail_silently=False)
+            except Exception:
+                logging.getLogger('bf1tv').exception('PASSWORD_RESET_EMAIL_SEND_ERROR email=%s', email)
+                messages.error(request, "Impossible d'envoyer l'email pour le moment. Réessayez plus tard.")
+                return render(request, 'spot/password_reset_request.html', {'form': form})
+
+            messages.success(request, "Un lien de réinitialisation a été envoyé à votre adresse email.")
+            return redirect('login')
+    else:
+        form = PasswordResetRequestForm()
+
+    return render(request, 'spot/password_reset_request.html', {'form': form})
+
+def password_reset_confirm(request, uidb64, token):
+    user = None
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.filter(pk=uid, is_active=True).first()
+    except Exception:
+        user = None
+
+    valid = bool(user) and default_token_generator.check_token(user, token)
+    if not valid:
+        return render(request, 'spot/password_reset_confirm.html', {'form': None, 'invalid': True})
+
+    if request.method == 'POST':
+        form = PasswordResetConfirmForm(request.POST)
+        if form.is_valid():
+            user.set_password(form.cleaned_data['new_password1'])
+            user.save(update_fields=['password'])
+            messages.success(request, "Votre mot de passe a été réinitialisé. Vous pouvez vous connecter.")
+            return redirect('login')
+    else:
+        form = PasswordResetConfirmForm()
+
+    return render(request, 'spot/password_reset_confirm.html', {'form': form, 'invalid': False})
 
 
 @login_required

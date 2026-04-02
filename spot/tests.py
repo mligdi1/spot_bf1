@@ -11,6 +11,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from datetime import date, datetime, timedelta, time
 import urllib.parse
+from django.core.cache import cache
 
 User = get_user_model()
 
@@ -160,6 +161,57 @@ class ViewTests(TestCase):
     def test_cost_simulator_view(self):
         response = self.client.get(reverse('cost_simulator'))
         self.assertRedirects(response, f"{reverse('login')}?next={reverse('cost_simulator')}")
+
+
+class PasswordResetTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        cache.clear()
+        self.user = User.objects.create_user(
+            username='resetuser',
+            email='reset@test.com',
+            password='Oldpass123!',
+            role='client'
+        )
+
+    def test_password_reset_request_nonexistent_email(self):
+        resp = self.client.post(reverse('password_reset_request'), {'email': 'nope@test.com'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Aucun compte n&#x27;est associé à cette adresse email.")
+
+    def test_password_reset_request_rate_limit(self):
+        url = reverse('password_reset_request')
+        for _ in range(3):
+            resp = self.client.post(url, {'email': 'reset@test.com'}, follow=False)
+            self.assertEqual(resp.status_code, 302)
+            self.assertEqual(resp['Location'], reverse('login'))
+        resp4 = self.client.post(url, {'email': 'reset@test.com'})
+        self.assertEqual(resp4.status_code, 200)
+        self.assertContains(resp4, "Limite atteinte: 3 tentatives par jour pour cette adresse email.")
+
+    def test_password_reset_confirm_invalid_token(self):
+        resp = self.client.get(reverse('password_reset_confirm', kwargs={'uidb64': 'invalid', 'token': 'invalid'}))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Ce lien est invalide ou a expiré.")
+
+    def test_password_reset_confirm_password_strength(self):
+        from django.contrib.auth.tokens import default_token_generator
+        from django.utils.http import urlsafe_base64_encode
+        from django.utils.encoding import force_bytes
+
+        uidb64 = urlsafe_base64_encode(force_bytes(self.user.pk))
+        token = default_token_generator.make_token(self.user)
+        url = reverse('password_reset_confirm', kwargs={'uidb64': uidb64, 'token': token})
+
+        weak = self.client.post(url, {'new_password1': 'abc', 'new_password2': 'abc'})
+        self.assertEqual(weak.status_code, 200)
+        self.assertContains(weak, "Le mot de passe doit contenir au moins 8 caractères.")
+
+        strong = self.client.post(url, {'new_password1': 'Abcd1234!', 'new_password2': 'Abcd1234!'}, follow=False)
+        self.assertEqual(strong.status_code, 302)
+        self.assertEqual(strong['Location'], reverse('login'))
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('Abcd1234!'))
 
 class DiffusionAccessTests(TestCase):
     def setUp(self):

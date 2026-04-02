@@ -69,6 +69,8 @@ CSRF_COOKIE_SECURE = _enable_https
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
 
+PASSWORD_RESET_TIMEOUT = 60 * 60
+
 # Fichiers statiques et média
 STATIC_ROOT = os.environ.get('STATIC_ROOT', str(BASE_DIR / 'staticfiles'))
 MEDIA_ROOT = os.environ.get('MEDIA_ROOT', str(BASE_DIR / 'media'))

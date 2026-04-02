@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column, Div, HTML
 from django.utils import timezone  # ← IMPORT AJOUTÉ
+import re
 from .models import Campaign, Spot, TimeSlot, CoverageRequest
 
 User = get_user_model()
@@ -88,6 +89,44 @@ class CustomAuthenticationForm(AuthenticationForm):
             'password',
             Submit('submit', 'Se connecter', css_class='btn btn-primary btn-block')
         )
+
+class PasswordResetRequestForm(forms.Form):
+    email = forms.EmailField(label="Adresse email", required=True)
+
+
+class PasswordResetConfirmForm(forms.Form):
+    new_password1 = forms.CharField(
+        label="Nouveau mot de passe",
+        widget=forms.PasswordInput,
+        required=True
+    )
+    new_password2 = forms.CharField(
+        label="Confirmer le mot de passe",
+        widget=forms.PasswordInput,
+        required=True
+    )
+
+    def clean_new_password1(self):
+        pwd = (self.cleaned_data.get('new_password1') or '').strip()
+        if len(pwd) < 8:
+            raise forms.ValidationError("Le mot de passe doit contenir au moins 8 caractères.")
+        if not re.search(r'[A-Z]', pwd):
+            raise forms.ValidationError("Le mot de passe doit contenir au moins une lettre majuscule.")
+        if not re.search(r'[a-z]', pwd):
+            raise forms.ValidationError("Le mot de passe doit contenir au moins une lettre minuscule.")
+        if not re.search(r'\d', pwd):
+            raise forms.ValidationError("Le mot de passe doit contenir au moins un chiffre.")
+        if not re.search(r'[^A-Za-z0-9]', pwd):
+            raise forms.ValidationError("Le mot de passe doit contenir au moins un caractère spécial.")
+        return pwd
+
+    def clean(self):
+        cleaned = super().clean()
+        p1 = cleaned.get('new_password1')
+        p2 = cleaned.get('new_password2')
+        if p1 and p2 and p1 != p2:
+            raise forms.ValidationError("Les deux mots de passe ne correspondent pas.")
+        return cleaned
 
 
 class CampaignForm(forms.ModelForm):
