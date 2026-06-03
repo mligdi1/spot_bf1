@@ -106,16 +106,26 @@ ASGI_APPLICATION = 'spot_bf1.asgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DATABASE_NAME', 'gestion_publicitaire'),
-        'USER': os.environ.get('DATABASE_USER', 'spot_bf1'),
-        'PASSWORD': os.environ.get('DATABASE_PASSWORD', ''),
-        'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
-        'PORT': os.environ.get('DATABASE_PORT', '5433'),
+if 'PYTHONANYWHERE_DOMAIN' in os.environ:
+    # Configuration pour la production sur PythonAnywhere (SQLite)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    # Configuration pour le développement local (PostgreSQL)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('DATABASE_NAME', 'gestion_publicitaire'),
+            'USER': os.environ.get('DATABASE_USER', 'spot_bf1'),
+            'PASSWORD': os.environ.get('DATABASE_PASSWORD', ''),
+            'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
+            'PORT': os.environ.get('DATABASE_PORT', '5433'),
+        }
+    }
 
 
 # Password validation
