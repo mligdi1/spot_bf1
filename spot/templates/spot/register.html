@@ -76,13 +76,14 @@
                 </div>
 
                 <div>
-                    <label for="id_company" class="block text-sm font-medium text-gray-700">Entreprise</label>
-                    <input id="id_company" name="company" type="text" required 
+                    <label for="id_company" class="block text-sm font-medium text-gray-700">Entreprise (Facultatif)</label>
+                    <input id="id_company" name="company" type="text" 
                            class="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-bf1-red focus:border-bf1-red sm:text-sm" 
-                           placeholder="Nom de votre entreprise" value="{{ form.company.value|default:'' }}">
+                           placeholder="Nom de votre entreprise (optionnel)" value="{{ form.company.value|default:'' }}">
                     {% if form.company.errors %}
                         <p class="mt-1 text-sm text-red-600">{{ form.company.errors.0 }}</p>
                     {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Laissez vide si vous êtes un particulier.</p>
                 </div>
 
                 <div>

@@ -14,7 +14,12 @@ class CustomUserCreationForm(UserCreationForm):
     """Formulaire d'inscription personnalisé"""
     email = forms.EmailField(required=True)
     phone = forms.CharField(max_length=20, required=True, label='Téléphone')
-    company = forms.CharField(max_length=200, required=True, label='Entreprise')
+    company = forms.CharField(
+        max_length=200, 
+        required=False, 
+        label='Entreprise',
+        help_text="Facultatif. Indiquez le nom de votre entreprise si applicable."
+    )
     address = forms.CharField(widget=forms.Textarea(attrs={'rows': 3}), required=False, label='Adresse')
     
     class Meta:
@@ -71,7 +76,7 @@ class CustomUserCreationForm(UserCreationForm):
         user.first_name = (self.cleaned_data.get('first_name') or '').strip()
         user.last_name = (self.cleaned_data.get('last_name') or '').strip()
         user.phone = self.cleaned_data['phone']
-        user.company = self.cleaned_data['company']
+        user.company = self.cleaned_data.get('company', '')
         user.address = self.cleaned_data['address']
         user.role = 'client'  # Par défaut, les nouveaux utilisateurs sont des clients
         if commit:
@@ -127,65 +132,6 @@ class PasswordResetConfirmForm(forms.Form):
         if p1 and p2 and p1 != p2:
             raise forms.ValidationError("Les deux mots de passe ne correspondent pas.")
         return cleaned
-
-
-class CampaignForm(forms.ModelForm):
-    """Formulaire de création de campagne"""
-    class Meta:
-        model = Campaign
-        fields = [
-            'title', 'description', 'start_date', 'end_date', 'budget',
-            'campaign_type', 'requested_creation',
-            'objective', 'channel', 'preferred_time_slots', 'languages',
-            'target_audience', 'key_message'
-        ]
-        widgets = {
-            'start_date': forms.DateInput(attrs={'type': 'date'}),
-            'end_date': forms.DateInput(attrs={'type': 'date'}),
-            'description': forms.Textarea(attrs={'rows': 4}),
-            'campaign_type': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-bf1-red'}),
-            'requested_creation': forms.CheckboxInput(attrs={'class': 'h-4 w-4 text-bf1-red'}),
-            'objective': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-bf1-red'}),
-            'channel': forms.Select(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-bf1-red'}),
-            'preferred_time_slots': forms.SelectMultiple(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-bf1-red'}),
-            'languages': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-bf1-red', 'placeholder': 'Ex: fr, en'}),
-            'target_audience': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-bf1-red'}),
-            'key_message': forms.Textarea(attrs={'rows': 3, 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-bf1-red'}),
-        }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.layout = Layout(
-            'title',
-            'description',
-            Row(
-                Column('start_date', css_class='form-group col-md-6 mb-0'),
-                Column('end_date', css_class='form-group col-md-6 mb-0'),
-                css_class='form-row'
-            ),
-            'budget',
-            Submit('submit', 'Créer la campagne', css_class='btn btn-primary')
-        )
-        self.fields['title'].help_text = "Intitulé clair (ex: Promo Rentrée BF1TV)."
-        self.fields['description'].help_text = "Précisez l’objectif, l’audience et les canaux envisagés."
-        self.fields['start_date'].help_text = "Date de début de la campagne."
-        self.fields['end_date'].help_text = "Date de fin (postérieure à la date de début)."
-        self.fields['budget'].help_text = "Budget indicatif (aucun paiement en ligne)."
-    
-    def clean(self):
-        cleaned_data = super().clean()
-        start_date = cleaned_data.get('start_date')
-        end_date = cleaned_data.get('end_date')
-        
-        if start_date and end_date:
-            if start_date >= end_date:
-                raise forms.ValidationError("La date de fin doit être postérieure à la date de début.")
-            
-            if start_date < timezone.now().date():
-                raise forms.ValidationError("La date de début ne peut pas être dans le passé.")
-        
-        return cleaned_data
 
 
 class SpotForm(forms.ModelForm):
@@ -252,54 +198,8 @@ class SpotForm(forms.ModelForm):
         
         return video_file
 
-class CostSimulatorForm(forms.Form):
-    """Formulaire du simulateur de coût"""
-    duration = forms.IntegerField(
-        min_value=5,
-        max_value=300,
-        label='Durée (secondes)',
-        help_text='Durée du spot en secondes (5-300s)'
-    )
-    time_slot = forms.ModelChoiceField(
-        queryset=TimeSlot.objects.filter(is_active=True),
-        label='Créneau horaire',
-        help_text='Sélectionnez le créneau de diffusion'
-    )
-    broadcast_count = forms.IntegerField(
-        min_value=1,
-        max_value=100,
-        initial=1,
-        label='Nombre de diffusions',
-        help_text='Nombre de fois que le spot sera diffusé'
-    )
-    campaign_duration = forms.IntegerField(
-        min_value=1,
-        max_value=365,
-        initial=30,
-        label='Durée de campagne (jours)',
-        help_text='Durée totale de la campagne en jours'
-    )
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.layout = Layout(
-            Row(
-                Column('duration', css_class='form-group col-md-6 mb-0'),
-                Column('time_slot', css_class='form-group col-md-6 mb-0'),
-                css_class='form-row'
-            ),
-            Row(
-                Column('broadcast_count', css_class='form-group col-md-6 mb-0'),
-                Column('campaign_duration', css_class='form-group col-md-6 mb-0'),
-                css_class='form-row'
-            ),
-            Submit('submit', 'Calculer le coût', css_class='btn btn-primary')
-        )
-
-
 class CampaignSpotForm(forms.Form):
-    """Formulaire unifié pour créer campagne et uploader le spot en une fois"""
+    """Mode Facile: création de campagne + upload du spot en une fois"""
     
     # Champs de campagne
     title = forms.CharField(

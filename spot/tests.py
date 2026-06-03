@@ -71,6 +71,9 @@ class CampaignModelTest(TestCase):
     def test_campaign_duration(self):
         self.assertEqual(self.campaign.duration_days, 31)
 
+    def test_campaign_str(self):
+        self.assertEqual(str(self.campaign), 'Test Campaign')
+
 
 class SpotModelTest(TestCase):
     def setUp(self):
@@ -158,10 +161,6 @@ class ViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Créer votre compte')
 
-    def test_cost_simulator_view(self):
-        response = self.client.get(reverse('cost_simulator'))
-        self.assertRedirects(response, f"{reverse('login')}?next={reverse('cost_simulator')}")
-
 
 class PasswordResetTests(TestCase):
     def setUp(self):
@@ -224,7 +223,6 @@ class DiffusionAccessTests(TestCase):
         blocked = [
             'home',
             'campaign_list',
-            'campaign_create',
             'campaign_spot_create',
             'coverage_request_create',
             'spot_list',
@@ -276,36 +274,16 @@ class FormTests(TestCase):
             role='client'
         )
 
-    def test_campaign_form_valid(self):
-        from .forms import CampaignForm
-        start = timezone.localdate() + timedelta(days=1)
-        end = start + timedelta(days=30)
-        form_data = {
-            'title': 'Test Campaign',
-            'description': 'Test Description',
-            'start_date': start.isoformat(),
-            'end_date': end.isoformat(),
-            'budget': '100000',
-            'campaign_type': 'spot_upload',
-        }
-        
-        form = CampaignForm(data=form_data)
-        self.assertTrue(form.is_valid())
-
-    def test_campaign_form_invalid_dates(self):
-        from .forms import CampaignForm
-        end = timezone.localdate() + timedelta(days=1)
-        start = end + timedelta(days=10)
-        form_data = {
-            'title': 'Test Campaign',
-            'description': 'Test Description',
-            'start_date': start.isoformat(),
-            'end_date': end.isoformat(),  # Date de fin avant date de début
-            'budget': '100000'
-        }
-        
-        form = CampaignForm(data=form_data)
-        self.assertFalse(form.is_valid())
+    def test_login_username_is_case_insensitive(self):
+        User.objects.create_user(
+            username='Nana',
+            email='nana3@test.com',
+            password='testpass123',
+            role='client',
+            phone='000',
+            company='X'
+        )
+        self.assertTrue(self.client.login(username='nana', password='testpass123'))
 
     def test_register_username_is_case_insensitive(self):
         from .forms import CustomUserCreationForm
@@ -331,17 +309,6 @@ class FormTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('username', form.errors)
 
-    def test_login_username_is_case_insensitive(self):
-        User.objects.create_user(
-            username='Nana',
-            email='nana3@test.com',
-            password='testpass123',
-            role='client',
-            phone='000',
-            company='X'
-        )
-        self.assertTrue(self.client.login(username='nana', password='testpass123'))
-
 
 class IntegrationTests(TestCase):
     def setUp(self):
@@ -366,7 +333,7 @@ class IntegrationTests(TestCase):
         # 1. Connexion
         self.client.login(username='testuser', password='testpass123')
         
-        # 2. Création d'une campagne
+        # 2. Création d'une campagne (via le nouveau formulaire combiné)
         start = timezone.localdate() + timedelta(days=1)
         end = start + timedelta(days=30)
         campaign_data = {
@@ -375,31 +342,17 @@ class IntegrationTests(TestCase):
             'start_date': start.isoformat(),
             'end_date': end.isoformat(),
             'budget': '100000',
-            'campaign_type': 'spot_upload',
+            'objective': 'promotion',
+            'channel': 'tv',
         }
         
-        response = self.client.post(reverse('campaign_create'), campaign_data)
+        response = self.client.post(reverse('campaign_spot_create'), campaign_data)
         self.assertEqual(response.status_code, 302)  # Redirection après création
         
         # 3. Vérifier que la campagne a été créée
         campaign = Campaign.objects.get(title='Test Campaign')
         self.assertEqual(campaign.client, self.user)
         self.assertEqual(campaign.status, 'pending')
-
-    def test_cost_simulator_calculation(self):
-        """Test du simulateur de coût"""
-        self.client.login(username='testuser', password='testpass123')
-        
-        simulator_data = {
-            'duration': 30,
-            'time_slot': self.time_slot.id,
-            'broadcast_count': 10,
-            'campaign_duration': 30
-        }
-        
-        response = self.client.post(reverse('cost_simulator'), simulator_data)
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Coût estimé')
 
 
 class AdminTests(TestCase):

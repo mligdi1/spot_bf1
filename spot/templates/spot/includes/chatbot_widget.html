@@ -1,4 +1,23 @@
 {% if CHATBOT.enabled %}
+    <!-- Markdown Rendering Library (Marked.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+      /* Styles pour le rendu Markdown dans les bulles du chatbot */
+      .cb-markdown-content h1, .cb-markdown-content h2, .cb-markdown-content h3 {
+        font-weight: 700;
+        margin-top: 0.75rem;
+        margin-bottom: 0.5rem;
+        color: inherit;
+      }
+      .cb-markdown-content h3 { font-size: 1rem; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 2px; }
+      .cb-markdown-content p { margin-bottom: 0.5rem; line-height: 1.4; }
+      .cb-markdown-content ul, .cb-markdown-content ol { margin-bottom: 0.75rem; padding-left: 1.25rem; }
+      .cb-markdown-content ul { list-style-type: disc; }
+      .cb-markdown-content li { margin-bottom: 0.25rem; }
+      .cb-markdown-content strong { font-weight: 600; }
+      .cb-markdown-content a { color: #dc2626; text-decoration: underline; font-weight: 500; }
+      .cb-markdown-content a:hover { color: #b91c1c; }
+    </style>
   {% with provider=CHATBOT.provider escalate=CHATBOT.escalate_mode suggestions=CHATBOT.suggestions %}
   {% with pos=WHATSAPP_WIDGET.position|default:'bottom-left' %}
   <div id="bf1-chat-draggable" class="fixed z-40 cursor-grab"
@@ -213,6 +232,7 @@
         toggleBtn.focus();
         document.removeEventListener('keydown', onKey);
       };
+
       const onKey = (e) => {
         if (e.key === 'Escape') { e.preventDefault(); closePanel(); }
       };
@@ -234,12 +254,24 @@
         const bubbleEl = document.createElement('div');
         bubbleEl.className = (isUser
           ? 'max-w-[85%] bg-bf1-red text-white rounded-2xl px-3 py-2'
-          : 'max-w-[85%] bg-white border border-gray-200 text-gray-900 rounded-2xl px-3 py-2');
-        bubbleEl.textContent = text || '';
+          : 'max-w-[85%] bg-white border border-gray-200 text-gray-900 rounded-2xl px-3 py-2 cb-markdown-content');
+        
+        if (isUser) {
+          bubbleEl.textContent = text || '';
+        } else {
+          // Utiliser marked.js pour le bot afin de supporter le Markdown (titres, listes, liens)
+          if (typeof marked !== 'undefined' && typeof marked.parse === 'function') {
+            bubbleEl.innerHTML = marked.parse(text || '');
+          } else {
+            bubbleEl.textContent = text || '';
+          }
+        }
+        
         wrap.appendChild(bubbleEl);
         thread.appendChild(wrap);
         thread.scrollTop = thread.scrollHeight;
       };
+
       const getCsrfToken = () => {
         const meta = document.querySelector('meta[name="csrf-token"]');
         if (meta) {

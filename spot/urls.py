@@ -16,7 +16,6 @@ urlpatterns = [
 
     # Campagnes & spots
     path('campaigns/', views.campaign_list, name='campaign_list'),
-    path('campaigns/create/', views.campaign_create, name='campaign_create'),
     path('campaigns/<uuid:campaign_id>/', views.campaign_detail, name='campaign_detail'),
     path('campaigns/<uuid:campaign_id>/upload/', views.spot_upload, name='spot_upload'),
     path('spots/<uuid:spot_id>/', views.spot_detail, name='spot_detail'),
@@ -44,9 +43,6 @@ urlpatterns = [
     # Bilan intelligent
     path('reports/overview/', views.report_overview, name='report_overview'),
 
-    # Simulateur de coût (dans views_additional)
-    path('cost-simulator/', views_additional.cost_simulator, name='cost_simulator'),
-
     # Notifications & profil
     path('notifications/', views.notifications, name='notifications'),
     path('notifications/mark_read/<int:id>/', views.notifications_mark_read, name='notifications_mark_read'),
@@ -67,8 +63,6 @@ urlpatterns = [
     path('console/coverage/<uuid:coverage_id>/', views.admin_coverage_detail, name='admin_coverage_detail'),
     # Ajouter le détail des demandes de contact (admin)
     path('console/contacts/<uuid:request_id>/', views.admin_contact_request_detail, name='admin_contact_request_detail'),
-    path('admin/spot/campaign/reject/', views_additional.admin_campaign_reject, name='admin_campaign_reject'),
-    path('admin/spot/spot/reject/', views_additional.admin_spot_reject, name='admin_spot_reject'),
 
     # Alias de création combinée (si utilisé)
     path('campaign/create/', views.campaign_spot_create, name='campaign_spot_create'),

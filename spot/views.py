@@ -64,8 +64,8 @@ from .models import (
     AssignmentNotificationCampaign
 )
 from .forms import (
-    CustomUserCreationForm, CustomAuthenticationForm, CampaignForm,
-    SpotForm, CostSimulatorForm, CampaignSpotForm,
+    CustomUserCreationForm, CustomAuthenticationForm,
+    SpotForm, CampaignSpotForm,
     AdvisorWizardForm, ContactRequestForm, CoverageRequestForm,
     PasswordResetRequestForm, PasswordResetConfirmForm
 )
@@ -294,65 +294,6 @@ def campaign_list(request):
     }
     
     return render(request, 'spot/campaign_list.html', context)
-
-
-@login_required
-def campaign_create(request):
-    """Création d'une nouvelle campagne"""
-    # Blocage préventif pour administrateurs
-    if request.user.is_authenticated and hasattr(request.user, 'is_admin') and request.user.is_admin():
-        logging.getLogger('bf1tv').info(
-            'ADMIN_BLOCK_VIEW | user=%s username=%s view=campaign_create method=%s at=%s',
-            getattr(request.user, 'id', None), getattr(request.user, 'username', ''), request.method, timezone.now().isoformat(timespec='seconds')
-        )
-        messages.error(request, "Cette fonctionnalité est réservée aux clients. En tant qu'administrateur, vous n'avez pas accès à cette option.")
-        return redirect('home')
-    # Variables de contexte par défaut
-    locked_fields = []
-    selection_note = ''
-
-    if request.method == 'POST':
-        form = CampaignForm(request.POST)
-        if form.is_valid():
-            campaign = form.save(commit=False)
-            campaign.client = request.user
-            campaign.status = 'pending'
-            campaign.save()
-            form.save_m2m()  # Persiste preferred_time_slots
-            if campaign.campaign_type == 'spot_upload':
-                messages.success(request, 'Campagne créée avec succès ! Veuillez maintenant télécharger votre spot.')
-                return redirect('spot_upload', campaign_id=campaign.id)
-            else:
-                messages.success(request, 'Campagne créée avec succès ! Notre équipe vous contactera pour la création du spot.')
-                return redirect('campaign_detail', campaign_id=campaign.id)
-        else:
-            messages.error(request, 'Veuillez corriger les erreurs du formulaire.')
-    else:
-        # Pré-remplissage depuis la page Tarifs
-        initial = {}
-        locked_fields = []
-        selection_note = request.GET.get('selection_note') or ''
-        lock = (request.GET.get('lock') or '').strip()
-        if lock:
-            locked_fields = [f.strip() for f in lock.split(',') if f.strip()]
-
-        # Champs simples (pré-remplis)
-        for key in ['channel', 'campaign_type', 'objective', 'budget', 'title']:
-            val = request.GET.get(key)
-            if val:
-                initial[key] = val
-
-        # Description indicative depuis la sélection
-        if selection_note and not request.GET.get('description'):
-            initial['description'] = selection_note
-
-        form = CampaignForm(initial=initial)
-
-    return render(request, 'spot/campaign_create.html', {
-        'form': form,
-        'locked_fields': locked_fields,
-        'selection_note': selection_note,
-    })
 
 
 @login_required

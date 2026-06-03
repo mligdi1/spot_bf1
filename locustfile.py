@@ -30,25 +30,6 @@ class BF1TVUser(HttpUser):
         """Visiter la page d'inscription"""
         self.client.get("/register/")
     
-    @task(4)
-    def use_cost_simulator(self):
-        """Utiliser le simulateur de coût"""
-        # Visiter la page du simulateur
-        self.client.get("/cost-simulator/")
-        
-        # Simuler une utilisation du simulateur
-        simulator_data = {
-            'duration': random.randint(5, 300),
-            'broadcast_count': random.randint(1, 100),
-            'campaign_duration': random.randint(1, 365)
-        }
-        
-        # Note: Dans un vrai test, il faudrait d'abord récupérer les créneaux horaires disponibles
-        # Pour simplifier, on utilise un ID fictif
-        simulator_data['time_slot'] = 1
-        
-        self.client.post("/cost-simulator/", data=simulator_data)
-    
     @task(1)
     def view_admin_interface(self):
         """Visiter l'interface d'administration"""
@@ -99,7 +80,7 @@ class AuthenticatedUser(HttpUser):
     def create_campaign(self):
         """Créer une nouvelle campagne"""
         # Visiter la page de création
-        self.client.get("/campaigns/create/")
+        self.client.get("/campaign/create/")
         
         # Données de test pour une campagne
         campaign_data = {
@@ -110,26 +91,12 @@ class AuthenticatedUser(HttpUser):
             'budget': random.randint(10000, 1000000)
         }
         
-        self.client.post("/campaigns/create/", data=campaign_data)
+        self.client.post("/campaign/create/", data=campaign_data)
     
     @task(1)
     def view_notifications(self):
         """Consulter les notifications"""
         self.client.get("/notifications/")
-    
-    @task(1)
-    def use_cost_simulator(self):
-        """Utiliser le simulateur de coût"""
-        self.client.get("/cost-simulator/")
-        
-        simulator_data = {
-            'duration': random.randint(5, 300),
-            'broadcast_count': random.randint(1, 100),
-            'campaign_duration': random.randint(1, 365),
-            'time_slot': 1
-        }
-        
-        self.client.post("/cost-simulator/", data=simulator_data)
 
 
 class AdminUser(HttpUser):

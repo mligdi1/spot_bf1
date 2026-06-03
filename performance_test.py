@@ -78,13 +78,6 @@ class PerformanceTest:
         self.results['login_page'] = result
         return result
     
-    def test_cost_simulator(self):
-        """Test du simulateur de coût"""
-        print("🧮 Test du simulateur de coût...")
-        result = self.test_endpoint('/cost-simulator/')
-        self.results['cost_simulator'] = result
-        return result
-    
     def test_admin_interface(self):
         """Test de l'interface d'administration"""
         print("⚙️  Test de l'interface d'administration...")
@@ -108,7 +101,6 @@ class PerformanceTest:
         # Tests individuels
         self.test_home_page()
         self.test_login_page()
-        self.test_cost_simulator()
         self.test_admin_interface()
         self.test_static_files()
         
@@ -116,7 +108,6 @@ class PerformanceTest:
         print("\n📊 Tests de charge...")
         load_tests = [
             ('/', 20),
-            ('/cost-simulator/', 10),
             ('/login/', 15),
         ]
         

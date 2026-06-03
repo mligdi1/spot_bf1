@@ -1,0 +1,203 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .font-montserrat { font-family: 'Montserrat', sans-serif; }
+  .font-poppins { font-family: 'Poppins', sans-serif; }
+  .bf1-shadow { @apply shadow-[0_10px_25px_-10px_rgba(0,0,0,0.25)]; }
+  .bf1-hover { @apply transition-[transform,box-shadow] duration-150 ease-in-out hover:-translate-y-[1px] hover:shadow-[0_12px_32px_-12px_rgba(0,0,0,0.3)]; }
+}
+
+:root {
+  --bf1-brand: #dc2626;
+  --bf1-brand-dark: #b91c1c;
+  --bf1-ring: rgba(220, 38, 38, .28);
+  --bf1-shadow-soft: 0 10px 28px -18px rgba(0, 0, 0, .35);
+  --bf1-shadow-deep: 0 18px 46px -22px rgba(0, 0, 0, .45);
+  --bf1-shadow-brand: 0 18px 42px -24px rgba(220, 38, 38, .65);
+}
+
+.bf1-ui :where(a, button, [role="button"], input, select, textarea) {
+  @apply transition-[color,background-color,border-color,opacity,transform,box-shadow,filter] duration-200 ease-out;
+}
+
+.bf1-ui :where(a, button, [role="button"], input, select, textarea):focus-visible {
+  @apply outline-none ring-2 ring-offset-2 ring-bf1-red;
+}
+
+.bf1-ui :where(button, [role="button"], input[type="submit"], input[type="button"]):active {
+  @apply scale-95;
+}
+
+@media (hover: hover) {
+  .bf1-ui :where(button, [role="button"], a, input[type="submit"], input[type="button"]):not([disabled]):hover {
+    @apply saturate-[1.03];
+  }
+
+  .bf1-ui :where(button, a, input[type="submit"]).bg-bf1-red.text-white:not([disabled]):hover {
+    @apply -translate-y-[1px] shadow-[var(--bf1-shadow-brand)] saturate-[1.06] brightness-[1.02];
+  }
+
+  .bf1-ui :where(button, a, input[type="submit"]).bg-gray-800.text-white:not([disabled]):hover {
+    @apply -translate-y-[1px] shadow-[var(--bf1-shadow-soft)];
+  }
+
+  .bf1-ui :where(.bf1-hover, .bf1-shadow):hover {
+    @apply shadow-[var(--bf1-shadow-deep)];
+  }
+}
+
+.bf1-page-enter {
+  @apply opacity-0 transition-opacity duration-300 ease-out;
+}
+
+body.bf1-loaded .bf1-page-enter {
+  @apply opacity-100;
+}
+
+.bf1-reveal {
+  @apply opacity-0 translate-y-[14px] transition-[opacity,transform] duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)];
+  transition-delay: calc(var(--bf1-reveal-delay, 0) * 1ms);
+  will-change: opacity, transform;
+}
+
+.bf1-reveal.is-inview {
+  @apply opacity-100 translate-y-0;
+}
+
+.bf1-cta {
+  @apply relative overflow-hidden origin-center transition-[transform,box-shadow,filter,background-color,color,border-color] duration-300 ease-out;
+}
+
+.bf1-cta::after {
+  content: '';
+  @apply absolute inset-[-40%] opacity-0 transition-opacity duration-300 ease-out pointer-events-none;
+  background: radial-gradient(circle at var(--bf1-rx, 30%) var(--bf1-ry, 30%), rgba(255, 255, 255, .35), transparent 55%);
+}
+
+@media (hover: hover) {
+  .bf1-cta:hover {
+    @apply -translate-y-[2px] scale-[1.03] shadow-[var(--bf1-shadow-brand)];
+  }
+
+  .bf1-cta:hover::after {
+    @apply opacity-100;
+  }
+}
+
+.bf1-cta:active {
+  @apply translate-y-0 scale-[.99] brightness-[.96] saturate-[1.02];
+}
+
+.bf1-dropdown {
+  @apply opacity-0 translate-y-[8px] scale-[.98] pointer-events-none invisible transition-[opacity,transform,filter] duration-150 ease-in;
+}
+
+.bf1-dropdown.is-open {
+  @apply opacity-100 translate-y-0 scale-100 pointer-events-auto visible;
+}
+
+html,
+body {
+  @apply max-w-full overflow-x-hidden;
+}
+
+img,
+video,
+canvas,
+svg {
+  @apply max-w-full h-auto;
+}
+
+pre,
+code {
+  @apply whitespace-pre-wrap break-words;
+}
+
+.bf1-ui :where(.flex, .inline-flex) > * {
+  @apply min-w-0;
+}
+
+.bf1-ui :where(.grid) > * {
+  @apply min-w-0;
+}
+
+.bf1-ui :where(h1, h2, h3, h4, h5, h6, p, a, span, li, td, th, div) {
+  overflow-wrap: anywhere;
+  @apply break-words hyphens-auto;
+}
+
+.u-min-0 {
+  @apply min-w-0;
+}
+
+.u-fit {
+  @apply max-w-full max-h-full overflow-hidden;
+}
+
+.u-ellipsis {
+  @apply min-w-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap;
+}
+
+.u-clamp-2 {
+  @apply min-w-0 max-w-full line-clamp-2 overflow-hidden;
+}
+
+.u-clamp-3 {
+  @apply min-w-0 max-w-full line-clamp-3 overflow-hidden;
+}
+
+.u-fluid-xs {
+  font-size: clamp(.72rem, 1.2vw, .82rem);
+}
+
+.u-fluid-sm {
+  font-size: clamp(.82rem, 1.6vw, .95rem);
+}
+
+.u-fluid-md {
+  font-size: clamp(.95rem, 2.2vw, 1.1rem);
+}
+
+@media (max-width: 640px) {
+  .u-clamp-2 {
+    -webkit-line-clamp: 3;
+  }
+
+  .u-fluid-md {
+    font-size: clamp(.92rem, 4.2vw, 1.05rem);
+  }
+}
+
+@keyframes bf1-heartbeat {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  12% {
+    transform: scale(1.06);
+    opacity: 0.95;
+  }
+
+  24% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  38% {
+    transform: scale(1.04);
+    opacity: 0.96;
+  }
+
+  60% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

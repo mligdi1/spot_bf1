@@ -39,11 +39,6 @@ Une application web complète développée avec Django pour la gestion des campa
 - Visualisations de données et statistiques mensuelles
 - Modération et validation des contenus
 
-### 🧮 Simulateur de coût publicitaire interactif
-- Calculateur dynamique estimant le coût selon la durée, créneau horaire et nombre de diffusions
-- Outil pédagogique avec explications sur les facteurs de prix
-- Ajustement des paramètres en temps réel
-
 ### 📚 Archivage et historique des campagnes
 - Accès aux anciennes campagnes
 - Réutilisation ou modification de spots précédents

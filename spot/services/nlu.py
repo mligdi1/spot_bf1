@@ -1,5 +1,25 @@
 from typing import List, Dict, Optional, Any, Iterable, Tuple
 from django.urls import reverse
+import re
+import unicodedata
+
+
+def normalize_text(text: str) -> str:
+    """Normalise le texte: minuscule, sans accents, sans ponctuation inutile."""
+    if not text:
+        return ""
+    # Passage en minuscule
+    text = text.lower()
+    # Suppression des accents
+    text = "".join(
+        c for c in unicodedata.normalize('NFD', text)
+        if unicodedata.category(c) != 'Mn'
+    )
+    # Suppression de la ponctuation (garde espaces et lettres/chiffres)
+    text = re.sub(r'[^\w\s]', ' ', text)
+    # Nettoyage des espaces multiples
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
 
 
 INTENTS = {
@@ -44,17 +64,139 @@ INTENTS = {
         'interview',
         'live',
         'presse',
+        'comment demander une couverture',
+        'procédure couverture',
+        'procedural couverture',
+        'champs couverture',
+        'infos couverture',
     ],
-    'create_campaign': ['créer une campagne', 'nouvelle campagne', 'campagne'],
+    'create_campaign': [
+        'créer une campagne',
+        'nouvelle campagne',
+        'campagne',
+        'comment créer une campagne',
+        'procédure campagne',
+        'champs campagne',
+        'infos campagne',
+        'lancer une pub',
+    ],
+    'site_navigation': [
+        'navigation',
+        'pages du site',
+        'contenu des pages',
+        'où aller',
+        'plan du site',
+        'rubriques',
+        'sections',
+        'menu',
+    ],
+    'functional_elements': [
+        'fonctionnalités',
+        'outils',
+        'services',
+        'que peut faire le site',
+        'possibilités',
+        'options du site',
+    ],
     'upload_spot': ['téléverser un spot', 'televerser un spot', 'upload spot', 'upload', 'téléverse', 'televerse', 'spot'],
     'view_broadcasts': ['calendrier', 'planifier', 'diffusions', 'grille de diffusion'],
     'support': ['support', 'aide', 'humain', 'agent', 'contact', 'correspondence', 'discussion', 'ticket', 'tickets'],
-    'pricing': ['tarif', 'tarifs', 'prix', 'coût', 'cout', 'simulateur'],
+    'pricing': ['tarif', 'tarifs', 'prix', 'coût', 'cout'],
     'advisory': ['orientation', 'conseil', 'conseils', 'guide', 'guides', 'inspiration'],
     'reports': ['rapport', 'rapports', 'bilan', 'report', 'kpi', 'export', 'pdf', 'excel'],
     'notifications': ['notifications', 'notification', 'alertes', 'alerte'],
     'profile': ['profil', 'mon profil', 'compte', 'mot de passe'],
     'follow_threads': ['suivre mes échanges', 'suivre mes echanges', 'mes discussions', 'correspondance', 'threads'],
+    'about_site': [
+        'tout savoir',
+        'en savoir plus',
+        'qu\'est-ce que ce projet',
+        'comment utiliser la plateforme',
+        'présentation',
+        'objectifs',
+        'à propos',
+        'bienvenue',
+        'découvrir',
+        'decouvrir',
+        'c\'est quoi',
+    ],
+    'bf1_tv': [
+        'bf1',
+        'bf1 tv',
+        'la chaîne',
+        'la chaine',
+        'télévision',
+        'television',
+        'burkina faso',
+        'siège',
+        'ouagadougou',
+        'mission',
+        'vision',
+        'valeurs',
+    ],
+    'roles_permissions': [
+        'rôle',
+        'role',
+        'permission',
+        'accès',
+        'acces',
+        'administrateur',
+        'client',
+        'diffuseur',
+        'rédaction',
+        'redaction',
+        'responsable',
+        'que peut faire',
+    ],
+    'technical_info': [
+        'technique',
+        'technologie',
+        'django',
+        'python',
+        'base de données',
+        'postgresql',
+        'temps réel',
+        'websocket',
+        'docker',
+        'sécurité',
+        'securite',
+        'développeur',
+        'developpeur',
+        'développer',
+        'developper',
+        'développé',
+        'developpe',
+        'auteur',
+        'concepteur',
+        'créateur',
+        'createur',
+        'qui a fait',
+        'nana',
+        'marcel',
+    ],
+    'campaign_process': [
+        'processus',
+        'étapes',
+        'etapes',
+        'déroulement',
+        'comment ça marche',
+        'validation',
+        'approbation',
+        'rejet',
+        'statut',
+    ],
+    'ad_types': [
+        'type de pub',
+        'format',
+        'vidéo',
+        'video',
+        'image',
+        'spot',
+        'création',
+        'creation',
+        'durée',
+        'duree',
+    ],
 }
 
 
@@ -64,18 +206,23 @@ def _contains(text: str, phrases: List[str]) -> bool:
 
 
 def detect_intent(text: str) -> Optional[str]:
-    t = (text or '').lower()
-    if not t.strip():
+    t = normalize_text(text)
+    if not t:
         return None
 
     def score(phrases: Iterable[str]) -> int:
         s = 0
         for p in phrases:
-            p2 = (p or '').lower().strip()
-            if not p2:
+            p_norm = normalize_text(p)
+            if not p_norm:
                 continue
-            if p2 in t:
-                s += max(1, len(p2) // 6)
+            # Recherche exacte du mot-clé normalisé dans le texte normalisé
+            if p_norm in t:
+                # Bonus si c'est un mot entier (évite les correspondances partielles accidentelles)
+                if re.search(r'\b' + re.escape(p_norm) + r'\b', t):
+                    s += max(5, len(p_norm))
+                else:
+                    s += max(1, len(p_norm) // 2)
         return s
 
     ranked: List[Tuple[int, int, str]] = []
@@ -94,6 +241,14 @@ def detect_intent(text: str) -> Optional[str]:
         'create_campaign',
         'upload_spot',
         'view_broadcasts',
+        'about_site',
+        'bf1_tv',
+        'roles_permissions',
+        'technical_info',
+        'campaign_process',
+        'ad_types',
+        'site_navigation',
+        'functional_elements',
     ]
     prio_index = {name: i for i, name in enumerate(priority)}
 
@@ -221,7 +376,6 @@ def build_actions(intent: Optional[str], user: Optional[Any] = None) -> List[Dic
     if intent == 'pricing':
         return [
             {'type': 'redirect', 'url': link('pricing_overview'), 'label': 'Voir les tarifs'},
-            {'type': 'redirect', 'url': link('cost_simulator'), 'label': 'Simuler un coût'},
         ]
     if intent == 'advisory':
         return [
@@ -247,13 +401,27 @@ def build_actions(intent: Optional[str], user: Optional[Any] = None) -> List[Dic
         return [
             {'type': 'redirect', 'url': link('correspondence_list'), 'label': 'Suivre mes échanges'},
         ]
-    # Par défaut: proposer les principales actions
-    return [
-        {'type': 'redirect', 'url': link('campaign_spot_create'), 'label': 'Créer une campagne'},
-        {'type': 'redirect', 'url': link('campaign_list'), 'label': 'Voir mes campagnes'},
-        {'type': 'redirect', 'url': link('broadcast_grid'), 'label': 'Voir mes diffusions'},
-        {'type': 'redirect', 'url': link('coverage_request_create'), 'label': 'Demande de couverture'},
-    ]
+    if intent == 'about_site':
+        return [
+            {'type': 'redirect', 'url': link('guides_list'), 'label': 'Guides d\'utilisation'},
+            {'type': 'redirect', 'url': link('pricing_overview'), 'label': 'Tarifs & Services'},
+            {'type': 'redirect', 'url': link('home'), 'label': 'Accueil'},
+        ]
+
+    if intent == 'site_navigation':
+        return [
+            {'type': 'redirect', 'url': link('home'), 'label': 'Accueil'},
+            {'type': 'redirect', 'url': link('campaign_list'), 'label': 'Mes Campagnes'},
+            {'type': 'redirect', 'url': link('broadcast_grid'), 'label': 'Planning de Diffusion'},
+        ]
+
+    if intent == 'functional_elements':
+        return [
+            {'type': 'redirect', 'url': link('advisory_wizard'), 'label': 'Assistant Conseil'},
+            {'type': 'redirect', 'url': link('report_overview'), 'label': 'Rapports & Bilans'},
+        ]
+
+    return []
 
 
 def guide_message(intent: Optional[str], user: Optional[Any] = None) -> str:
@@ -319,6 +487,31 @@ def guide_message(intent: Optional[str], user: Optional[Any] = None) -> str:
     if intent == 'follow_threads':
         return (
             "Vos échanges: accédez à la page Correspondence pour consulter vos discussions et leur statut."
+        )
+    if intent == 'about_site':
+        return (
+            "Bienvenue ! Ce projet modernise la publicité télévisée au Burkina Faso. "
+            "Inscrivez-vous, créez vos campagnes et gérez vos spots simplement."
+        )
+    if intent == 'bf1_tv':
+        return (
+            "BF1 TV: la chaîne leader au Burkina Faso. Découvrez notre mission, nos valeurs et notre engagement."
+        )
+    if intent == 'roles_permissions':
+        return (
+            "Rôles: Clients, Administrateurs, Rédaction et Diffuseurs. Chaque profil a des accès spécifiques."
+        )
+    if intent == 'technical_info':
+        return (
+            "Technique: Stack Django/PostgreSQL/Docker. Sécurité et temps réel via WebSockets."
+        )
+    if intent == 'campaign_process':
+        return (
+            "Processus: Création → Validation → Dépôt → Programmation → Diffusion."
+        )
+    if intent == 'ad_types':
+        return (
+            "Formats: Vidéo (MP4/AVI) et Image (PNG/JPG). Durée de 5 à 300 secondes."
         )
     return (
         "Je peux vous guider sur les actions clés: campagnes, spots, diffusions, couverture, support."
