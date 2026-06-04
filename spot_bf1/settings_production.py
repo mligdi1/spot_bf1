@@ -19,10 +19,14 @@ if _allowed_hosts_env:
 else:
     ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', '[::1]']
 
-# Base de données de production
-_db_password_env = os.environ.get('DATABASE_PASSWORD')
-_use_sqlite = os.environ.get('DJANGO_USE_SQLITE') == '1' or _db_password_env is None
-if _use_sqlite:
+# Database
+# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+
+# Détection de l'environnement PythonAnywhere
+IS_PYTHONANYWHERE = 'PYTHONANYWHERE_DOMAIN' in os.environ or os.path.expanduser('~').startswith('/home/spotbf1')
+
+if IS_PYTHONANYWHERE:
+    # Configuration pour la production sur PythonAnywhere (SQLite)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -30,6 +34,8 @@ if _use_sqlite:
         }
     }
 else:
+    # Configuration PostgreSQL (si utilisé sur un autre serveur de prod)
+    _db_password_env = os.environ.get('DATABASE_PASSWORD')
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',

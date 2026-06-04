@@ -6,7 +6,13 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'spot_bf1.settings')
+    # Détection automatique de l'environnement PythonAnywhere
+    path = os.path.expanduser('~')
+    if path.startswith('/home/spotbf1'):
+        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'spot_bf1.settings_production')
+    else:
+        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'spot_bf1.settings')
+    
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

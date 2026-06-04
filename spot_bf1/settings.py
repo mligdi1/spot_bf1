@@ -106,8 +106,11 @@ ASGI_APPLICATION = 'spot_bf1.asgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-if 'PYTHONANYWHERE_DOMAIN' in os.environ:
-    # Configuration pour la production sur PythonAnywhere (SQLite)
+# Détection de l'environnement PythonAnywhere
+IS_PYTHONANYWHERE = 'PYTHONANYWHERE_DOMAIN' in os.environ or os.path.expanduser('~').startswith('/home/spotbf1')
+
+if IS_PYTHONANYWHERE:
+    # Configuration automatique pour la production sur PythonAnywhere (SQLite)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
