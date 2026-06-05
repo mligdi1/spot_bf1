@@ -126,7 +126,7 @@ else:
             'USER': os.environ.get('DATABASE_USER', 'spot_bf1'),
             'PASSWORD': os.environ.get('DATABASE_PASSWORD', ''),
             'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
-            'PORT': os.environ.get('DATABASE_PORT', '5433'),
+            'PORT': os.environ.get('DATABASE_PORT', '5432'),
         }
     }
 

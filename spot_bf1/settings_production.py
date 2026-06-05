@@ -19,33 +19,12 @@ if _allowed_hosts_env:
 else:
     ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', '[::1]']
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-# Détection de l'environnement PythonAnywhere
-IS_PYTHONANYWHERE = 'PYTHONANYWHERE_DOMAIN' in os.environ or os.path.expanduser('~').startswith('/home/spotbf1')
-
-if IS_PYTHONANYWHERE:
-    # Configuration pour la production sur PythonAnywhere (SQLite)
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
-else:
-    # Configuration PostgreSQL (si utilisé sur un autre serveur de prod)
-    _db_password_env = os.environ.get('DATABASE_PASSWORD')
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('DATABASE_NAME', 'spot_bf1_prod'),
-            'USER': os.environ.get('DATABASE_USER', 'postgres'),
-            'PASSWORD': _db_password_env,
-            'HOST': os.environ.get('DATABASE_HOST', 'localhost'),
-            'PORT': os.environ.get('DATABASE_PORT', '5432'),
-        }
-    }
+}
 
 _force_https = os.environ.get('DJANGO_FORCE_HTTPS', '').strip().lower() in ('1', 'true', 'yes')
 _is_localhost = any(h in ('localhost', '127.0.0.1', '0.0.0.0', '[::1]') for h in ALLOWED_HOSTS)
