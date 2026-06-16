@@ -218,7 +218,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # WhatsApp Chat Widget configuration
 # Use E.164 format for phone (e.g., '+22670123456')
-WHATSAPP_PHONE = '+22674470032'
+WHATSAPP_PHONE = '+22607030280'
 WHATSAPP_DEFAULT_MESSAGE = 'Bonjour BF1 TV, je souhaite échanger avec votre équipe.'
 WHATSAPP_WIDGET_ENABLED = True
 WHATSAPP_WIDGET_POSITION = 'bottom-right'  # options: bottom-right, bottom-left
