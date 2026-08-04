@@ -168,9 +168,7 @@ spot_bf1/
 - Statique : `static/` (sources) + `staticfiles/` (collectstatic).
 
 ### Temps réel (WebSocket)
-Le projet utilise Django Channels (ASGI) pour pousser des mises à jour en temps réel :
-- `ws/admin/pending-counts/` : compteurs d’éléments “en attente” côté console admin.
-- `ws/diffusion/planning/` : snapshot + mises à jour du planning côté diffusion.
+Le projet utilise Django Channels pour fournir des mises à jour en temps réel via WebSocket.
 
 ## 👥 Rôles et parcours
 
@@ -197,9 +195,9 @@ Le projet utilise Django Channels (ASGI) pour pousser des mises à jour en temps
 - `/diffusion/planning/` : planning, confirmation/annulation diffusion
 - `/diffusion/spots/` et exports : CSV / XLSX / PDF selon vues et dépendances
 
-### Console admin
-- `/console/login/` + `/console/dashboard/`
-- `/console/campaigns/…` et `/console/spots/…` (validation)
+### Administration
+
+Une interface dédiée permet aux équipes internes de gérer les campagnes, les spots et les diffusions.
 
 ## 🎨 Design et couleurs
 
@@ -327,17 +325,11 @@ Un exemple est disponible dans `.env.example`. Les variables importantes :
 - Certaines sections historiques (paiement, facturation) sont décrites comme objectifs, mais l’implémentation actuelle privilégie exports/notifications et workflows campagne→spot→diffusion.
 - En prod, privilégier `settings_production.py` + variables d’environnement (pas de secrets en dur).
 
-## 🤝 Contribution
+## 🤝 Collaboration
 
-1. Fork le projet
-2. Créer une branche feature (`git checkout -b feature/AmazingFeature`)
-3. Commit les changements (`git commit -m 'Add some AmazingFeature'`)
-4. Push vers la branche (`git push origin feature/AmazingFeature`)
-5. Ouvrir une Pull Request
+Les évolutions du projet sont gérées par l'équipe technique autorisée.
+Toute contribution externe nécessite une validation préalable.
 
-## 📄 Licence
-
-Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
 
 ## 📞 Support
 
